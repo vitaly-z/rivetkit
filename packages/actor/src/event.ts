@@ -64,7 +64,7 @@ export interface HandleMessageEventDelegate<A extends AnyActor> {
 
 export async function handleMessageEvent<A extends AnyActor>(
 	event: MessageEvent<WSMessageReceive>,
-	actorMetadata: Metadata,
+	//actorMetadata: Metadata,
 	conn: Connection<A>,
 	config: MessageEventConfig,
 	handlers: HandleMessageEventDelegate<A>,
@@ -142,7 +142,7 @@ export async function handleMessageEvent<A extends AnyActor>(
 			code = errors.INTERNAL_ERROR_CODE;
 			message = errors.INTERNAL_ERROR_DESCRIPTION;
 			metadata = {
-				url: `https://hub.rivet.gg/projects/${actorMetadata.project.slug}/environments/${actorMetadata.environment.slug}/actors?actorId=${actorMetadata.actor.id}`,
+				//url: `https://hub.rivet.gg/projects/${actorMetadata.project.slug}/environments/${actorMetadata.environment.slug}/actors?actorId=${actorMetadata.actor.id}`,
 			} satisfies errors.InternalErrorMetadata;
 
 			logger().warn("internal error", {

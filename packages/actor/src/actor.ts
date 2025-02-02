@@ -1,7 +1,7 @@
 import { type Logger, setupLogging } from "@rivet-gg/actor-common/log";
 import { listObjectMethods } from "@rivet-gg/actor-common/reflect";
 import { isJsonSerializable } from "@rivet-gg/actor-common/utils";
-import type { ActorContext, Metadata } from "@rivet-gg/actor-core";
+import type { ActorDriver } from "@rivet-gg/actor-core";
 import * as protoHttpRpc from "@rivet-gg/actor-protocol/http/rpc";
 import {
 	type ProtocolFormat,
@@ -21,8 +21,8 @@ import {
 } from "./connection";
 import * as errors from "./errors";
 import { handleMessageEvent } from "./event";
-import { ActorInspection } from "./inspect";
-import type { Kv } from "./kv";
+//import { ActorInspection } from "./inspect";
+//import type { Kv } from "./kv";
 import { instanceLogger, logger } from "./log";
 import { Rpc } from "./rpc";
 import { Lock, deadline } from "./utils";
@@ -138,7 +138,7 @@ export abstract class Actor<
 	#server?: Deno.HttpServer<Deno.NetAddr>;
 	#backgroundPromises: Promise<void>[] = [];
 	#config: ActorConfig;
-	#ctx!: ActorContext;
+	#driver!: ActorDriver;
 	#ready = false;
 
 	#connectionIdCounter = 0;
@@ -148,7 +148,7 @@ export abstract class Actor<
 	#lastSaveTime = 0;
 	#pendingSaveTimeout?: number | NodeJS.Timeout;
 
-	#inspection!: ActorInspection<this>;
+	//#inspection!: ActorInspection<this>;
 
 	/**
 	 * This constructor should never be used directly.
@@ -166,37 +166,37 @@ export abstract class Actor<
 	 *
 	 * This should never be used directly.
 	 *
-	 * @param ctx - The actor context.
+	 * @param driver - The actor context.
 	 */
-	public static async start(ctx: ActorContext): Promise<void> {
+	public static async start(driver: ActorDriver): Promise<void> {
 		setupLogging();
 
 		// biome-ignore lint/complexity/noThisInStatic lint/suspicious/noExplicitAny: Needs to construct self
 		const instance = new (this as any)() as Actor;
-		return await instance.#run(ctx);
+		return await instance.#run(driver);
 	}
 
-	async #run(ctx: ActorContext) {
-		this.#ctx = ctx;
+	async #run(driver: ActorDriver) {
+		this.#driver = driver;
 
-		// Create inspector after receiving `ActorContext`
-		this.#inspection = new ActorInspection(
-			this.#config,
-			this.#ctx.metadata,
-			{
-				state: () => ({
-					enabled: this.#stateEnabled,
-					state: this.#stateProxy,
-				}),
-				connections: () => this.#connections.values(),
-				rpcs: () => this.#rpcNames,
-				setState: (state) => {
-					this.#validateStateEnabled();
-					this.#setStateWithoutChange(state);
-				},
-				onRpcCall: (ctx, rpc, args) => this.#executeRpc(ctx, rpc, args),
-			},
-		);
+		//// Create inspector after receiving `ActorDriver`
+		//this.#inspection = new ActorInspection(
+		//	this.#config,
+		//	this.#driver.metadata,
+		//	{
+		//		state: () => ({
+		//			enabled: this.#stateEnabled,
+		//			state: this.#stateProxy,
+		//		}),
+		//		connections: () => this.#connections.values(),
+		//		rpcs: () => this.#rpcNames,
+		//		setState: (state) => {
+		//			this.#validateStateEnabled();
+		//			this.#setStateWithoutChange(state);
+		//		},
+		//		onRpcCall: (ctx, rpc, args) => this.#executeRpc(ctx, rpc, args),
+		//	},
+		//);
 
 		// Run server immediately since init might take a few ms
 		this.#runServer();
@@ -272,7 +272,7 @@ export abstract class Actor<
 					this.#stateChanged = false;
 
 					// Write to KV
-					await this.#ctx.kv.put(KEYS.STATE.DATA, this.#stateRaw);
+					await this.#driver.kvPut(KEYS.STATE.DATA, this.#stateRaw);
 
 					logger().debug("state saved");
 				});
@@ -317,7 +317,7 @@ export abstract class Actor<
 					throw new errors.InvalidStateType({ path });
 				}
 				this.#stateChanged = true;
-				this.#inspection.notifyStateChanged();
+				//this.#inspection.notifyStateChanged();
 
 				// Call onStateChange if it exists
 				if (this._onStateChange && this.#ready) {
@@ -346,14 +346,10 @@ export abstract class Actor<
 		if (!this._onInitialize) throw new Error("missing _onInitialize");
 
 		// Read initial state
-		const getStateBatch = await this.#ctx.kv.getBatch([
+		const [[_i, initialized], [_s, stateData]] = await this.#driver.kvGetBatch([
 			KEYS.STATE.INITIALIZED,
 			KEYS.STATE.DATA,
-		]);
-		const initialized = getStateBatch.get(
-			KEYS.STATE.INITIALIZED,
-		) as boolean;
-		const stateData = getStateBatch.get(KEYS.STATE.DATA) as State;
+		]) as [[any, boolean], [any, State]];
 
 		if (!initialized) {
 			// Initialize
@@ -369,12 +365,10 @@ export abstract class Actor<
 
 			// Update state
 			logger().debug("writing state");
-			await this.#ctx.kv.putBatch(
-				new Map<unknown, unknown>([
-					[KEYS.STATE.INITIALIZED, true],
-					[KEYS.STATE.DATA, stateData],
-				]),
-			);
+			await this.#driver.kvPutBatch([
+				[KEYS.STATE.INITIALIZED, true],
+				[KEYS.STATE.DATA, stateData],
+			]);
 			this.#setStateWithoutChange(stateData);
 		} else {
 			// Save state
@@ -388,32 +382,30 @@ export abstract class Actor<
 
 		app.get("/", (c) => {
 			// TODO: Give the metadata about this actor (ie tags)
-			return c.text(
-				"This is a Rivet Actor\n\nLearn more at https://rivet.gg",
-			);
+			return c.text("This is a Rivet Actor\n\nLearn more at https://rivet.gg");
 		});
 
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
 		app.get("/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
-		app.get(
-			"/__inspect/connect",
-			// cors({
-			// 	// TODO: Fetch configuration from config, manager, or env?
-			// 	origin: (origin, c) => {
-			// 		return [
-			// 			"http://localhost:5080",
-			// 			"https://hub.rivet.gg",
-			// 		].includes(origin) ||
-			// 			origin.endsWith(".rivet-hub-7jb.pages.dev")
-			// 			? origin
-			// 			: "https://hub.rivet.gg";
-			// 	},
-			// }),
-			upgradeWebSocket((c) =>
-				this.#inspection.handleWebsocketConnection(c),
-			),
-		);
+		//app.get(
+		//	"/__inspect/connect",
+		//	// cors({
+		//	// 	// TODO: Fetch configuration from config, manager, or env?
+		//	// 	origin: (origin, c) => {
+		//	// 		return [
+		//	// 			"http://localhost:5080",
+		//	// 			"https://hub.rivet.gg",
+		//	// 		].includes(origin) ||
+		//	// 			origin.endsWith(".rivet-hub-7jb.pages.dev")
+		//	// 			? origin
+		//	// 			: "https://hub.rivet.gg";
+		//	// 	},
+		//	// }),
+		//	upgradeWebSocket((_c) => {
+		//		this.#inspection.handleWebsocketConnection(c),
+		//	}),
+		//);
 
 		app.all("*", (c) => {
 			return c.text("Not Found", 404);
@@ -466,11 +458,7 @@ export abstract class Actor<
 				});
 
 			// Create connection with validated parameters
-			conn = await this.#createConnection(
-				protocolFormat,
-				connState,
-				undefined,
-			);
+			conn = await this.#createConnection(protocolFormat, connState, undefined);
 
 			// Parse request body if present
 			const contentLength = Number(c.req.header("content-length") || "0");
@@ -522,7 +510,7 @@ export abstract class Actor<
 				code = errors.INTERNAL_ERROR_CODE;
 				message = errors.INTERNAL_ERROR_DESCRIPTION;
 				metadata = {
-					url: `https://hub.rivet.gg/projects/${this.#ctx.metadata.project.slug}/environments/${this.#ctx.metadata.environment.slug}/actors?actorId=${this.#ctx.metadata.actor.id}`,
+					//url: `https://hub.rivet.gg/projects/${this.#driver.metadata.project.slug}/environments/${this.#driver.metadata.environment.slug}/actors?actorId=${this.#driver.metadata.actor.id}`,
 				} satisfies errors.InternalErrorMetadata;
 			}
 
@@ -573,9 +561,7 @@ export abstract class Actor<
 		let params: ExtractActorConnParams<this>;
 		try {
 			params =
-				typeof paramsStr === "string"
-					? JSON.parse(paramsStr)
-					: undefined;
+				typeof paramsStr === "string" ? JSON.parse(paramsStr) : undefined;
 		} catch (error) {
 			logger().warn("malformed connection parameters", {
 				error: `${error}`,
@@ -592,10 +578,7 @@ export abstract class Actor<
 				parameters: params,
 			});
 			if (dataOrPromise instanceof Promise) {
-				connState = await deadline(
-					dataOrPromise,
-					PREPARE_CONNECT_TIMEOUT,
-				);
+				connState = await deadline(dataOrPromise, PREPARE_CONNECT_TIMEOUT);
 			} else {
 				connState = dataOrPromise;
 			}
@@ -674,7 +657,7 @@ export abstract class Actor<
 	// MARK: Events
 	#addSubscription(eventName: string, connection: Connection<this>) {
 		connection.subscriptions.add(eventName);
-		this.#inspection.notifyConnectionsChanged();
+		//this.#inspection.notifyConnectionsChanged();
 
 		let subscribers = this.#eventSubscriptions.get(eventName);
 		if (!subscribers) {
@@ -686,7 +669,7 @@ export abstract class Actor<
 
 	#removeSubscription(eventName: string, connection: Connection<this>) {
 		connection.subscriptions.delete(eventName);
-		this.#inspection.notifyConnectionsChanged();
+		//this.#inspection.notifyConnectionsChanged();
 
 		const subscribers = this.#eventSubscriptions.get(eventName);
 		if (subscribers) {
@@ -708,11 +691,7 @@ export abstract class Actor<
 		return {
 			onOpen: async (_evt, ws) => {
 				// Create connection with validated parameters
-				conn = await this.#createConnection(
-					protocolFormat,
-					connState,
-					ws,
-				);
+				conn = await this.#createConnection(protocolFormat, connState, ws);
 			},
 			onMessage: async (evt) => {
 				if (!conn) {
@@ -722,7 +701,7 @@ export abstract class Actor<
 
 				await handleMessageEvent(
 					evt,
-					this.#ctx.metadata,
+					//this.#driver.metadata,
 					conn,
 					this.#config,
 					{
@@ -784,16 +763,9 @@ export abstract class Actor<
 					await deadline(outputOrPromise, this.#config.rpc.timeout),
 				);
 			}
-			return await this._onBeforeRpcResponse(
-				rpcName,
-				args,
-				outputOrPromise,
-			);
+			return await this._onBeforeRpcResponse(rpcName, args, outputOrPromise);
 		} catch (error) {
-			if (
-				error instanceof DOMException &&
-				error.name === "TimeoutError"
-			) {
+			if (error instanceof DOMException && error.name === "TimeoutError") {
 				throw new errors.RpcTimedOut();
 			}
 			throw error;
@@ -882,7 +854,7 @@ export abstract class Actor<
 	 * @see {@link https://rivet.gg/docs/lifecycle|Lifecycle Documentation}
 	 */
 	protected _onConnect?(connection: Connection<this>): void | Promise<void> {
-		this.#inspection.notifyConnectionsChanged();
+		//this.#inspection.notifyConnectionsChanged();
 	}
 
 	/**
@@ -891,10 +863,8 @@ export abstract class Actor<
 	 * @param connection - The connection object.
 	 * @see {@link https://rivet.gg/docs/lifecycle|Lifecycle Documentation}
 	 */
-	protected _onDisconnect?(
-		connection: Connection<this>,
-	): void | Promise<void> {
-		this.#inspection.notifyConnectionsChanged();
+	protected _onDisconnect?(connection: Connection<this>): void | Promise<void> {
+		//this.#inspection.notifyConnectionsChanged();
 	}
 
 	// MARK: Exposed methods
@@ -903,18 +873,18 @@ export abstract class Actor<
 	 *
 	 * @see {@link https://rivet.gg/docs/metadata|Metadata Documentation}
 	 */
-	protected get _metadata(): Metadata {
-		return this.#ctx.metadata;
-	}
+	//protected get _metadata(): Metadata {
+	//	return this.#driver.metadata;
+	//}
 
 	/**
 	 * Gets the KV state API. This KV storage is local to this actor.
 	 *
 	 * @see {@link https://rivet.gg/docs/state|State Documentation}
 	 */
-	protected get _kv(): Kv {
-		return this.#ctx.kv;
-	}
+	//protected get _kv(): Kv {
+	//	return this.#driver.kv;
+	//}
 
 	/**
 	 * Gets the logger instance.
@@ -994,9 +964,7 @@ export abstract class Actor<
 					connection._serialize(toClient);
 			}
 
-			connection._sendWebSocketMessage(
-				serialized[connection._protocolFormat],
-			);
+			connection._sendWebSocketMessage(serialized[connection._protocolFormat]);
 		}
 	}
 
@@ -1074,8 +1042,7 @@ export abstract class Actor<
 
 				// Create deferred promise
 				const { promise, resolve } = Promise.withResolvers();
-				if (!resolve)
-					throw new Error("resolve should be defined by now");
+				if (!resolve) throw new Error("resolve should be defined by now");
 
 				// Resolve promise when websocket closes
 				raw.addEventListener("close", resolve);

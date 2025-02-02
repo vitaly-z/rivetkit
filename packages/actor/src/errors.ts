@@ -2,7 +2,7 @@ export const INTERNAL_ERROR_CODE = "internal_error";
 export const INTERNAL_ERROR_DESCRIPTION =
 	"Internal error. Read the actor logs for more details.";
 export interface InternalErrorMetadata {
-	url: string;
+	//url: string;
 }
 
 export const USER_ERROR_CODE = "user_error";

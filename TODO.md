@@ -14,17 +14,14 @@
 - Get manager creating actors
 - Expose proxy to actors from manager
 
-## Questions
-
-### How do we handle the manager <-> connection? Is this a standard HTTP interface?
-
-Is this a standard RTT like the Rivet manager? If so, this makes it easy in CF workers bc it lets us just expose it directly.
+## Problems
 
 ## Key notes
 
 - We need to store the actor list in global KV
 - We'll need to expose the manager API
 - The client is exactly the same, it just needs to be pointed at an endpoint and give a place to open a WS connection to
+- We'll pass in the equivalent of the Rivet config
 
 ## Flow
 
