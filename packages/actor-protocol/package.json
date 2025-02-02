@@ -1,5 +1,5 @@
 {
-  "name": "@rivet-gg/actor-protocol",
+  "name": "@actor-core/actor-protocol",
   "private": true,
   "version": "25.1.0-rc.1",
   "files": ["dist", "package.json"],

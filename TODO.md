@@ -1,19 +1,28 @@
 # Todo
 
-## Platforms
-
-- Cloudflare DO
-- Supabase
-- Vercel
-- Rivet
-
 ## Primary
 
-- Expose manager HTTP API
-- Get manager creating actors
-- Expose proxy to actors from manager
-- Handle actor ID not found (respond from the actor itself)
-    - Or will this error when getting the stub?
+- Implement basic tests based on multiple drivers
+- Finish CF
+    - Implement framework as drivers
+    - Handle actor ID not found
+    - Handle actor tags
+    - Handle actor shutdown
+- Implement Rivet compat
+- Write Cloudflare guide
+- Write Rivet guide
+
+## Website
+
+- Highlight use cases
+- OG image for GitHub
+
+## Distribution
+
+- Marketplace for vercel
+- Marketplace for Supabase
+
+---
 
 ## Secondary
 
@@ -22,6 +31,20 @@
 - Figure out how to destroy actors
 - Implement _shutdown
 
+## Platforms
+
+- Cloudflare DO
+- Supabase
+- Vercel
+- Rivet
+
+Later:
+
+- Web Containers
+- NodeJS
+- Deno Deploy
+
+
 ## Rivet compat
 
 - Add 404 & cors to router
@@ -29,37 +52,6 @@
 - Add back shutdown
 
 ---
-
-## Alternative names
-
-- open-actor
-- next-actor
-- unjs? unactor?
-- xactor
-- portactor
-
-
-## Problems
-
-## Key notes
-
-- We need to store the actor list in global KV
-- We'll need to expose the manager API
-- The client is exactly the same, it just needs to be pointed at an endpoint and give a place to open a WS connection to
-- We'll pass in the equivalent of the Rivet config
-
-## Flow
-
-1. client -> manager: give me the actor (include compat)
-2. client -> actor: connect over ws (or use http)
-
-## Components
-
-- Manager library
-- Actor library + drivers
-- Actor client
-- Manager protocol
-- Actor protocol
 
 ## Site layout
 
@@ -84,4 +76,8 @@ Or copy the Resend API https://resend.com/docs/introduction
 - hono
 - itty-router
 - elysa.js
+
+## Later
+
+- StackBlitz demo
 

@@ -1,7 +1,7 @@
 {
   "private": true,
   "packageManager": "yarn@4.2.2",
-  "name": "open-actor",
+  "name": "actor-core",
   "workspaces": ["packages/*", "examples/*"],
   "scripts": {
     "start": "npx turbo dev",

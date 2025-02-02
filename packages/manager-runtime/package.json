@@ -1,5 +1,5 @@
 {
-  "name": "@rivet-gg/actor-manager",
+  "name": "@actor-core/manager-runtime",
   "version": "25.1.0-rc.1",
   "license": "Apache-2.0",
   "files": ["dist", "src", "deno.json", "package.json"],
