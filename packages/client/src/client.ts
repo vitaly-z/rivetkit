@@ -308,11 +308,7 @@ export class Client {
 		// Stores returned RPC functions for faster calls
 		const methodCache = new Map<string, ActorRPCFunction>();
 		return new Proxy(handle, {
-			get(
-				target: ActorHandleRaw,
-				prop: string | symbol,
-				receiver: unknown,
-			) {
+			get(target: ActorHandleRaw, prop: string | symbol, receiver: unknown) {
 				// Handle built-in Symbol properties
 				if (typeof prop === "symbol") {
 					return Reflect.get(target, prop, receiver);
@@ -338,8 +334,7 @@ export class Client {
 				if (typeof prop === "string") {
 					let method = methodCache.get(prop);
 					if (!method) {
-						method = (...args: unknown[]) =>
-							target.rpc(prop, ...args);
+						method = (...args: unknown[]) => target.rpc(prop, ...args);
 						methodCache.set(prop, method);
 					}
 					return method;
@@ -367,14 +362,8 @@ export class Client {
 			},
 
 			// Support proper property descriptors
-			getOwnPropertyDescriptor(
-				target: ActorHandleRaw,
-				prop: string | symbol,
-			) {
-				const targetDescriptor = Reflect.getOwnPropertyDescriptor(
-					target,
-					prop,
-				);
+			getOwnPropertyDescriptor(target: ActorHandleRaw, prop: string | symbol) {
+				const targetDescriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 				if (targetDescriptor) {
 					return targetDescriptor;
 				}
@@ -384,8 +373,7 @@ export class Client {
 						configurable: true,
 						enumerable: false,
 						writable: false,
-						value: (...args: unknown[]) =>
-							target.rpc(prop, ...args),
+						value: (...args: unknown[]) => target.rpc(prop, ...args),
 					};
 				}
 				return undefined;
@@ -420,9 +408,7 @@ export class Client {
 			});
 
 			if (!res.ok) {
-				throw new errors.ManagerError(
-					`${res.statusText}: ${await res.text()}`,
-				);
+				throw new errors.ManagerError(`${res.statusText}: ${await res.text()}`);
 			}
 
 			return res.json();

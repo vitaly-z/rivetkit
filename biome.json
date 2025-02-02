@@ -1,85 +1,84 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-	"files": {
-		"ignore": [
-			"**/node_modules/**",
-			"**/dist/**",
-			"**/build/**",
-			"**/coverage/**",
-			"**/tmp",
-			"**/.turbo/**",
-			"**/generated/**",
-			"*.gen.*",
-			"**/.next/**",
-			".vscode/**",
-			"docker/**",
-			"docs/**",
-			"docs-internal/**",
-			"externals/**",
-			"modules/**",
-			"scripts/**",
-			"namespaces/**",
-			"secrets/**",
-			"sdks/api/**",
-			"*.lock",
-			"resources/**",
-			"site/framer/**",
-			"**/out/**",
-			"packages/infra/**",
-			"packages/common/**",
-			"packages/api/**",
-			"packages/services/**",
-			"packages/toolchain/**"
-		],
-		"ignoreUnknown": true
-	},
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true,
-		"defaultBranch": "main"
-	},
-	"formatter": {
-		"enabled": true,
-		"useEditorconfig": true
-	},
-	"organizeImports": { "enabled": true },
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"recommended": true,
-			"correctness": {
-				"noUnusedImports": "warn"
-			}
-		}
-	},
-	"overrides": [
-		{
-			"include": ["site/**/*.css"],
-			"linter": {
-				"rules": {
-					"correctness": {
-						"noInvalidPositionAtImportRule": "off",
-						"noUnknownFunction": "off"
-					}
-				}
-			}
-		},
-		{
-			"include": ["site/**/*.js*"],
-			"linter": {
-				"enabled": false
-			}
-		},
-		{
-			"include": [
-				"sdks/actor/bridge/**/lib/**/*",
-				"sdks/**/bridge_types/**/lib/**/*"
-			],
-			"linter": {
-				"enabled": false
-			}
-		}
-	]
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "files": {
+    "ignore": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/coverage/**",
+      "**/tmp",
+      "**/.turbo/**",
+      "**/generated/**",
+      "*.gen.*",
+      "**/.next/**",
+      ".vscode/**",
+      "docker/**",
+      "docs/**",
+      "docs-internal/**",
+      "externals/**",
+      "modules/**",
+      "scripts/**",
+      "namespaces/**",
+      "secrets/**",
+      "sdks/api/**",
+      "*.lock",
+      "resources/**",
+      "site/framer/**",
+      "**/out/**",
+      "packages/infra/**",
+      "packages/common/**",
+      "packages/api/**",
+      "packages/services/**",
+      "packages/toolchain/**"
+    ],
+    "ignoreUnknown": true
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true
+  },
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "warn"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "include": ["site/**/*.css"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noInvalidPositionAtImportRule": "off",
+            "noUnknownFunction": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["site/**/*.js*"],
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
+      "include": [
+        "sdks/actor/bridge/**/lib/**/*",
+        "sdks/**/bridge_types/**/lib/**/*"
+      ],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ]
 }
-

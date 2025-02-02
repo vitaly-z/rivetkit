@@ -17,13 +17,10 @@ export async function readEndpointFromCli(): Promise<string> {
 			stdout: string;
 			stderr: string;
 		}>((resolve, reject) => {
-			execCallback(
-				`${cliPath} manager endpoint`,
-				(error, stdout, stderr) => {
-					if (error) reject(error);
-					else resolve({ stdout, stderr });
-				},
-			);
+			execCallback(`${cliPath} manager endpoint`, (error, stdout, stderr) => {
+				if (error) reject(error);
+				else resolve({ stdout, stderr });
+			});
 		});
 
 		if (stderr) {

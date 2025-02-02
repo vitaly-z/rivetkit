@@ -1,5 +1,12 @@
 # Todo
 
+## Platforms
+
+- Cloudflare DO
+- Supabase
+- Vercel
+- Rivet
+
 ## Primary
 
 - Expose manager HTTP API

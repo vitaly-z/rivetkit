@@ -1,9 +1,7 @@
 export const INTERNAL_ERROR_CODE = "internal_error";
 export const INTERNAL_ERROR_DESCRIPTION =
 	"Internal error. Read the actor logs for more details.";
-export interface InternalErrorMetadata {
-	//url: string;
-}
+export type InternalErrorMetadata = {};
 
 export const USER_ERROR_CODE = "user_error";
 
@@ -73,25 +71,17 @@ export class RpcNotFound extends ActorError {
 
 export class InvalidProtocolFormat extends ActorError {
 	constructor(format?: string) {
-		super(
-			"invalid_protocol_format",
-			`Invalid protocol format \`${format}\`.`,
-			{
-				public: true,
-			},
-		);
+		super("invalid_protocol_format", `Invalid protocol format \`${format}\`.`, {
+			public: true,
+		});
 	}
 }
 
 export class ConnectionParametersTooLong extends ActorError {
 	constructor() {
-		super(
-			"connection_parameters_too_long",
-			"Connection parameters too long.",
-			{
-				public: true,
-			},
-		);
+		super("connection_parameters_too_long", "Connection parameters too long.", {
+			public: true,
+		});
 	}
 }
 

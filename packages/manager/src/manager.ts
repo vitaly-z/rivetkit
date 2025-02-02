@@ -1,7 +1,6 @@
 // @ts-types="../../manager-protocol/dist/mod.d.ts"
 import { ActorsRequestSchema } from "@rivet-gg/manager-protocol";
 import { Hono, type Context as HonoContext } from "hono";
-import { cors } from "hono/cors";
 import type { ManagerDriver } from "./driver";
 
 export class Manager {

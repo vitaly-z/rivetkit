@@ -29,9 +29,7 @@ export async function queryActor(
 		// Validate actor
 		if ((res.actor.tags as ActorTags).access !== "public") {
 			// TODO: Throw 404 that matches the 404 from Fern if the actor is not found
-			throw new Error(
-				`Actor with ID ${query.getForId.actorId} is private`,
-			);
+			throw new Error(`Actor with ID ${query.getForId.actorId} is private`);
 		}
 		if (res.actor.destroyedAt) {
 			throw new Error(

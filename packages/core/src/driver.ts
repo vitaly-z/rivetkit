@@ -19,4 +19,3 @@ export interface ActorDriver {
 	//destroy(): Promise<void>;
 	//readState(): void;
 }
-

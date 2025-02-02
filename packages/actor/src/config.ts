@@ -49,8 +49,7 @@ export function mergeActorConfig(
 				DEFAULT_ACTOR_CONFIG.state.saveInterval,
 		},
 		rpc: {
-			timeout:
-				partialConfig?.rpc?.timeout ?? DEFAULT_ACTOR_CONFIG.rpc.timeout,
+			timeout: partialConfig?.rpc?.timeout ?? DEFAULT_ACTOR_CONFIG.rpc.timeout,
 		},
 	};
 }

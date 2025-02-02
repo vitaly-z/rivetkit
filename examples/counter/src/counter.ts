@@ -1,4 +1,5 @@
-import { Actor } from "@rivet-gg/actor";
+//import { Actor } from "@rivet-gg/actor";
+import { Actor } from "actor-core";
 
 export interface State {
 	count: number;
@@ -14,4 +15,3 @@ export default class Counter extends Actor<State> {
 		return this._state.count;
 	}
 }
-

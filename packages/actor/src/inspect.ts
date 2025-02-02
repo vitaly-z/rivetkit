@@ -95,12 +95,7 @@ export class ActorInspection<A extends AnyActor> {
 		let connection: Connection<A> | undefined;
 		return {
 			onOpen: (evt, ws) => {
-				connection = this.#connections.create(
-					ws,
-					"cbor",
-					undefined,
-					false,
-				);
+				connection = this.#connections.create(ws, "cbor", undefined, false);
 			},
 			onMessage: async (evt, ws) => {
 				if (!connection) {

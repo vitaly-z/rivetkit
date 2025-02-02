@@ -1,4 +1,4 @@
-import { setup, handle } from "open-actor/cloudflare";
+import { handle } from "open-actor/cloudflare";
 
 // TODO: this exposes the manager API
 
@@ -33,7 +33,7 @@ export class Counter {
 	// Handle HTTP requests from clients.
 	async fetch(request) {
 		// Apply requested action.
-		let url = new URL(request.url);
+		const url = new URL(request.url);
 
 		// Durable Object storage is automatically cached in-memory, so reading the
 		// same key every request is fast. (That said, you could also store the

@@ -1,4 +1,4 @@
-import { type Logger, setupLogging } from "@rivet-gg/actor-common/log";
+import type { Logger } from "@rivet-gg/actor-common/log";
 import { listObjectMethods } from "@rivet-gg/actor-common/reflect";
 import { isJsonSerializable } from "@rivet-gg/actor-common/utils";
 import type { ActorDriver } from "@rivet-gg/actor-core";
@@ -332,10 +332,9 @@ export abstract class Actor<
 		if (!this._onInitialize) throw new Error("missing _onInitialize");
 
 		// Read initial state
-		const [[_i, initialized], [_s, stateData]] = await this.#driver.kvGetBatch([
-			KEYS.STATE.INITIALIZED,
-			KEYS.STATE.DATA,
-		]) as [[any, boolean], [any, State]];
+		const [[_i, initialized], [_s, stateData]] = (await this.#driver.kvGetBatch(
+			[KEYS.STATE.INITIALIZED, KEYS.STATE.DATA],
+		)) as [[any, boolean], [any, State]];
 
 		if (!initialized) {
 			// Initialize
@@ -374,7 +373,10 @@ export abstract class Actor<
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
 		app.get("/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
-		app.get("/actors/:actorId/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
+		app.get(
+			"/actors/:actorId/connect",
+			upgradeWebSocket(this.#handleWebSocket.bind(this)),
+		);
 
 		//app.get(
 		//	"/__inspect/connect",

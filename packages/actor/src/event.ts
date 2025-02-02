@@ -1,4 +1,3 @@
-import type { Metadata } from "@rivet-gg/actor-core";
 import type * as wsToClient from "@rivet-gg/actor-protocol/ws/to_client";
 import * as wsToServer from "@rivet-gg/actor-protocol/ws/to_server";
 import type { WSMessageReceive } from "hono/ws";

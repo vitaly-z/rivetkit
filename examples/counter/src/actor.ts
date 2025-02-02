@@ -1,9 +1,9 @@
-import { ActorTags } from "@rivet-gg/actor-common/utils";
-import { Actor as CoreActor } from "@rivet-gg/actor";
 import { DurableObject } from "cloudflare:workers";
-import { ActorDriver } from "@rivet-gg/actor-core";
-import { logger } from "./log";
+import type { Actor as CoreActor } from "@rivet-gg/actor";
+import type { ActorTags } from "@rivet-gg/actor-common/utils";
+import type { ActorDriver } from "@rivet-gg/actor-core";
 import Counter from "./counter";
+import { logger } from "./log";
 
 const ACTOR_REGISTRY: Record<string, any> = {
 	counter: Counter,
@@ -29,7 +29,7 @@ export interface ActorInitRequest {
 }
 
 interface InitializedData {
-	tags: ActorTags,
+	tags: ActorTags;
 }
 
 /**

@@ -1,9 +1,9 @@
 {
-	"$schema": "https://turbo.build/schema.json",
-	"extends": ["//"],
-	"tasks": {
-		"build": {
-			"dependsOn": ["@rivet-gg/actor-common#build"]
-		}
-	}
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["@rivet-gg/actor-common#build"]
+    }
+  }
 }

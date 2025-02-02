@@ -197,9 +197,7 @@ export class ActorHandleRaw {
 			logger().warn("socket error", { event });
 		};
 		ws.onmessage = async (ev) => {
-			const response = (await this.#parse(
-				ev.data,
-			)) as wsToClient.ToClient;
+			const response = (await this.#parse(ev.data)) as wsToClient.ToClient;
 
 			if ("ro" in response.body) {
 				// RPC response OK

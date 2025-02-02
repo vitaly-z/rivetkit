@@ -1,6 +1,6 @@
 import { Manager } from "@rivet-gg/actor-manager";
-import { buildManager } from "./manager";
 import { logger } from "./log";
+import { buildManager } from "./manager";
 export { Actor } from "./actor";
 
 export default {
@@ -19,8 +19,8 @@ export default {
 			const subpath = "/" + c.req.param("path");
 			logger().debug("forwarding request", { actorId, subpath });
 
-			let id = env.ACTOR_DO.idFromString(actorId);
-			let stub = env.ACTOR_DO.get(id);
+			const id = env.ACTOR_DO.idFromString(actorId);
+			const stub = env.ACTOR_DO.get(id);
 
 			// Modify the path tor emove the prefix
 			//const url = new URL(request.url);

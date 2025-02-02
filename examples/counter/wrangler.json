@@ -4,9 +4,7 @@
   "compatibility_date": "2025-01-29",
   "migrations": [
     {
-      "new_classes": [
-        "OpenActor"
-      ],
+      "new_classes": ["OpenActor"],
       "tag": "v1"
     }
   ],
@@ -19,10 +17,10 @@
     ]
   },
   "kv_namespaces": [
-	  {
-		  "binding": "ACTOR_KV",
-		  "id": "a70ee566ff9544ebb88ba91cf41a5e97"
-	  }
+    {
+      "binding": "ACTOR_KV",
+      "id": "a70ee566ff9544ebb88ba91cf41a5e97"
+    }
   ],
   "observability": {
     "enabled": true
