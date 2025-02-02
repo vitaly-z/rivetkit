@@ -1,0 +1,55 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "ActorCore",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": true
+  },
+  "colors": {
+    "primary": "#ff4f00",
+    "light": "#ff4f00",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#ff4f00",
+      "to": "#eb4a04"
+    }
+  },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/OpenGameBackend/OpenGameBackend"
+  },
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "getting-started/cloudflare-workers",
+        "getting-started/rivet",
+        "getting-started/supabase",
+        "getting-started/vercel"
+      ]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
+        "concepts/TODO"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/rivet_gg",
+    "github": "https://github.com/rivet-gg",
+    "discord": "https://rivet.gg/discord"
+  },
+  "analytics": {
+    "posthog": {
+      "apiHost": "https://ph.rivet.gg/",
+      "apiKey": "phc_6kfTNEAVw7rn1LA51cO3D69FefbKupSWFaM7OUgEpEo"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+---
+title: Introduction
+description: "Stateful serverless actor framework you can run anywhere"
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.svg"
+  alt="Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.svg"
+  alt="Hero Dark"
+/>
+
+<CardGroup cols={2}>
+  <Card
+    title="State, RPC, & Events"
+    icon="palette"
+  >
+    TODO
+  </Card>
+  <Card
+    title="Fast as fuck"
+    icon="code"
+  >
+    TODO
+  </Card>
+  <Card
+    title="Works with your serverless runtime"
+    icon="screwdriver-wrench"
+  >
+    TODO
+  </Card>
+  <Card
+    title="Scalable Realtime"
+    icon="stars"
+  >
+    TODO
+  </Card>
+</CardGroup>
+
+<div class="text-center">
+	<h3>Supports</h3>
+</div>
+
+<CardGroup>
+	<Card title="Cloudflare Workers" href="/getting-started/cloudflare-workers" horizontal={true} />
+	<Card title="Rivet" href="/getting-started/rivet" horizontal={true} />
+	<Card title="Supabase" href="/getting-started/supabase" horizontal={true} />
+	<Card title="Vercel" href="/getting-started/vercel" horizontal={true} />
+</CardGroup>
+
+## Quickstart
+
+<Steps>
+	<Step title="Install">
+		<CodeGroup>
+			```sh npm
+			npm install actor-core
+			```
+
+			```sh pnpm
+			pnpm install actor-core
+			```
+
+			```sh yarn
+			yarn add actor-core
+			```
+		</CodeGroup>
+	</Step>
+	<Step title="Create Actor">
+		```typescript
+		import { Actor } from "actor-core";
+
+		export interface State {
+			count: number;
+		}
+
+		export default class Counter extends Actor<State> {
+			_onInitialize() {
+				return { count: 0 };
+			}
+
+			increment() {
+				this._state.count += 1;
+				return this._state.count;
+			}
+		}
+		```
+	</Step>
+	<Step title="Connect to Actor">
+		```typescript
+		const client = new Client("http://localhost:8787");
+
+		const counter = await client.get<Counter>({ name: "counter" });
+
+		counter.on("countUpdate", (count: number) =>
+			console.log("New count:", count),
+		);
+
+		const count1 = await counter.increment(1);
+		console.log(count1);
+		const count2 = await counter.increment(2);
+		console.log(count2);
+		```
+	</Step>
+</Steps>
