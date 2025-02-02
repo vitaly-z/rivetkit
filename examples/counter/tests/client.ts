@@ -1,7 +1,10 @@
 import { Client } from "@rivet-gg/actor-client";
+import { setupLogging } from "@rivet-gg/actor-common/log";
 import type Counter from "../src/counter.ts";
 
 async function main() {
+	setupLogging();
+
 	const client = new Client("http://localhost:8787");
 
 	// Get-or-create a counter actor

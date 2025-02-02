@@ -9,7 +9,8 @@ import {
 } from "@rivet-gg/actor-protocol/ws";
 import type * as wsToClient from "@rivet-gg/actor-protocol/ws/to_client";
 import { Hono, type Context as HonoContext } from "hono";
-import { upgradeWebSocket } from "hono/deno";
+//import { upgradeWebSocket } from "hono/deno";
+import { upgradeWebSocket } from "hono/cloudflare-workers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { WSContext, WSEvents } from "hono/ws";
 import onChange from "on-change";
@@ -135,7 +136,7 @@ export abstract class Actor<
 	/** Raw state without the proxy wrapper */
 	#stateRaw!: State;
 
-	#server?: Deno.HttpServer<Deno.NetAddr>;
+	//#server?: Deno.HttpServer<Deno.NetAddr>;
 	#backgroundPromises: Promise<void>[] = [];
 	#config: ActorConfig;
 	#driver!: ActorDriver;
@@ -148,6 +149,8 @@ export abstract class Actor<
 	#lastSaveTime = 0;
 	#pendingSaveTimeout?: number | NodeJS.Timeout;
 
+	public readonly __router: Hono;
+
 	//#inspection!: ActorInspection<this>;
 
 	/**
@@ -159,24 +162,10 @@ export abstract class Actor<
 	 */
 	public constructor(config?: Partial<ActorConfig>) {
 		this.#config = mergeActorConfig(config);
+		this.__router = this.#buildRouter();
 	}
 
-	/**
-	 * Called by Rivet runtime to start a new actor. This class must use `export default` in order to be called automatically.
-	 *
-	 * This should never be used directly.
-	 *
-	 * @param driver - The actor context.
-	 */
-	public static async start(driver: ActorDriver): Promise<void> {
-		setupLogging();
-
-		// biome-ignore lint/complexity/noThisInStatic lint/suspicious/noExplicitAny: Needs to construct self
-		const instance = new (this as any)() as Actor;
-		return await instance.#run(driver);
-	}
-
-	async #run(driver: ActorDriver) {
+	async __start(driver: ActorDriver) {
 		this.#driver = driver;
 
 		//// Create inspector after receiving `ActorDriver`
@@ -197,9 +186,6 @@ export abstract class Actor<
 		//		onRpcCall: (ctx, rpc, args) => this.#executeRpc(ctx, rpc, args),
 		//	},
 		//);
-
-		// Run server immediately since init might take a few ms
-		this.#runServer();
 
 		// Initialize server
 		//
@@ -377,7 +363,7 @@ export abstract class Actor<
 		}
 	}
 
-	#runServer() {
+	#buildRouter() {
 		const app = new Hono();
 
 		app.get("/", (c) => {
@@ -411,17 +397,7 @@ export abstract class Actor<
 			return c.text("Not Found", 404);
 		});
 
-		const port = this.#getServerPort();
-		logger().info("server running", { port });
-		this.#server = Deno.serve(
-			{
-				port,
-				hostname: "0.0.0.0",
-				// Remove "Listening on ..." message
-				onListen() {},
-			},
-			app.fetch,
-		);
+		return app;
 	}
 
 	/**
@@ -624,18 +600,18 @@ export abstract class Actor<
 		return conn;
 	}
 
-	#getServerPort(): number {
-		const portStr = Deno.env.get("PORT_HTTP");
-		if (!portStr) {
-			throw "Missing port";
-		}
-		const port = Number.parseInt(portStr);
-		if (!Number.isFinite(port)) {
-			throw "Invalid port";
-		}
-
-		return port;
-	}
+	//#getServerPort(): number {
+	//	const portStr = Deno.env.get("PORT_HTTP");
+	//	if (!portStr) {
+	//		throw "Missing port";
+	//	}
+	//	const port = Number.parseInt(portStr);
+	//	if (!Number.isFinite(port)) {
+	//		throw "Invalid port";
+	//	}
+	//
+	//	return port;
+	//}
 
 	// MARK: RPC
 	#isValidRpc(rpcName: string): boolean {
@@ -1030,8 +1006,8 @@ export abstract class Actor<
 	 * @see {@link https://rivet.gg/docs/lifecycle|Lifecycle Documentation}
 	 */
 	protected async _shutdown() {
-		// Stop accepting new connections
-		if (this.#server) await this.#server.shutdown();
+		//// Stop accepting new connections
+		//if (this.#server) await this.#server.shutdown();
 
 		// Disconnect existing connections
 		const promises: Promise<unknown>[] = [];
@@ -1070,6 +1046,7 @@ export abstract class Actor<
 			);
 		}
 
-		Deno.exit(0);
+		// TODO:
+		//Deno.exit(0);
 	}
 }

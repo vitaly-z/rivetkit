@@ -8,7 +8,7 @@ export interface LoadOutput {
 }
 
 export interface ActorDriver {
-	load(): Promise<LoadOutput>;
+	//load(): Promise<LoadOutput>;
 
 	// HACK: Clean these up
 	kvPut(key: any, value: any): Promise<void>;
@@ -16,7 +16,7 @@ export interface ActorDriver {
 	kvPutBatch(key: [any, any][]): Promise<void>;
 
 	// TODO:
-	destroy(): Promise<void>;
-	readState(): void;
+	//destroy(): Promise<void>;
+	//readState(): void;
 }
 

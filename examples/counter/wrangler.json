@@ -14,10 +14,16 @@
     "bindings": [
       {
         "class_name": "Actor",
-        "name": "ACTOR"
+        "name": "ACTOR_DO"
       }
     ]
   },
+  "kv_namespaces": [
+	  {
+		  "binding": "ACTOR_KV",
+		  "id": "a70ee566ff9544ebb88ba91cf41a5e97"
+	  }
+  ],
   "observability": {
     "enabled": true
   }

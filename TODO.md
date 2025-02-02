@@ -1,5 +1,20 @@
 # Todo
 
+## Primary
+
+- Expose manager HTTP API
+- Get manager creating actors
+- Expose proxy to actors from manager
+
+## Secondary
+
+- Impl run in backgruond to call waitUntil
+- Add snapshotting to use waitUntil
+- Figure out how to destroy actors
+- Implement _shutdown
+
+---
+
 ## Alternative names
 
 - open-actor
@@ -8,11 +23,6 @@
 - xactor
 - portactor
 
-## Todo
-
-- Expose manager HTTP API
-- Get manager creating actors
-- Expose proxy to actors from manager
 
 ## Problems
 

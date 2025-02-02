@@ -1,24 +1,11 @@
-import { DurableObject } from "cloudflare:workers";
-import Manager from "@rivet-gg/actor-manager";
+import { Manager } from "@rivet-gg/actor-manager";
+import { buildManager } from "./manager";
 
-interface Env {
-	//ACTOR: DurableObjectNamespace<Actor>;
-}
+export { Actor } from "./actor";
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		const manager = new Manager({
-			async queryActor(request) {
-				console.log('query');
-				return {} as any;
-			},
-			// TODO:
-			//actorRouter: {
-			//	connect() {
-			//		// TODO:
-			//	}
-			//}
-		});
+		const manager = new Manager(buildManager(env));
 
 		const router = manager.router();
 
@@ -55,37 +42,3 @@ export default {
 	},
 } satisfies ExportedHandler<Env>;
 
-export class Actor extends DurableObject {
-	constructor(ctx: DurableObjectState, env: Env) {
-		super(ctx, env);
-	}
-
-	async fetch(request: Request): Promise<Response> {
-		// TODO: Expose Actor hono router
-
-		// Creates two ends of a WebSocket connection.
-		const webSocketPair = new WebSocketPair();
-		const [client, server] = Object.values(webSocketPair);
-
-		server.accept();
-
-		//// Upon receiving a message from the client, the server replies with the same message,
-		//// and the total number of connections with the "[Durable Object]: " prefix
-		//server.addEventListener("message", (event: MessageEvent) => {
-		//	server.send(
-		//		`[Durable Object] currentlyConnectedWebSockets: ${this.currentlyConnectedWebSockets}`,
-		//	);
-		//});
-
-		// If the client closes the connection, the runtime will close the connection too.
-		server.addEventListener("close", (cls: CloseEvent) => {
-			//this.currentlyConnectedWebSockets -= 1;
-			server.close(cls.code, "Durable Object is closing WebSocket");
-		});
-
-		return new Response(null, {
-			status: 101,
-			webSocket: client,
-		});
-	}
-}
