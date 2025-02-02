@@ -9,6 +9,10 @@
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250129.0",
+    "@rivet-gg/actor": "workspace:*",
+    "@rivet-gg/actor-client": "workspace:*",
+    "@rivet-gg/actor-manager": "workspace:*",
     "typescript": "^5.5.2",
     "wrangler": "^3.101.0"
   }

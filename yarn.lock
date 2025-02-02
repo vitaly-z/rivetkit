@@ -182,6 +182,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cloudflare/workers-types@npm:^4.20250129.0":
+  version: 4.20250129.0
+  resolution: "@cloudflare/workers-types@npm:4.20250129.0"
+  checksum: 10c0/03cf0e679e9f91f517e75211daefd0d40bdc1bbb848b187fd9c30c9845bd912ca690bbbff92f38c77a33f623ad9b65ec591c9179200053f8012d20f8f351f8d9
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-support@npm:0.8.1":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1"
@@ -671,7 +678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rivet-gg/actor-client@workspace:packages/client":
+"@rivet-gg/actor-client@workspace:*, @rivet-gg/actor-client@workspace:packages/client":
   version: 0.0.0-use.local
   resolution: "@rivet-gg/actor-client@workspace:packages/client"
   dependencies:
@@ -711,7 +718,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rivet-gg/actor-manager@workspace:packages/manager":
+"@rivet-gg/actor-manager@workspace:*, @rivet-gg/actor-manager@workspace:packages/manager":
   version: 0.0.0-use.local
   resolution: "@rivet-gg/actor-manager@workspace:packages/manager"
   dependencies:
@@ -732,7 +739,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rivet-gg/actor@workspace:packages/actor":
+"@rivet-gg/actor@workspace:*, @rivet-gg/actor@workspace:packages/actor":
   version: 0.0.0-use.local
   resolution: "@rivet-gg/actor@workspace:packages/actor"
   dependencies:
@@ -1204,6 +1211,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "counter@workspace:examples/counter"
   dependencies:
+    "@cloudflare/workers-types": "npm:^4.20250129.0"
+    "@rivet-gg/actor": "workspace:*"
+    "@rivet-gg/actor-client": "workspace:*"
+    "@rivet-gg/actor-manager": "workspace:*"
     typescript: "npm:^5.5.2"
     wrangler: "npm:^3.101.0"
   languageName: unknown

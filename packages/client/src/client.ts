@@ -3,7 +3,7 @@ import type { ProtocolFormat } from "@rivet-gg/actor-protocol/ws";
 import type {
 	ActorsRequest,
 	ActorsResponse,
-	RivetConfigResponse,
+	//RivetConfigResponse,
 } from "@rivet-gg/manager-protocol";
 import type { CreateRequest } from "@rivet-gg/manager-protocol/query";
 import * as errors from "./errors";
@@ -125,7 +125,7 @@ export interface Region {
  */
 export class Client {
 	#managerEndpointPromise: Promise<string>;
-	#regionPromise: Promise<Region | undefined>;
+	//#regionPromise: Promise<Region | undefined>;
 	#protocolFormat: ProtocolFormat;
 
 	/**
@@ -149,7 +149,7 @@ export class Client {
 			);
 		}
 
-		this.#regionPromise = this.#fetchRegion();
+		//this.#regionPromise = this.#fetchRegion();
 
 		this.#protocolFormat = opts?.protocolFormat ?? "cbor";
 	}
@@ -219,7 +219,8 @@ export class Client {
 				// Default to the same tags as the request
 				tags: opts?.create?.tags ?? tags,
 				// Default to the chosen region
-				region: opts?.create?.region ?? (await this.#regionPromise)?.id,
+				//region: opts?.create?.region ?? (await this.#regionPromise)?.id,
+				region: opts?.create?.region,
 			};
 		}
 
@@ -273,7 +274,7 @@ export class Client {
 		const create = opts.create;
 
 		// Default to the chosen region
-		if (!create.region) create.region = (await this.#regionPromise)?.id;
+		//if (!create.region) create.region = (await this.#regionPromise)?.id;
 
 		logger().debug("create actor", {
 			parameters: opts?.parameters,
@@ -436,49 +437,49 @@ export class Client {
 	 * @returns {Promise<Region | undefined>} - A promise resolving to the region or undefined.
 	 * @see {@link https://rivet.gg/docs/edge#Fetching-regions-via-API}
 	 */
-	async #fetchRegion(): Promise<Region | undefined> {
-		try {
-			// Fetch the connection info from the manager
-			const { endpoint, project, environment } =
-				await this.#sendManagerRequest<undefined, RivetConfigResponse>(
-					"GET",
-					"/rivet/config",
-				);
-
-			// Fetch the region
-			//
-			// This is fetched from the client instead of the manager so Rivet
-			// can automatically determine the recommended region using an
-			// anycast request made from the client
-			const url = new URL("/regions/resolve", endpoint);
-			if (project) url.searchParams.set("project", project);
-			if (environment) url.searchParams.set("environment", environment);
-			const res = await fetch(url.toString());
-
-			if (!res.ok) {
-				// Add safe fallback in case we can't fetch the region
-				logger().error(
-					"failed to fetch region, defaulting to manager region",
-					{
-						status: res.statusText,
-						body: await res.text(),
-					},
-				);
-				return undefined;
-			}
-
-			const { region }: { region: Region } = await res.json();
-
-			return region;
-		} catch (error) {
-			// Add safe fallback in case we can't fetch the region
-			logger().error(
-				"failed to fetch region, defaulting to manager region",
-				{
-					error,
-				},
-			);
-			return undefined;
-		}
-	}
+	//async #fetchRegion(): Promise<Region | undefined> {
+	//	try {
+	//		// Fetch the connection info from the manager
+	//		const { endpoint, project, environment } =
+	//			await this.#sendManagerRequest<undefined, RivetConfigResponse>(
+	//				"GET",
+	//				"/rivet/config",
+	//			);
+	//
+	//		// Fetch the region
+	//		//
+	//		// This is fetched from the client instead of the manager so Rivet
+	//		// can automatically determine the recommended region using an
+	//		// anycast request made from the client
+	//		const url = new URL("/regions/resolve", endpoint);
+	//		if (project) url.searchParams.set("project", project);
+	//		if (environment) url.searchParams.set("environment", environment);
+	//		const res = await fetch(url.toString());
+	//
+	//		if (!res.ok) {
+	//			// Add safe fallback in case we can't fetch the region
+	//			logger().error(
+	//				"failed to fetch region, defaulting to manager region",
+	//				{
+	//					status: res.statusText,
+	//					body: await res.text(),
+	//				},
+	//			);
+	//			return undefined;
+	//		}
+	//
+	//		const { region }: { region: Region } = await res.json();
+	//
+	//		return region;
+	//	} catch (error) {
+	//		// Add safe fallback in case we can't fetch the region
+	//		logger().error(
+	//			"failed to fetch region, defaulting to manager region",
+	//			{
+	//				error,
+	//			},
+	//		);
+	//		return undefined;
+	//	}
+	//}
 }

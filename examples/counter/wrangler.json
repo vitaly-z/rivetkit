@@ -1,11 +1,11 @@
 {
-  "name": "<TBD>",
+  "name": "counter",
   "main": "src/index.ts",
-  "compatibility_date": "<TBD>",
+  "compatibility_date": "2025-01-29",
   "migrations": [
     {
       "new_classes": [
-        "MyDurableObject"
+        "OpenActor"
       ],
       "tag": "v1"
     }
@@ -13,8 +13,8 @@
   "durable_objects": {
     "bindings": [
       {
-        "class_name": "MyDurableObject",
-        "name": "MY_DURABLE_OBJECT"
+        "class_name": "Actor",
+        "name": "ACTOR"
       }
     ]
   },
