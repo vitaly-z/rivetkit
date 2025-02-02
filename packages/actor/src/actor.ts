@@ -374,6 +374,8 @@ export abstract class Actor<
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
 		app.get("/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
+		app.get("/actors/:actorId/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
+
 		//app.get(
 		//	"/__inspect/connect",
 		//	// cors({
@@ -394,7 +396,7 @@ export abstract class Actor<
 		//);
 
 		app.all("*", (c) => {
-			return c.text(`Not Found`, 404);
+			return c.text(`Not Found (actor) (${c.req.path})`, 404);
 		});
 
 		return app;
@@ -664,12 +666,30 @@ export abstract class Actor<
 			await this.#prepareConnectionFromRequest(c);
 
 		let conn: Connection<this> | undefined;
-		return {
-			onOpen: async (_evt, ws) => {
+
+		// Create connection once we have the WebSocket objects. This isn't available on all drivers (e.g. Cloudflare Workers).
+		//
+		// See https://hono.dev/docs/helpers/websocket#upgradewebsocket
+		const lazyOnOpen = async (ws: WSContext<WebSocket>) => {
+			if (!conn) {
+				logger().debug("socket open");
+
 				// Create connection with validated parameters
 				conn = await this.#createConnection(protocolFormat, connState, ws);
+			}
+		};
+
+		return {
+			onOpen: async (_evt, ws) => {
+				// onOpen doesn't get triggered on all drivers (e.g. Cloudflare Workers)
+
+				await lazyOnOpen(ws);
 			},
-			onMessage: async (evt) => {
+			onMessage: async (evt, ws) => {
+				await lazyOnOpen(ws);
+
+				logger().debug("received message");
+
 				if (!conn) {
 					logger().warn("`conn` does not exist");
 					return;
@@ -693,10 +713,14 @@ export abstract class Actor<
 					},
 				);
 			},
-			onClose: () => {
+			onClose: async (_evt, ws) => {
+				await lazyOnOpen(ws);
+
 				this.#removeConnection(conn);
 			},
-			onError: (error) => {
+			onError: async (error, ws) => {
+				await lazyOnOpen(ws);
+
 				// Actors don't need to know about this, since it's abstracted
 				// away
 				logger().warn("websocket error", { error: `${error}` });
