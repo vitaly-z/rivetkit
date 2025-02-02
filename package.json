@@ -2,7 +2,7 @@
   "private": true,
   "packageManager": "yarn@4.2.2",
   "name": "open-actor",
-  "workspaces": ["website", "packages/*", "examples/*"],
+  "workspaces": ["packages/*", "examples/*"],
   "scripts": {
     "start": "npx turbo dev",
     "dev": "npx turbo dev",

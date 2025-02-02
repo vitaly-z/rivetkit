@@ -21,7 +21,7 @@
   },
   "topbarCtaButton": {
     "type": "github",
-    "url": "https://github.com/OpenGameBackend/OpenGameBackend"
+    "url": "https://github.com/rivet-gg/actor-core"
   },
   "navigation": [
     {
@@ -43,7 +43,7 @@
   ],
   "footerSocials": {
     "x": "https://x.com/rivet_gg",
-    "github": "https://github.com/rivet-gg",
+    "github": "https://github.com/rivet-gg/actor-core",
     "discord": "https://rivet.gg/discord"
   },
   "analytics": {
