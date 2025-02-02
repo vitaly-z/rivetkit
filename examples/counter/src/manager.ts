@@ -19,7 +19,7 @@ export interface ActorState {
 
 function buildActorEndpoint(actorId: string) {
 	// TODO: Remove hardcoded host
-	return `http://localhost:8787/actors/${actorId}/connect`;
+	return `http://localhost:8787/actors/${actorId}`;
 }
 
 export function buildManager(env: Env): ManagerDriver {

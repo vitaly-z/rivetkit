@@ -394,7 +394,7 @@ export abstract class Actor<
 		//);
 
 		app.all("*", (c) => {
-			return c.text("Not Found", 404);
+			return c.text(`Not Found`, 404);
 		});
 
 		return app;

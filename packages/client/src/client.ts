@@ -173,7 +173,7 @@ export class Client {
 		const resJson = await this.#sendManagerRequest<
 			ActorsRequest,
 			ActorsResponse
-		>("POST", "/actors", {
+		>("POST", "/manager/actors", {
 			query: {
 				getForId: {
 					actorId,
@@ -233,7 +233,7 @@ export class Client {
 		const resJson = await this.#sendManagerRequest<
 			ActorsRequest,
 			ActorsResponse
-		>("POST", "/actors", {
+		>("POST", "/manager/actors", {
 			query: {
 				getOrCreateForTags: {
 					tags,
@@ -284,7 +284,7 @@ export class Client {
 		const resJson = await this.#sendManagerRequest<
 			ActorsRequest,
 			ActorsResponse
-		>("POST", "/actors", {
+		>("POST", "/manager/actors", {
 			query: {
 				create,
 			},

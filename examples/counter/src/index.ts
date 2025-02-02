@@ -1,44 +1,34 @@
 import { Manager } from "@rivet-gg/actor-manager";
 import { buildManager } from "./manager";
-
+import { logger } from "./log";
 export { Actor } from "./actor";
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const manager = new Manager(buildManager(env));
 
-		const router = manager.router();
+		const app = manager.router;
 
-		// TODO: Mount router for actor under /actor/xxxx/*
+		app.get("/actors/:actorId/:path{.+}", (c) => {
+			const actorId = c.req.param("actorId");
+			const subpath = "/" + c.req.param("path");
+			logger().debug("forwarding request", { actorId, subpath });
 
-		return await router.fetch(request, env, ctx);
+			let id = env.ACTOR_DO.idFromString(actorId);
+			let stub = env.ACTOR_DO.get(id);
 
-		//env.ACTOR.idFromName()
+			// Modify the path tor emove the prefix
+			const url = new URL(request.url);
+			url.pathname = subpath;
+			const actorRequest = new Request(url.toString(), request);
 
-		// TODO: Implement manager API
-		//if (request.url.endsWith("/websocket")) {
-		//  // Expect to receive a WebSocket Upgrade request.
-		//  // If there is one, accept the request and return a WebSocket Response.
-		//  const upgradeHeader = request.headers.get('Upgrade');
-		//  if (!upgradeHeader || upgradeHeader !== 'websocket') {
-		//    return new Response('Durable Object expected Upgrade: websocket', { status: 426 });
-		//  }
-		//
-		//  // This example will refer to the same Durable Object,
-		//  // since the name "foo" is hardcoded.
-		//  let id = env.WEBSOCKET_SERVER.idFromName("foo");
-		//  let stub = env.WEBSOCKET_SERVER.get(id);
-		//
-		//  return stub.fetch(request);
-		//}
-		//
-		//return new Response(null, {
-		//  status: 400,
-		//  statusText: 'Bad Request',
-		//  headers: {
-		//    'Content-Type': 'text/plain',
-		//  },
-		//});
+			return stub.fetch(actorRequest);
+		});
+
+		app.all("*", (c) => {
+			return c.text("Not Found", 404);
+		});
+
+		return await app.fetch(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
-

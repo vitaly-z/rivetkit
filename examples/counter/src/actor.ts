@@ -49,8 +49,6 @@ export class Actor extends DurableObject {
 	}
 
 	async #loadActor(): Promise<CoreActor> {
-		if (this.#actor) throw new Error("Actor already loaded");
-
 		// Wait for initi
 		if (!this.#initialized) {
 			// Wait for init

@@ -11,8 +11,12 @@ export class Manager {
 
 	#driver: ManagerDriver;
 
+	router: Hono;
+
 	public constructor(driver: ManagerDriver) {
 		this.#driver = driver;
+
+		this.router = this.#buildRouter();
 	}
 
 	//constructor(private readonly ctx: ActorContext) {
@@ -42,10 +46,8 @@ export class Manager {
 	//	await manager.#run();
 	//}
 
-	router(): Hono {
-		const app = new Hono();
-
-		app.use("/*", cors());
+	#buildRouter(): Hono {
+		const managerApp = new Hono();
 
 		//app.get("/rivet/config", (c: HonoContext) => {
 		//	return c.json({
@@ -56,16 +58,12 @@ export class Manager {
 		//	} satisfies RivetConfigResponse);
 		//});
 
-		app.post("/actors", async (c: HonoContext) => {
+		managerApp.post("/actors", async (c: HonoContext) => {
 			const body = ActorsRequestSchema.parse(await c.req.json());
 			const response = await this.#driver.queryActor(body);
 			return c.json(response);
 		});
 
-		app.all("*", (c) => {
-			return c.text("Not Found", 404);
-		});
-
-		return app;
+		return new Hono().route("/manager", managerApp);
 	}
 }

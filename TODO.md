@@ -5,13 +5,21 @@
 - Expose manager HTTP API
 - Get manager creating actors
 - Expose proxy to actors from manager
+- Handle actor ID not found (respond from the actor itself)
+    - Or will this error when getting the stub?
 
 ## Secondary
 
-- Impl run in backgruond to call waitUntil
+- Impl run in background to call waitUntil
 - Add snapshotting to use waitUntil
 - Figure out how to destroy actors
 - Implement _shutdown
+
+## Rivet compat
+
+- Add 404 & cors to router
+- Update paths
+- Add back shutdown
 
 ---
 
