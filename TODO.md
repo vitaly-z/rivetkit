@@ -37,6 +37,7 @@
 - Add snapshotting to use waitUntil
 - Figure out how to destroy actors
 - Implement _shutdown
+- Inspect bundle size
 
 ## Platforms
 
@@ -75,7 +76,6 @@ Or copy the Resend API https://resend.com/docs/introduction
 
 - Web containers
 - Service worker: https://hono.dev/docs/getting-started/service-worker
-
 
 ## Similar libraries
 

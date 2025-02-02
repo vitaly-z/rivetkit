@@ -22,20 +22,20 @@
       }
     },
     "./client": {
-      "deno": "./src/unstable-react.ts",
+      "deno": "./src/client.ts",
       "import": {
-        "types": "./dist/unstable-react.d.ts",
-        "default": "./dist/unstable-react.js"
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
       },
       "require": {
-        "types": "./dist/unstable-react.d.cts",
-        "default": "./dist/unstable-react.cjs"
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
       }
     }
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/driver.ts src/mod.ts src/unstable-react.ts",
+    "build": "tsup src/mod.ts src/client.ts",
     "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
