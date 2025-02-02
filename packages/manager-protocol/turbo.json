@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "dependsOn": ["@rivet-gg/actor-common#build"]
+      "dependsOn": ["@actor-core/common#build"]
     }
   }
 }

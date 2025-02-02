@@ -1,4 +1,4 @@
-import { Manager } from "@rivet-gg/actor-manager";
+import { Manager } from "@actor-core/manager-runtime";
 import { logger } from "./log";
 import { buildManager } from "./manager";
 export { Actor } from "./actor";

@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
-import type { Actor as CoreActor } from "@rivet-gg/actor";
-import type { ActorTags } from "@rivet-gg/actor-common/utils";
-import type { ActorDriver } from "@rivet-gg/actor-core";
+import type { Actor as CoreActor } from "@actor-core/actor-runtime";
+import type { ActorTags } from "@actor-core/common/utils";
+import type { ActorDriver } from "@actor-core/actor-runtime/driver";
 import Counter from "./counter";
 import { logger } from "./log";
 

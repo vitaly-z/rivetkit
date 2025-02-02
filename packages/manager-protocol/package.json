@@ -2,7 +2,12 @@
   "name": "@actor-core/manager-protocol",
   "private": true,
   "version": "25.1.0-rc.1",
-  "files": ["dist", "src", "deno.json", "package.json"],
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -38,7 +43,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@rivet-gg/actor-common": "workspace:*",
+    "@actor-core/common": "workspace:*",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3"
   }

@@ -1,8 +1,13 @@
 {
-  "name": "@actor-core/runtime",
+  "name": "@actor-core/actor-runtime",
   "version": "25.1.0-rc.1",
   "license": "Apache-2.0",
-  "files": ["dist", "src", "deno.json", "package.json"],
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -27,17 +32,6 @@
         "default": "./dist/driver.cjs"
       }
     },
-    "./kv": {
-      "deno": "./src/mod.ts",
-      "import": {
-        "types": "./dist/kv.d.ts",
-        "default": "./dist/kv.js"
-      },
-      "require": {
-        "types": "./dist/kv.d.cts",
-        "default": "./dist/kv.cjs"
-      }
-    },
     "./unstable-react": {
       "deno": "./src/unstable-react.ts",
       "import": {
@@ -52,7 +46,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/kv.ts src/driver.ts src/mod.ts src/unstable-react.ts",
+    "build": "tsup src/driver.ts src/mod.ts src/unstable-react.ts",
     "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
@@ -66,8 +60,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@rivet-gg/actor-common": "workspace:*",
-    "@rivet-gg/actor-protocol": "workspace:*",
+    "@actor-core/actor-protocol": "workspace:*",
+    "@actor-core/common": "workspace:*",
     "@types/deno": "^2.0.0",
     "@types/ws": "^8",
     "tsup": "^8.3.6",
@@ -75,7 +69,9 @@
   },
   "deno": {
     "compilerOptions": {
-      "lib": ["dom"],
+      "lib": [
+        "dom"
+      ],
       "jsx": "react-jsx",
       "jsxImportSource": "react",
       "jsxImportSourceTypes": "@types/react@^19"

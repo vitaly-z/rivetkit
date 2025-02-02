@@ -11,7 +11,7 @@ Rivet Actors have built-in RPC, state, and events — the easiest way to build m
 ## Example
 
 ```typescript
-import { Client } from "@rivet-gg/actor-client";
+import { Client } from "@actor-core/client";
 import type Counter from "./counter.ts";
 
 const client = new Client(/* CONNECTION ADDRESS */);
@@ -33,7 +33,7 @@ See [setup guide](https://rivet.gg/docs/setup) for how to access `/* CONNECTION 
 
 ## Related Packages
 
-- [Actor SDK (@rivet-gg/actor)](https://jsr.io/@rivet-gg/actor)
+- [Actor SDK (@actor-core/actor-runtime)](https://jsr.io/@actor-core/actor-runtime)
 
 ## Community & Support
 

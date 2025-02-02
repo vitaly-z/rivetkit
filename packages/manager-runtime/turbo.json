@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "dependsOn": ["@rivet-gg/manager-protocol#build"]
+      "dependsOn": ["@actor-core/manager-protocol#build"]
     }
   }
 }

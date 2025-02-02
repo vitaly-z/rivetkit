@@ -1,13 +1,13 @@
-import type { Logger } from "@rivet-gg/actor-common/log";
-import { listObjectMethods } from "@rivet-gg/actor-common/reflect";
-import { isJsonSerializable } from "@rivet-gg/actor-common/utils";
-import type { ActorDriver } from "@rivet-gg/actor-core";
-import * as protoHttpRpc from "@rivet-gg/actor-protocol/http/rpc";
+import type { Logger } from "@actor-core/common/log";
+import { listObjectMethods } from "@actor-core/common/reflect";
+import { isJsonSerializable } from "@actor-core/common/utils";
+import type { ActorDriver } from "./driver";
+import * as protoHttpRpc from "@actor-core/actor-protocol/http/rpc";
 import {
 	type ProtocolFormat,
 	ProtocolFormatSchema,
-} from "@rivet-gg/actor-protocol/ws";
-import type * as wsToClient from "@rivet-gg/actor-protocol/ws/to_client";
+} from "@actor-core/actor-protocol/ws";
+import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
 import { Hono, type Context as HonoContext } from "hono";
 //import { upgradeWebSocket } from "hono/deno";
 import { upgradeWebSocket } from "hono/cloudflare-workers";

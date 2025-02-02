@@ -1,8 +1,8 @@
-import { assertUnreachable } from "@rivet-gg/actor-common/utils";
-import type { ActorTags } from "@rivet-gg/actor-common/utils";
-import type { ManagerDriver } from "@rivet-gg/actor-manager";
-import type { ActorsRequest, ActorsResponse } from "@rivet-gg/manager-protocol";
-import type { CreateRequest } from "@rivet-gg/manager-protocol/query";
+import { assertUnreachable } from "@actor-core/common/utils";
+import type { ActorTags } from "@actor-core/common/utils";
+import type { ManagerDriver } from "@actor-core/manager-runtime";
+import type { ActorsRequest, ActorsResponse } from "@actor-core/manager-protocol";
+import type { CreateRequest } from "@actor-core/manager-protocol/query";
 import { logger } from "./log";
 
 export interface ActorState {

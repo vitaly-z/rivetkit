@@ -1,4 +1,4 @@
-import { getLogger } from "@rivet-gg/actor-common/log";
+import { getLogger } from "@actor-core/common/log";
 
 /** Logger for this library. */
 export const RUNTIME_LOGGER_NAME = "actor-runtime";

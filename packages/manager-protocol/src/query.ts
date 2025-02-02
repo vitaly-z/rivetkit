@@ -1,4 +1,4 @@
-import type { ActorTags } from "@rivet-gg/actor-common/utils";
+import type { ActorTags } from "@actor-core/common/utils";
 import { z } from "zod";
 
 export const CreateRequestSchema = z.object({

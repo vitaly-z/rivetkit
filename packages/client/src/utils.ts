@@ -1,4 +1,4 @@
-import { assertUnreachable } from "@rivet-gg/actor-common/utils";
+import { assertUnreachable } from "@actor-core/common/utils";
 
 export type WebSocketMessage = string | Blob | ArrayBuffer | Uint8Array;
 

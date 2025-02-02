@@ -1,5 +1,5 @@
 // @ts-types="../../manager-protocol/dist/mod.d.ts"
-import { ActorsRequestSchema } from "@rivet-gg/manager-protocol";
+import { ActorsRequestSchema } from "@actor-core/manager-protocol";
 import { Hono, type Context as HonoContext } from "hono";
 import type { ManagerDriver } from "./driver";
 

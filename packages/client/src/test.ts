@@ -1,5 +1,5 @@
 import { exec as execCallback } from "node:child_process";
-import { setupLogging } from "@rivet-gg/actor-common/log";
+import { setupLogging } from "@actor-core/common/log";
 import type { ClientOptions } from "./client";
 import { InternalError } from "./errors";
 import { Client } from "./mod.ts";

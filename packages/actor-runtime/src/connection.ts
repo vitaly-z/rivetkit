@@ -1,10 +1,10 @@
-import type { ProtocolFormat } from "@rivet-gg/actor-protocol/ws";
-import type * as wsToClient from "@rivet-gg/actor-protocol/ws/to_client";
+import type { ProtocolFormat } from "@actor-core/actor-protocol/ws";
+import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
 import * as cbor from "cbor-x";
 import type { WSContext } from "hono/ws";
 import type { AnyActor, ExtractActorConnState } from "./actor";
 import * as errors from "./errors";
-import { INSPECT_SYMBOL } from "./inspect";
+//import { INSPECT_SYMBOL } from "./inspect";
 import { logger } from "./log";
 import { assertUnreachable } from "./utils";
 
@@ -210,14 +210,14 @@ export class Connection<A extends AnyActor> {
 	 * Inspects the connection for debugging purposes.
 	 * @internal
 	 */
-	[INSPECT_SYMBOL]() {
-		return {
-			id: this.id.toString(),
-			subscriptions: [...this.subscriptions.values()],
-			state: {
-				enabled: this.#stateEnabled,
-				native: this.#state,
-			},
-		};
-	}
+	//[INSPECT_SYMBOL]() {
+	//	return {
+	//		id: this.id.toString(),
+	//		subscriptions: [...this.subscriptions.values()],
+	//		state: {
+	//			enabled: this.#stateEnabled,
+	//			native: this.#state,
+	//		},
+	//	};
+	//}
 }

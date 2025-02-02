@@ -4,9 +4,9 @@
   "tasks": {
     "build": {
       "dependsOn": [
-        "@rivet-gg/actor-common#build",
-        "@rivet-gg/actor-protocol#build",
-        "@rivet-gg/manager-protocol#build"
+        "@actor-core/common#build",
+        "@actor-core/actor-protocol#build",
+        "@actor-core/manager-protocol#build"
       ]
     }
   }

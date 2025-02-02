@@ -25,8 +25,8 @@ See the [setup guide](https://rivet.gg/docs/setup) for more information.
 ## Example
 
 ```typescript
-import { Actor } from "@rivet-gg/actor";
-import type { Rpc } from "@rivet-gg/actor";
+import { Actor } from "@actor-core/actor-runtime";
+import type { Rpc } from "@actor-core/actor-runtime";
 
 // Durable state for the counter (https://rivet.gg/docs/state)
 interface State {
@@ -55,7 +55,7 @@ export default class Counter extends Actor<State> {
 
 ## Related Packages
 
-- [Actor Client SDK (@rivet-gg/actor-client)](https://jsr.io/@rivet-gg/actor-client)
+- [Actor Client SDK (@actor-core/client)](https://jsr.io/@actor-core/client)
 
 ## Community & Support
 

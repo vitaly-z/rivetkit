@@ -1,11 +1,11 @@
-import type { ActorTags } from "@rivet-gg/actor-common/utils";
-import type { ProtocolFormat } from "@rivet-gg/actor-protocol/ws";
+import type { ActorTags } from "@actor-core/common/utils";
+import type { ProtocolFormat } from "@actor-core/actor-protocol/ws";
 import type {
 	ActorsRequest,
 	ActorsResponse,
 	//RivetConfigResponse,
-} from "@rivet-gg/manager-protocol";
-import type { CreateRequest } from "@rivet-gg/manager-protocol/query";
+} from "@actor-core/manager-protocol";
+import type { CreateRequest } from "@actor-core/manager-protocol/query";
 import * as errors from "./errors";
 import { ActorHandleRaw } from "./handle";
 import { logger } from "./log";

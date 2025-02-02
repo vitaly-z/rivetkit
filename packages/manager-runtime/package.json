@@ -2,7 +2,12 @@
   "name": "@actor-core/manager-runtime",
   "version": "25.1.0-rc.1",
   "license": "Apache-2.0",
-  "files": ["dist", "src", "deno.json", "package.json"],
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -24,8 +29,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@rivet-gg/actor-common": "workspace:*",
-    "@rivet-gg/manager-protocol": "workspace:*",
+    "@actor-core/common": "workspace:*",
+    "@actor-core/manager-protocol": "workspace:*",
     "hono": "^4.6.17",
     "ts-dedent": "^2.2.0"
   }

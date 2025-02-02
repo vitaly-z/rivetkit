@@ -1,19 +1,19 @@
 // @ts-types="../../common/dist/network.d.ts"
-import { PORT_NAME } from "@rivet-gg/actor-common/network";
+import { PORT_NAME } from "@actor-core/common/network";
 // @ts-types="../../common/dist/utils.d.ts"
-import { assertUnreachable } from "@rivet-gg/actor-common/utils";
+import { assertUnreachable } from "@actor-core/common/utils";
 // @ts-types="../../common/dist/utils.d.ts"
 import type {
 	ActorTags,
 	BuildTags,
 	RivetEnvironment,
-} from "@rivet-gg/actor-common/utils";
+} from "@actor-core/common/utils";
 import type { Rivet, RivetClient } from "@rivet-gg/api";
 // @ts-types="../../manager-protocol/dist/query.d.ts"
 import type {
 	ActorQuery,
 	CreateRequest,
-} from "@rivet-gg/manager-protocol/query";
+} from "@actor-core/manager-protocol/query";
 import { logger } from "./log";
 
 export async function queryActor(

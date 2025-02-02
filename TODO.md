@@ -16,11 +16,13 @@
 
 - Highlight use cases
 - OG image for GitHub
+- tsdoc
+- Limitations chart
 
 ## Distribution
 
-- Marketplace for vercel
-- Marketplace for Supabase
+- Vercel partners
+- Supabase partners
 
 ---
 

@@ -1,5 +1,5 @@
-import { Client } from "@rivet-gg/actor-client";
-import { setupLogging } from "@rivet-gg/actor-common/log";
+import { Client } from "@actor-core/client";
+import { setupLogging } from "@actor-core/common/log";
 import type Counter from "../src/counter.ts";
 
 async function main() {

@@ -1,5 +1,5 @@
-import type * as wsToClient from "@rivet-gg/actor-protocol/ws/to_client";
-import * as wsToServer from "@rivet-gg/actor-protocol/ws/to_server";
+import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
+import * as wsToServer from "@actor-core/actor-protocol/ws/to_server";
 import type { WSMessageReceive } from "hono/ws";
 import type { AnyActor } from "./actor";
 import type { Connection, IncomingWebSocketMessage } from "./connection";
