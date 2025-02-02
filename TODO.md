@@ -11,6 +11,8 @@
 - Implement Rivet compat
 - Write Cloudflare guide
 - Write Rivet guide
+- Add README for NPM
+- Publish to JSR
 
 ## Website
 
@@ -18,6 +20,9 @@
 - OG image for GitHub
 - tsdoc
 - Limitations chart
+- Add react docs
+- Copy over concepts
+- Publish to JSR?
 
 ## Distribution
 

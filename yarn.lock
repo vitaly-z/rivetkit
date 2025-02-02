@@ -91,6 +91,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@actor-core/workspace@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@actor-core/workspace@workspace:."
+  dependencies:
+    "@biomejs/biome": "npm:^1.9.4"
+    lefthook: "npm:^1.6.12"
+    turbo: "npm:^2.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@biomejs/biome@npm:^1.9.4":
   version: 1.9.4
   resolution: "@biomejs/biome@npm:1.9.4"
@@ -979,13 +989,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"actor-core@workspace:.":
+"actor-core@workspace:packages/actor-core":
   version: 0.0.0-use.local
-  resolution: "actor-core@workspace:."
+  resolution: "actor-core@workspace:packages/actor-core"
   dependencies:
-    "@biomejs/biome": "npm:^1.9.4"
-    lefthook: "npm:^1.6.12"
-    turbo: "npm:^2.0.1"
+    "@actor-core/actor-runtime": "workspace:*"
+    "@actor-core/client": "workspace:*"
+    tsup: "npm:^8.3.6"
+    typescript: "npm:^5.7.3"
   languageName: unknown
   linkType: soft
 
