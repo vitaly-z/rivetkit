@@ -18,7 +18,10 @@ export function createHandler(config: Config): Handler {
 
 	const handler = {
 		async fetch(request, env: Env, ctx: ExecutionContext): Promise<Response> {
-			const manager = new Manager(buildManager(env));
+			const url = new URL(request.url);
+			const origin = url.origin;
+
+			const manager = new Manager(buildManager(env, origin));
 
 			const app = manager.router;
 

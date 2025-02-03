@@ -14,12 +14,11 @@ export interface ActorState {
 	destroyedAt?: number;
 }
 
-function buildActorEndpoint(actorId: string) {
-	// TODO: Remove hardcoded host
-	return `http://localhost:8787/actors/${actorId}`;
+function buildActorEndpoint(origin: string, actorId: string) {
+	return `${origin}/actors/${actorId}`;
 }
 
-export function buildManager(env: Env): ManagerDriver {
+export function buildManager(env: Env, origin: string): ManagerDriver {
 	return {
 		async queryActor({ query }: ActorsRequest): Promise<ActorsResponse> {
 			logger().debug("query", { query });
@@ -39,13 +38,13 @@ export function buildManager(env: Env): ManagerDriver {
 				//
 				//return res.actor;
 
-				return { endpoint: buildActorEndpoint(query.getForId.actorId) };
+				return { endpoint: buildActorEndpoint(origin, query.getForId.actorId) };
 			}
 			if ("getOrCreateForTags" in query) {
 				const tags = query.getOrCreateForTags.tags;
 				if (!tags) throw new Error("Must define tags in getOrCreateForTags");
 
-				const existingActor = await getWithTags(env, tags as ActorTags);
+				const existingActor = await getWithTags(env, origin, tags as ActorTags);
 				if (existingActor) {
 					// Actor exists
 					return existingActor;
@@ -53,13 +52,17 @@ export function buildManager(env: Env): ManagerDriver {
 
 				if (query.getOrCreateForTags.create) {
 					// Create if needed
-					return await createActor(env, query.getOrCreateForTags.create);
+					return await createActor(
+						env,
+						origin,
+						query.getOrCreateForTags.create,
+					);
 				}
 				// Creation disabled
 				throw new Error("Actor not found with tags or is private.");
 			}
 			if ("create" in query) {
-				return await createActor(env, query.create);
+				return await createActor(env, origin, query.create);
 			}
 			assertUnreachable(query);
 		},
@@ -68,6 +71,7 @@ export function buildManager(env: Env): ManagerDriver {
 
 async function getWithTags(
 	env: Env,
+	origin: string,
 	tags: ActorTags,
 ): Promise<ActorsResponse | undefined> {
 	// TODO: use an inverse tree for correct tag looups
@@ -76,7 +80,7 @@ async function getWithTags(
 		`actor:tags:${JSON.stringify(tags)}:id`,
 	);
 	if (actorId) {
-		return { endpoint: buildActorEndpoint(actorId) };
+		return { endpoint: buildActorEndpoint(origin, actorId) };
 	}
 	return undefined;
 
@@ -108,6 +112,7 @@ async function getWithTags(
 
 async function createActor(
 	env: Env,
+	origin: string,
 	createRequest: CreateRequest,
 ): Promise<ActorsResponse> {
 	logger().info("creating actor", { ...createRequest });
@@ -128,5 +133,5 @@ async function createActor(
 		actorId.toString(),
 	);
 
-	return { endpoint: buildActorEndpoint(actorId.toString()) };
+	return { endpoint: buildActorEndpoint(origin, actorId.toString()) };
 }
