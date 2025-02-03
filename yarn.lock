@@ -59,6 +59,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@actor-core/cloudflare-workers@workspace:*, @actor-core/cloudflare-workers@workspace:packages/drivers/cloudflare-workers":
+  version: 0.0.0-use.local
+  resolution: "@actor-core/cloudflare-workers@workspace:packages/drivers/cloudflare-workers"
+  dependencies:
+    "@cloudflare/workers-types": "npm:^4.20250129.0"
+    tsup: "npm:^8.3.6"
+    typescript: "npm:^5.5.2"
+    wrangler: "npm:^3.101.0"
+  languageName: unknown
+  linkType: soft
+
 "@actor-core/common@workspace:*, @actor-core/common@workspace:packages/common":
   version: 0.0.0-use.local
   resolution: "@actor-core/common@workspace:packages/common"
@@ -80,7 +91,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@actor-core/manager-runtime@workspace:*, @actor-core/manager-runtime@workspace:packages/manager-runtime":
+"@actor-core/manager-runtime@workspace:packages/manager-runtime":
   version: 0.0.0-use.local
   resolution: "@actor-core/manager-runtime@workspace:packages/manager-runtime"
   dependencies:
@@ -989,7 +1000,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"actor-core@workspace:packages/actor-core":
+"actor-core@workspace:*, actor-core@workspace:packages/actor-core":
   version: 0.0.0-use.local
   resolution: "actor-core@workspace:packages/actor-core"
   dependencies:
@@ -1221,11 +1232,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "counter@workspace:examples/counter"
   dependencies:
-    "@actor-core/actor-runtime": "workspace:*"
-    "@actor-core/client": "workspace:*"
-    "@actor-core/common": "workspace:*"
-    "@actor-core/manager-runtime": "workspace:*"
+    "@actor-core/cloudflare-workers": "workspace:*"
     "@cloudflare/workers-types": "npm:^4.20250129.0"
+    actor-core: "workspace:*"
     typescript: "npm:^5.5.2"
     wrangler: "npm:^3.101.0"
   languageName: unknown

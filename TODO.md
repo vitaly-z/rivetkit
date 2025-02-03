@@ -2,17 +2,25 @@
 
 ## Primary
 
-- Implement basic tests based on multiple drivers
+- Implement CF driver
+- Implement basic RPC & events test with multiple drivers
 - Finish CF
-    - Implement framework as drivers
+    - Remove path remapping
     - Handle actor ID not found
     - Handle actor tags
     - Handle actor shutdown
+    - Remove hardcoded localhost
+    - Search for TODO
 - Implement Rivet compat
 - Write Cloudflare guide
 - Write Rivet guide
+- Validate KV is in a backwards-compatible format
+
+---
+
 - Add README for NPM
 - Publish to JSR
+- Release please
 
 ## Website
 

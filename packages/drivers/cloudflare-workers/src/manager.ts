@@ -1,9 +1,13 @@
 import { assertUnreachable } from "@actor-core/common/utils";
 import type { ActorTags } from "@actor-core/common/utils";
 import type { ManagerDriver } from "@actor-core/manager-runtime";
-import type { ActorsRequest, ActorsResponse } from "@actor-core/manager-protocol";
+import type {
+	ActorsRequest,
+	ActorsResponse,
+} from "@actor-core/manager-protocol";
 import type { CreateRequest } from "@actor-core/manager-protocol/query";
 import { logger } from "./log";
+import type { Env } from "./env";
 
 export interface ActorState {
 	tags: ActorTags;

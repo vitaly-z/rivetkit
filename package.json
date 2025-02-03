@@ -4,6 +4,7 @@
   "name": "@actor-core/workspace",
   "workspaces": [
     "packages/*",
+    "packages/drivers/*",
     "examples/*"
   ],
   "scripts": {
