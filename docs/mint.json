@@ -23,15 +23,21 @@
     "type": "github",
     "url": "https://github.com/rivet-gg/actor-core"
   },
+  "topbarLinks": [
+    {
+      "name": "Discussions",
+      "url": "https://github.com/rivet-gg/actor-core/discussions"
+    }
+  ],
   "navigation": [
     {
       "group": "Get Started",
       "pages": [
         "introduction",
-        "getting-started/cloudflare-workers",
-        "getting-started/rivet",
-        "getting-started/supabase",
-        "getting-started/vercel"
+        "platforms/cloudflare-workers",
+        "platforms/rivet",
+        "platforms/supabase",
+        "platforms/vercel"
       ]
     },
     {

@@ -59,9 +59,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@actor-core/cloudflare-workers@workspace:*, @actor-core/cloudflare-workers@workspace:packages/drivers/cloudflare-workers":
+"@actor-core/cloudflare-workers@workspace:*, @actor-core/cloudflare-workers@workspace:packages/platforms/cloudflare-workers":
   version: 0.0.0-use.local
-  resolution: "@actor-core/cloudflare-workers@workspace:packages/drivers/cloudflare-workers"
+  resolution: "@actor-core/cloudflare-workers@workspace:packages/platforms/cloudflare-workers"
   dependencies:
     "@cloudflare/workers-types": "npm:^4.20250129.0"
     tsup: "npm:^8.3.6"
@@ -107,6 +107,7 @@ __metadata:
   resolution: "@actor-core/workspace@workspace:."
   dependencies:
     "@biomejs/biome": "npm:^1.9.4"
+    dedent: "npm:^1.5.3"
     lefthook: "npm:^1.6.12"
     turbo: "npm:^2.0.1"
   languageName: unknown
@@ -1228,15 +1229,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"counter@workspace:examples/counter":
+"counter-cloudflare-workers@workspace:examples/counter/platforms/cloudflare-workers":
   version: 0.0.0-use.local
-  resolution: "counter@workspace:examples/counter"
+  resolution: "counter-cloudflare-workers@workspace:examples/counter/platforms/cloudflare-workers"
   dependencies:
     "@actor-core/cloudflare-workers": "workspace:*"
     "@cloudflare/workers-types": "npm:^4.20250129.0"
     actor-core: "workspace:*"
     typescript: "npm:^5.5.2"
     wrangler: "npm:^3.101.0"
+  languageName: unknown
+  linkType: soft
+
+"counter-rivet@workspace:examples/counter/platforms/rivet":
+  version: 0.0.0-use.local
+  resolution: "counter-rivet@workspace:examples/counter/platforms/rivet"
+  dependencies:
+    actor-core: "workspace:*"
+    typescript: "npm:^5.5.2"
+  languageName: unknown
+  linkType: soft
+
+"counter@workspace:examples/counter":
+  version: 0.0.0-use.local
+  resolution: "counter@workspace:examples/counter"
+  dependencies:
+    actor-core: "workspace:*"
+    typescript: "npm:^5.5.2"
   languageName: unknown
   linkType: soft
 
@@ -1274,6 +1293,18 @@ __metadata:
     supports-color:
       optional: true
   checksum: 10c0/db94f1a182bf886f57b4755f85b3a74c39b5114b9377b7ab375dc2cfa3454f09490cc6c30f829df3fc8042bc8b8995f6567ce5cd96f3bc3688bd24027197d9de
+  languageName: node
+  linkType: hard
+
+"dedent@npm:^1.5.3":
+  version: 1.5.3
+  resolution: "dedent@npm:1.5.3"
+  peerDependencies:
+    babel-plugin-macros: ^3.1.0
+  peerDependenciesMeta:
+    babel-plugin-macros:
+      optional: true
+  checksum: 10c0/d94bde6e6f780be4da4fd760288fcf755ec368872f4ac5218197200d86430aeb8d90a003a840bff1c20221188e3f23adced0119cb811c6873c70d0ac66d12832
   languageName: node
   linkType: hard
 

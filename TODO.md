@@ -2,8 +2,18 @@
 
 ## Primary
 
-- Implement CF driver
+- Write script to template out projects for different platforms
 - Implement basic RPC & events test with multiple drivers
+- Implement Rivet compat
+    - Figure out how to inject inspector in to Rivet Actor (maybe add middleware that's opt-in?)
+    - Figure out how to use Rivet-native types? (is it a Rivet actor subclass?)
+- Write Cloudflare guide
+- Write Rivet guide
+- Validate KV is in a backwards-compatible format
+- Visit cleaner actor type
+
+### Do this later:
+
 - Finish CF
     - Remove path remapping
     - Handle actor ID not found
@@ -11,10 +21,7 @@
     - Handle actor shutdown
     - Remove hardcoded localhost
     - Search for TODO
-- Implement Rivet compat
-- Write Cloudflare guide
-- Write Rivet guide
-- Validate KV is in a backwards-compatible format
+- Add create-actor package
 
 ---
 
@@ -36,6 +43,7 @@
 
 - Vercel partners
 - Supabase partners
+- Ask for help on simpler Cloudflare adapter
 
 ---
 
