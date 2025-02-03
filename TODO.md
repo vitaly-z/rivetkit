@@ -2,11 +2,20 @@
 
 ## Primary
 
-- Write script to template out projects for different platforms
-- Implement basic RPC & events test with multiple drivers
+- Figure out how to expose ctx
+    - This needs to be an actor type and part of the driver
+- Revisit actor map concept
 - Implement Rivet compat
-    - Figure out how to inject inspector in to Rivet Actor (maybe add middleware that's opt-in?)
-    - Figure out how to use Rivet-native types? (is it a Rivet actor subclass?)
+    - Impl actor scaffold
+    - Impl manager
+    - Get this working e2e
+    - Impl remaining TODO that was commented out
+    - Impl actor inspector & hooks
+    - Figure out how to get Rivet using Rivet-native types
+    - Re-implement /rivet/config & region (abstract this away to a broader recommended region)
+    - Fix thrown error for Rivet request to encode message correctly
+- Finish CF
+    - Remove hardcoded localhost
 - Write Cloudflare guide
 - Write Rivet guide
 - Validate KV is in a backwards-compatible format
@@ -19,7 +28,6 @@
     - Handle actor ID not found
     - Handle actor tags
     - Handle actor shutdown
-    - Remove hardcoded localhost
     - Search for TODO
 - Add create-actor package
 
@@ -28,6 +36,13 @@
 - Add README for NPM
 - Publish to JSR
 - Release please
+
+## Internals to document
+
+- High level architecutre of manager vs actor
+- Difference between Rivet & Cloudflare & Vercel/Postgres architectures
+- Lifecycle for each (how it runs, etc)
+- Limitations of each platform
 
 ## Website
 
@@ -103,4 +118,111 @@ Or copy the Resend API https://resend.com/docs/introduction
 ## Later
 
 - StackBlitz demo
+
+---
+
+## Extension problem
+
+Key goals:
+
+- Retain inspector endpoint as part of rivet
+- Make actor class a standard thing that doesn't take any extra work to deploy to Rivet
+- Be able to expose Rivet APIs directly in Rivet actor class (it can be a subclass ig but still conform)
+
+Secondary goals:
+
+- Keep everything within the library itself
+
+Options:
+
+- Notify inspector events in the driver
+- Add a extra generic parameter for the extra cloud-specific data
+
+Approach:
+
+- @rivet-gg/actor is a subclass of @actor-core/actor, but they're both treated the same way
+- 
+
+Future requirements:
+
+- Connectors
+
+Other ideas:
+
+- Dynamically import global scope on the start to inject global shit (but this is not composable)
+- Add a global thing like ts-node that will configure the global Actor.start method or something
+
+Future thoughts:
+
+- Standardize the SQLite & KV API to be able to work across platforms (so we don't need a Rivet-specific API)
+- Expose
+
+```
+// import { Actor } from "@rivet-gg/actor";
+import { Actor } from "actor-core";
+
+class Counter extends Actor {
+
+}
+
+
+export {
+    start(ctx: ActorContext) {
+        const actor = new Counter();
+        const router = actor.__router;
+        actor.__start({
+            onRpc() {
+                // do something with inspector
+            },
+            onShutdown() {
+                Deno.exit()
+            }
+        })
+        router.get("__inspector/connect", ...etc...);
+        router.any("*", /* not found */);
+
+        const server = Deno.serve(router.fetch);
+        await server.finished;
+    }
+}
+```
+
+Ideal API:
+
+
+```
+// Magic injection (this might be part of the CLI build pipeline instead of Rivet)
+// This gets auto-installed or something
+import { __inject } from "@actor-core/rivet";
+import { Actor } from "actor-core";
+__inject(Actor);  // Implements Actor.start with the code above
+
+// User code
+import { Actor } from "actor-core";
+
+export default class Counter extends Actor {
+    
+}
+```
+
+---
+
+What if we switched up the config: if we had a global config.ts instead of building individual bundles
+
+- This is not good because we _want_ individual bundles
+
+Remaining questions:
+
+- How/when is the manager deployed?
+    - Ideally keep this as-is
+
+
+---
+
+## Roadmap
+
+- Schedule
+- Shutdown lifecycle hooks
+- KV API
+- SQLite API
 

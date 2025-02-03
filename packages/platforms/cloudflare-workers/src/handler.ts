@@ -6,7 +6,7 @@ import {
 	createActorDurableObject,
 	type DurableObjectConstructor,
 } from "./actor";
-import { Config } from "./config";
+import type { Config } from "@actor-core/actor-runtime";
 
 export interface Handler {
 	handler: ExportedHandler<Env>;

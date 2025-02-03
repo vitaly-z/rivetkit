@@ -3,7 +3,7 @@ import type { Actor } from "@actor-core/actor-runtime";
 import type { ActorTags } from "@actor-core/common/utils";
 import type { ActorDriver } from "@actor-core/actor-runtime/driver";
 import { logger } from "./log";
-import type { Config } from "./mod";
+import type { Config } from "@actor-core/actor-runtime";
 
 const KEYS = {
 	//SCHEDULE: {

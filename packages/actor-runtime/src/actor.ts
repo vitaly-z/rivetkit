@@ -1,4 +1,4 @@
-import type { Logger } from "@actor-core/common/log";
+import { setupLogging, type Logger } from "@actor-core/common/log";
 import { listObjectMethods } from "@actor-core/common/reflect";
 import { isJsonSerializable } from "@actor-core/common/utils";
 import type { ActorDriver } from "./driver";
@@ -14,7 +14,7 @@ import { upgradeWebSocket } from "hono/cloudflare-workers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { WSContext, WSEvents } from "hono/ws";
 import onChange from "on-change";
-import { type ActorConfig, mergeActorConfig } from "./config";
+import { type ActorConfig, mergeActorConfig } from "./actor_config";
 import {
 	Connection,
 	type ConnectionId,
@@ -163,6 +163,14 @@ export abstract class Actor<
 	public constructor(config?: Partial<ActorConfig>) {
 		this.#config = mergeActorConfig(config);
 		this.__router = this.#buildRouter();
+	}
+
+	public static async start(ctx: ActorContext): Promise<void> {
+		setupLogging();
+
+		// biome-ignore lint/complexity/noThisInStatic lint/suspicious/noExplicitAny: Needs to construct self
+		const instance = new (this as any)() as Actor;
+		return await instance.#run(ctx);
 	}
 
 	async __start(driver: ActorDriver) {

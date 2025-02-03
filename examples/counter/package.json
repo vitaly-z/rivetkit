@@ -2,8 +2,19 @@
   "name": "counter",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "devDependencies": {
     "actor-core": "workspace:*",
     "typescript": "^5.5.2"
+  },
+  "example": {
+    "platforms": [
+      "*"
+    ],
+    "actors": {
+      "counter": "src/counter.ts"
+    }
   }
 }

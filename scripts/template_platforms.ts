@@ -2,9 +2,23 @@ import fs from "fs";
 import path from "path";
 import dedent from "dedent";
 import { stringifyJson } from "./utils";
+import { z } from "zod";
+
+const PackageJsonSchema = z.object({
+	name: z.string(),
+	example: z.object({
+		platforms: z.array(z.string()),
+		actors: z.record(z.string()),
+	}),
+	devDependencies: z.record(z.string()),
+	scripts: z.record(z.string()).optional(),
+});
+
+type PackageJson = z.infer<typeof PackageJsonSchema>;
 
 interface PlatformInput {
-	packageJson: any;
+	path: string;
+	packageJson: PackageJson;
 }
 
 interface PlatformOutput {
@@ -16,9 +30,19 @@ type PlatformConfigFn = (build: PlatformInput) => PlatformOutput;
 const PLATFORMS: Record<string, PlatformConfigFn> = {
 	rivet: (input) => {
 		input.packageJson.name += "-rivet";
+
 		return {
 			files: {
 				"package.json": stringifyJson(input.packageJson),
+				"rivet.json": stringifyJson({
+					builds: Object.fromEntries(
+						Object.entries(input.packageJson.example.actors).map(
+							([name, path]) => {
+								return [name, { script: path, access: "public " }];
+							},
+						),
+					),
+				}),
 			},
 		};
 	},
@@ -29,12 +53,13 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 			wrangler: "^3.101.0",
 			"@cloudflare/workers-types": "^4.20250129.0",
 		});
-		input.packageJson.scripts = {
+		if (!input.packageJson.scripts) input.packageJson.scripts = {};
+		Object.assign(input.packageJson.scripts, {
 			deploy: "wrangler deploy",
 			dev: "wrangler dev",
 			start: "wrangler dev",
 			"cf-typegen": "wrangler types",
-		};
+		});
 
 		return {
 			files: {
@@ -60,7 +85,7 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 					kv_namespaces: [
 						{
 							binding: "ACTOR_KV",
-							id: "a70ee566ff9544ebb88ba91cf41a5e97",
+							id: "TODO",
 						},
 					],
 					observability: {
@@ -105,14 +130,21 @@ async function main() {
 		fs.writeFileSync(path.join(platformsPath, ".gitignore"), "*");
 
 		// Read the example's package.json
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-		const supportedPlatforms =
-			packageJson.actorCore?.platforms ?? Object.keys(PLATFORMS);
+		const packageJson = PackageJsonSchema.parse(
+			JSON.parse(fs.readFileSync(packageJsonPath, "utf-8")),
+		);
 
-		console.log(`Templating ${example} (${supportedPlatforms.join(", ")})`);
+		// Read example config
+		const exampleConfig = packageJson.example;
+		if (exampleConfig.platforms.includes("*"))
+			exampleConfig.platforms = Object.keys(PLATFORMS);
+
+		console.log(
+			`Templating ${example} (${exampleConfig.platforms.join(", ")})`,
+		);
 
 		// Create platform-specific folders and files
-		for (const platform of supportedPlatforms) {
+		for (const platform of exampleConfig.platforms) {
 			const platformDir = path.join(platformsPath, platform);
 			const srcDir = path.join(platformDir, "src");
 
@@ -123,6 +155,7 @@ async function main() {
 			// Call platform config function and write files
 			const platformConfig = PLATFORMS[platform];
 			const output = platformConfig({
+				path: examplePath,
 				packageJson: structuredClone(packageJson),
 			});
 

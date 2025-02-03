@@ -102,6 +102,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@actor-core/rivet@workspace:*, @actor-core/rivet@workspace:packages/platforms/rivet":
+  version: 0.0.0-use.local
+  resolution: "@actor-core/rivet@workspace:packages/platforms/rivet"
+  dependencies:
+    "@rivet-gg/actor-core": "npm:^0.0.1"
+    tsup: "npm:^8.3.6"
+    typescript: "npm:^5.5.2"
+  languageName: unknown
+  linkType: soft
+
 "@actor-core/workspace@workspace:.":
   version: 0.0.0-use.local
   resolution: "@actor-core/workspace@workspace:."
@@ -786,6 +796,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rivet-gg/actor-core@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "@rivet-gg/actor-core@npm:0.0.1"
+  dependencies:
+    zod: "npm:^3.24.1"
+  checksum: 10c0/9ce6edef0816571c6642d1bee56d9b1048f577216e013a5c5b3b74d5cd51b485c2bb6dd44d20ed179fe3578ded37faadab95e112190432fe4ad24b06e66b34a2
+  languageName: node
+  linkType: hard
+
 "@rollup/rollup-android-arm-eabi@npm:4.34.0":
   version: 4.34.0
   resolution: "@rollup/rollup-android-arm-eabi@npm:4.34.0"
@@ -1245,6 +1264,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "counter-rivet@workspace:examples/counter/platforms/rivet"
   dependencies:
+    "@actor-core/rivet": "workspace:*"
     actor-core: "workspace:*"
     typescript: "npm:^5.5.2"
   languageName: unknown
