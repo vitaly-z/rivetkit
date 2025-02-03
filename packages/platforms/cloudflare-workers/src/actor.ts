@@ -4,6 +4,7 @@ import type { ActorTags } from "@actor-core/common/utils";
 import type { ActorDriver } from "@actor-core/actor-runtime/driver";
 import { logger } from "./log";
 import type { Config } from "@actor-core/actor-runtime";
+import { upgradeWebSocket } from "hono/cloudflare-workers";
 
 const KEYS = {
 	//SCHEDULE: {
@@ -154,6 +155,8 @@ function serializeKey(key: any): string {
 function buildActorDriver(ctx: DurableObjectState): ActorDriver {
 	// TODO: Use a better key serialization format
 	return {
+		upgradeWebSocket,
+
 		async kvPut(key: any, value: any): Promise<void> {
 			await ctx.storage.put(serializeKey(key), value);
 		},

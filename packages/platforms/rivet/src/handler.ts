@@ -1,5 +1,6 @@
 import { logger } from "./log";
 import type { Actor } from "actor-core";
+import { upgradeWebSocket } from "hono/deno";
 import type { ActorContext } from "@rivet-gg/actor-core";
 import { setupLogging } from "@actor-core/common/log";
 import type { RivetHandler } from "./util";
@@ -43,6 +44,8 @@ export function createHandler(
 
 			const actor = new actorPrototype();
 			actor.__start({
+				upgradeWebSocket, 
+
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 				async kvPut(key: any, value: any) {
 					await ctx.kv.put(key, value);
@@ -53,7 +56,6 @@ export function createHandler(
 					const resultList = key.map((key) => {
 						return [key, response.get(key)] as [any, any];
 					});
-					console.log("responseList", key, resultList);
 					return resultList;
 				},
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>

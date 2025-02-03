@@ -9,8 +9,6 @@ import {
 } from "@actor-core/actor-protocol/ws";
 import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
 import { Hono, type Context as HonoContext } from "hono";
-//import { upgradeWebSocket } from "hono/deno";
-import { upgradeWebSocket } from "hono/cloudflare-workers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { WSContext, WSEvents } from "hono/ws";
 import onChange from "on-change";
@@ -163,14 +161,6 @@ export abstract class Actor<
 	public constructor(config?: Partial<ActorConfig>) {
 		this.#config = mergeActorConfig(config);
 		this.__router = this.#buildRouter();
-	}
-
-	public static async start(ctx: ActorContext): Promise<void> {
-		setupLogging();
-
-		// biome-ignore lint/complexity/noThisInStatic lint/suspicious/noExplicitAny: Needs to construct self
-		const instance = new (this as any)() as Actor;
-		return await instance.#run(ctx);
 	}
 
 	async __start(driver: ActorDriver) {
@@ -380,11 +370,7 @@ export abstract class Actor<
 
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
-		app.get("/connect", upgradeWebSocket(this.#handleWebSocket.bind(this)));
-		app.get(
-			"/actors/:actorId/connect",
-			upgradeWebSocket(this.#handleWebSocket.bind(this)),
-		);
+		app.get("/connect", this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)));
 
 		//app.get(
 		//	"/__inspect/connect",

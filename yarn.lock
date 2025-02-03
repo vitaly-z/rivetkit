@@ -107,6 +107,7 @@ __metadata:
   resolution: "@actor-core/rivet@workspace:packages/platforms/rivet"
   dependencies:
     "@rivet-gg/actor-core": "npm:^0.0.1"
+    hono: "npm:^4.6.20"
     tsup: "npm:^8.3.6"
     typescript: "npm:^5.5.2"
   languageName: unknown
@@ -1677,7 +1678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.6.16, hono@npm:^4.6.17":
+"hono@npm:^4.6.16, hono@npm:^4.6.17, hono@npm:^4.6.20":
   version: 4.6.20
   resolution: "hono@npm:4.6.20"
   checksum: 10c0/f4ebc987452e8cfc87577cae3b3fe7553affb10121d5fb48401d139c6c378824b9d5d88e42972781124251c466bfb8bfdeb67cb95928f9d6b91d8f4925ce031c
