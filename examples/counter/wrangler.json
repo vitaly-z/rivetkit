@@ -4,7 +4,7 @@
   "compatibility_date": "2025-01-29",
   "migrations": [
     {
-      "new_classes": ["OpenActor"],
+      "new_classes": ["Actor"],
       "tag": "v1"
     }
   ],
