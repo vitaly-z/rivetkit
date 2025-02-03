@@ -51,5 +51,12 @@
       "apiHost": "https://ph.rivet.gg/",
       "apiKey": "phc_6kfTNEAVw7rn1LA51cO3D69FefbKupSWFaM7OUgEpEo"
     }
+  },
+  "metadata": {
+    "title": "ActorCore",
+    "description": "The stateful serverless framework for AI agents, realtime apps, game servers, and more. Supports Rivet, Cloudflare Workers,Supabase, and Vercel.",
+    "image": "/images/og-image.png",
+    "type": "website",
+    "locale": "en_US"
   }
 }
