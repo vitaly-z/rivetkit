@@ -2,8 +2,8 @@
 
 ## Primary
 
-- Figure out how to expose ctx
-    - This needs to be an actor type and part of the driver
+- Update Rivet template
+- Squat actorcore and actor-core (both org and npm package)
 - Remove extending tsconfig
 - Revisit actor map concept
 - Implement Rivet compat

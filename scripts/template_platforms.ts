@@ -30,20 +30,46 @@ type PlatformConfigFn = (build: PlatformInput) => PlatformOutput;
 const PLATFORMS: Record<string, PlatformConfigFn> = {
 	rivet: (input) => {
 		input.packageJson.name += "-rivet";
+		Object.assign(input.packageJson.devDependencies, {
+			"@actor-core/rivet": "workspace:*",
+		});
+
+		const files = {
+			"package.json": stringifyJson(input.packageJson),
+			"src/_manager.ts": dedent`
+				import { createManagerHandler } from "@actor-core/rivet";
+				export default createManagerHandler();
+				`,
+		};
+		const rivetJson = {
+			builds: {
+				manager: {
+					script: "src/_manager.ts",
+					access: "private"
+				},
+			},
+			unstable: {
+				manager: {
+					enable: false,
+				},
+			},
+		};
+
+		for (const [name, script] of Object.entries(
+			input.packageJson.example.actors,
+		)) {
+			files[`src/${name}.ts`] = dedent`
+			import { createHandler } from "@actor-core/rivet"
+			import Actor from "../../../src/counter";
+			export default createHandler(Actor);
+			`;
+			rivetJson.builds[name] = { script, access: "public" };
+		}
+
+		files["rivet.json"] = stringifyJson(rivetJson);
 
 		return {
-			files: {
-				"package.json": stringifyJson(input.packageJson),
-				"rivet.json": stringifyJson({
-					builds: Object.fromEntries(
-						Object.entries(input.packageJson.example.actors).map(
-							([name, path]) => {
-								return [name, { script: path, access: "public " }];
-							},
-						),
-					),
-				}),
-			},
+			files,
 		};
 	},
 	"cloudflare-workers": (input) => {
@@ -170,9 +196,7 @@ async function main() {
 			// Write default tsconfig.json
 			fs.writeFileSync(
 				path.join(platformDir, "tsconfig.json"),
-				stringifyJson({
-					extends: "../../tsconfig.json",
-				}),
+				fs.readFileSync(path.join(examplePath, "tsconfig.json")),
 			);
 		}
 	}
