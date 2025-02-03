@@ -3,18 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
-    "cf-typegen": "wrangler types"
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250129.0",
-    "@rivet-gg/actor": "workspace:*",
-    "@rivet-gg/actor-client": "workspace:*",
-    "@rivet-gg/actor-common": "workspace:*",
-    "@rivet-gg/actor-manager": "workspace:*",
-    "typescript": "^5.5.2",
-    "wrangler": "^3.101.0"
+    "actor-core": "workspace:*",
+    "typescript": "^5.5.2"
+  },
+  "example": {
+    "platforms": [
+      "*"
+    ],
+    "actors": {
+      "counter": "src/counter.ts"
+    }
   }
 }

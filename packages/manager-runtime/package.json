@@ -1,0 +1,37 @@
+{
+  "name": "@actor-core/manager-runtime",
+  "version": "25.1.0-rc.1",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "deno": "./src/mod.ts",
+      "import": {
+        "types": "./dist/mod.d.ts",
+        "default": "./dist/mod.js"
+      },
+      "require": {
+        "types": "./dist/mod.d.cts",
+        "default": "./dist/mod.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/kv.ts src/mod.ts src/unstable-react.ts",
+    "dev": "yarn build --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@actor-core/common": "workspace:*",
+    "@actor-core/manager-protocol": "workspace:*",
+    "hono": "^4.6.17",
+    "ts-dedent": "^2.2.0"
+  }
+}

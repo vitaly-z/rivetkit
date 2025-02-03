@@ -1,4 +1,4 @@
-import { MAX_CONN_PARAMS_SIZE } from "@rivet-gg/actor-common/network";
+import { MAX_CONN_PARAMS_SIZE } from "@actor-core/common/network";
 
 export class ActorClientError extends Error {}
 

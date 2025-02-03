@@ -1,4 +1,3 @@
-//import { Actor } from "@rivet-gg/actor";
 import { Actor } from "actor-core";
 
 export interface State {

@@ -1,8 +1,13 @@
 {
   "private": true,
   "packageManager": "yarn@4.2.2",
-  "name": "open-actor",
-  "workspaces": ["packages/*", "examples/*"],
+  "name": "@actor-core/workspace",
+  "workspaces": [
+    "packages/*",
+    "packages/platforms/*",
+    "examples/*",
+    "examples/*/platforms/*"
+  ],
   "scripts": {
     "start": "npx turbo dev",
     "dev": "npx turbo dev",
@@ -11,6 +16,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "dedent": "^1.5.3",
     "lefthook": "^1.6.12",
     "turbo": "^2.0.1"
   },

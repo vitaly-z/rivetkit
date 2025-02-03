@@ -11,5 +11,5 @@ export type {
 } from "./client";
 export { ActorHandleRaw } from "./handle";
 export type { EventUnsubscribe } from "./handle";
-export type { ProtocolFormat } from "@rivet-gg/actor-protocol/ws";
-export type { CreateRequest } from "@rivet-gg/manager-protocol/query";
+export type { ProtocolFormat } from "@actor-core/actor-protocol/ws";
+export type { CreateRequest } from "@actor-core/manager-protocol/query";

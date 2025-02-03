@@ -1,0 +1,48 @@
+{
+  "name": "actor-core",
+  "version": "25.1.0-rc.1",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "deno": "./src/mod.ts",
+      "import": {
+        "types": "./dist/mod.d.ts",
+        "default": "./dist/mod.js"
+      },
+      "require": {
+        "types": "./dist/mod.d.cts",
+        "default": "./dist/mod.cjs"
+      }
+    },
+    "./client": {
+      "deno": "./src/client.ts",
+      "import": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/mod.ts src/client.ts",
+    "dev": "yarn build --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@actor-core/actor-runtime": "workspace:*",
+    "@actor-core/client": "workspace:*",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3"
+  }
+}

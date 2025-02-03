@@ -1,0 +1,83 @@
+{
+  "name": "@actor-core/actor-runtime",
+  "version": "25.1.0-rc.1",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "deno": "./src/mod.ts",
+      "import": {
+        "types": "./dist/mod.d.ts",
+        "default": "./dist/mod.js"
+      },
+      "require": {
+        "types": "./dist/mod.d.cts",
+        "default": "./dist/mod.cjs"
+      }
+    },
+    "./driver": {
+      "deno": "./src/driver.ts",
+      "import": {
+        "types": "./dist/driver.d.ts",
+        "default": "./dist/driver.js"
+      },
+      "require": {
+        "types": "./dist/driver.d.cts",
+        "default": "./dist/driver.cjs"
+      }
+    },
+    "./unstable-react": {
+      "deno": "./src/unstable-react.ts",
+      "import": {
+        "types": "./dist/unstable-react.d.ts",
+        "default": "./dist/unstable-react.js"
+      },
+      "require": {
+        "types": "./dist/unstable-react.d.cts",
+        "default": "./dist/unstable-react.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/driver.ts src/mod.ts src/unstable-react.ts",
+    "dev": "yarn build --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jogit/tmp-react-server-dom-nodeless": "^19.0.1",
+    "cbor-x": "^1.6.0",
+    "get-stream": "^9.0.1",
+    "hono": "^4.6.16",
+    "on-change": "^5.0.1",
+    "react": "^19.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@actor-core/actor-protocol": "workspace:*",
+    "@actor-core/common": "workspace:*",
+    "@types/deno": "^2.0.0",
+    "@types/ws": "^8",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3"
+  },
+  "deno": {
+    "compilerOptions": {
+      "lib": [
+        "dom"
+      ],
+      "jsx": "react-jsx",
+      "jsxImportSource": "react",
+      "jsxImportSourceTypes": "@types/react@^19"
+    }
+  },
+  "optionalDependencies": {
+    "ws": "^8.18.0"
+  }
+}
