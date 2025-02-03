@@ -1,13 +1,27 @@
-# this is a local dev cluster token
+#!/bin/bash
+
+# Check if service token is provided
+if [ -z "${RIVET_SERVICE_TOKEN}" ]; then
+    echo "Error: RIVET_SERVICE_TOKEN environment variable is required"
+    exit 1
+fi
+
+# Check if manager build ID is provided
+if [ -z "${MANAGER_BUILD_ID}" ]; then
+    echo "Error: MANAGER_BUILD_ID environment variable is required"
+    exit 1
+fi
+
+# Create manager actor
 curl -X POST http://localhost:8080/actors \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer env_svc.eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.CJvM1--uQBCbpNHUzDIaEgoQ3UK_Fj0CTAuHiBR438gfGCIXmgEUChIKELwDPXXvmkQOqe1g3mSKQIc.vVdpsxjeZfIybCMI6wykAK9MfEZiNmw6i6uZoD2x0DyH8_42K1-QfPH-6xo2EmVlhSKAxri6AilcZrzyXlk0CQ" \
+  -H "Authorization: Bearer ${RIVET_SERVICE_TOKEN}" \
   -d '{
     "tags": { "name": "manager", "owner": "rivet" },
-    "build": "b9bc242c-9594-44d9-945a-4964ccb7da26",
+    "build": "'"${MANAGER_BUILD_ID}"'",
     "runtime": {
       "environment": {
-        "RIVET_SERVICE_TOKEN": "env_svc.eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.CJvM1--uQBCbpNHUzDIaEgoQ3UK_Fj0CTAuHiBR438gfGCIXmgEUChIKELwDPXXvmkQOqe1g3mSKQIc.vVdpsxjeZfIybCMI6wykAK9MfEZiNmw6i6uZoD2x0DyH8_42K1-QfPH-6xo2EmVlhSKAxri6AilcZrzyXlk0CQ"
+        "RIVET_SERVICE_TOKEN": "'"${RIVET_SERVICE_TOKEN}"'"
       }
     },
     "network": {
