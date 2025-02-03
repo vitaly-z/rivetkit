@@ -147,7 +147,7 @@ export abstract class Actor<
 	#lastSaveTime = 0;
 	#pendingSaveTimeout?: number | NodeJS.Timeout;
 
-	public readonly __router: Hono;
+	public __router!: Hono;
 
 	//#inspection!: ActorInspection<this>;
 
@@ -160,11 +160,13 @@ export abstract class Actor<
 	 */
 	public constructor(config?: Partial<ActorConfig>) {
 		this.#config = mergeActorConfig(config);
-		this.__router = this.#buildRouter();
 	}
 
 	async __start(driver: ActorDriver) {
+		console.log('start');
 		this.#driver = driver;
+		console.log('build router');
+		this.__router = this.#buildRouter();
 
 		//// Create inspector after receiving `ActorDriver`
 		//this.#inspection = new ActorInspection(
@@ -370,7 +372,11 @@ export abstract class Actor<
 
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
-		app.get("/connect", this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)));
+		console.log('upgrade ws', this.#driver)
+		app.get(
+			"/connect",
+			this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)),
+		);
 
 		//app.get(
 		//	"/__inspect/connect",

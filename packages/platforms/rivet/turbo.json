@@ -5,7 +5,7 @@
     "build": {
       "inputs": ["src/**", "./tsup.config.ts"],
       "dependsOn": [
-        "@actor-core/actor-runtime#build"
+        "actor-core#build"
       ]
     }
   }

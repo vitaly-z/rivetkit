@@ -72,6 +72,7 @@
 - Figure out how to destroy actors
 - Implement _shutdown
 - Inspect bundle size
+- Look at build graph for platform libraries
 
 ## Platforms
 
