@@ -9,9 +9,9 @@ import type { CreateRequest } from "@actor-core/manager-protocol/query";
 import { logger } from "./log";
 import { type RivetClientConfig, rivetRequest } from "./rivet_client";
 
-	// biome-ignore lint/suspicious/noExplicitAny: will add api types later
+// biome-ignore lint/suspicious/noExplicitAny: will add api types later
 type RivetActor = any;
-	// biome-ignore lint/suspicious/noExplicitAny: will add api types later
+// biome-ignore lint/suspicious/noExplicitAny: will add api types later
 type RivetBuild = any;
 
 export interface ActorState {
@@ -19,9 +19,37 @@ export interface ActorState {
 	destroyedAt?: number;
 }
 
-export function buildManager(
-	clientConfig: RivetClientConfig,
-): ManagerDriver {
+function buildActorEndpoint(actor: RivetActor): string {
+	// Fetch port
+	const httpPort = actor.network.ports.http;
+	if (!httpPort) throw new Error("missing http port");
+	const hostname = httpPort.hostname;
+	if (!hostname) throw new Error("missing hostname");
+	const port = httpPort.port;
+	if (!port) throw new Error("missing port");
+
+	let isTls = false;
+	switch (httpPort.protocol) {
+		case "https":
+			isTls = true;
+			break;
+		case "http":
+		case "tcp":
+			isTls = false;
+			break;
+		case "tcp_tls":
+		case "udp":
+			throw new Error(`Invalid protocol ${httpPort.protocol}`);
+		default:
+			assertUnreachable(httpPort.protocol as never);
+	}
+
+	const path = httpPort.path ?? "";
+
+	return `${isTls ? "https" : "http"}://${hostname}:${port}${path}`;
+}
+
+export function buildManager(clientConfig: RivetClientConfig): ManagerDriver {
 	return {
 		async queryActor({ query }: ActorsRequest): Promise<ActorsResponse> {
 			logger().debug("query", { query });
@@ -44,7 +72,7 @@ export function buildManager(
 					);
 				}
 
-				return res.actor;
+				return { endpoint: buildActorEndpoint(res.actor) };
 			}
 			if ("getOrCreateForTags" in query) {
 				const tags = query.getOrCreateForTags.tags;
@@ -79,7 +107,7 @@ export function buildManager(
 async function getWithTags(
 	clientConfig: RivetClientConfig,
 	tags: ActorTags,
-): Promise<RivetActor | undefined> {
+): Promise<ActorsResponse | undefined> {
 	const tagsJson = JSON.stringify({
 		...tags,
 		access: "public",
@@ -113,13 +141,13 @@ async function getWithTags(
 		actors.sort((a: RivetActor, b: RivetActor) => a.id.localeCompare(b.id));
 	}
 
-	return actors[0];
+	return { endpoint: buildActorEndpoint(actors[0]) };
 }
 
 async function createActor(
 	clientConfig: RivetClientConfig,
 	createRequest: CreateRequest,
-): Promise<RivetActor> {
+): Promise<ActorsResponse> {
 	// Verify build access
 	const build = await getBuildWithTags(clientConfig, {
 		name: createRequest.tags.name,
@@ -152,7 +180,8 @@ async function createActor(
 		"/actors",
 		req,
 	);
-	return actor;
+
+	return { endpoint: buildActorEndpoint(actor) };
 }
 
 async function getBuildWithTags(

@@ -4,8 +4,10 @@
 
 - Figure out how to expose ctx
     - This needs to be an actor type and part of the driver
+- Remove extending tsconfig
 - Revisit actor map concept
 - Implement Rivet compat
+    - Fix current tag
     - Impl actor scaffold
     - Impl manager
     - Get this working e2e
@@ -14,6 +16,7 @@
     - Figure out how to get Rivet using Rivet-native types
     - Re-implement /rivet/config & region (abstract this away to a broader recommended region)
     - Fix thrown error for Rivet request to encode message correctly
+    - Steps to create: deploy, create manager, paste manager endpoint in to client
 - Finish CF
     - Remove hardcoded localhost
 - Write Cloudflare guide

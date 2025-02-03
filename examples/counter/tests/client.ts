@@ -5,7 +5,8 @@ import type Counter from "../src/counter.ts";
 async function main() {
 	setupLogging();
 
-	const client = new Client("http://localhost:8787");
+	//const client = new Client("http://localhost:8787");
+	const client = new Client("http://127.0.0.1:7080/b3701603-bd52-4023-ba78-e4d9eff060b4-http");
 
 	// Get-or-create a counter actor
 	const counter = await client.get<Counter>({ name: "counter" });

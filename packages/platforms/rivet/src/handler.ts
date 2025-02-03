@@ -2,13 +2,17 @@ import { logger } from "./log";
 import type { Actor } from "actor-core";
 import type { ActorContext } from "@rivet-gg/actor-core";
 import { setupLogging } from "@actor-core/common/log";
-import { RivetHandler } from "./util";
+import type { RivetHandler } from "./util";
 
-export type ActorConstructor = new (
-	...args: ConstructorParameters<typeof Actor>
-) => Actor;
+export type AnyActorConstructor = new (
+	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
+	...args: ConstructorParameters<typeof Actor<any, any, any>>
+	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
+) => Actor<any, any, any>;
 
-export function createHandler(actorPrototype: ActorConstructor): RivetHandler {
+export function createHandler(
+	actorPrototype: AnyActorConstructor,
+): RivetHandler {
 	const handler = {
 		async start(ctx: ActorContext): Promise<void> {
 			setupLogging();
@@ -46,7 +50,11 @@ export function createHandler(actorPrototype: ActorConstructor): RivetHandler {
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 				async kvGetBatch(key: any[]) {
 					const response = await ctx.kv.getBatch(key);
-					return response.array()
+					const resultList = key.map((key) => {
+						return [key, response.get(key)] as [any, any];
+					});
+					console.log("responseList", key, resultList);
+					return resultList;
 				},
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 				async kvPutBatch(key: [any, any][]) {
