@@ -45,7 +45,7 @@
         ]
       },
       {
-        "group": "API",
+        "group": "Concepts",
         "pages": [
           "concepts/manage",
           "concepts/rpc",
@@ -60,17 +60,10 @@
               "concepts/metadata",
               "concepts/authentication",
               "concepts/external-sql",
-              "concepts/logging"
+              "concepts/logging",
+              "concepts/scaling"
             ]
           }
-        ]
-      },
-      {
-        "group": "Concepts",
-        "pages": [
-          "concepts/multiplayer",
-          "concepts/edge",
-          "concepts/scaling"
         ]
       }
     ]
