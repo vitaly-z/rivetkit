@@ -20,7 +20,7 @@ git push && git push --tags
 
 # Step 3: Publish packages
 echo "Publishing packages..."
-yarn workspaces foreach -A -t --include actor-core --include actorcore --include @actor-core/cloudflare-workers --include @actor-core/rivet npm publish --access public --tolerate-republish
+yarn workspaces foreach -A -t --include actor-core --include @actor-core/cloudflare-workers --include @actor-core/rivet npm publish --access public --tolerate-republish
 
 echo "✅ Published specified packages at version $VERSION"
 
