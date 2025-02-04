@@ -27,21 +27,6 @@ export function createHandler(
 				throw "Invalid port";
 			}
 
-			//// Create inspector after receiving `ActorContext`
-			//const inspection = new ActorInspection(this.#config, this.#ctx.metadata, {
-			//	state: () => ({
-			//		enabled: this.#stateEnabled,
-			//		state: this.#stateProxy,
-			//	}),
-			//	connections: () => this.#connections.values(),
-			//	rpcs: () => this.#rpcNames,
-			//	setState: (state) => {
-			//		this.#validateStateEnabled();
-			//		this.#setStateWithoutChange(state);
-			//	},
-			//	onRpcCall: (ctx, rpc, args) => this.#executeRpc(ctx, rpc, args),
-			//});
-
 			const actor = new actorPrototype();
 			actor.__start({
 				upgradeWebSocket,
@@ -95,11 +80,6 @@ export function createHandler(
 			});
 
 			const app = actor.__router;
-
-			//app.get(
-			//	"/__inspect/connect",
-			//	upgradeWebSocket((c) => this.#inspection.handleWebsocketConnection(c)),
-			//);
 
 			app.all("*", (c) => {
 				return c.text("Not Found (actor)", 404);
