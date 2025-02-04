@@ -8,17 +8,26 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# Step 1: Bump version for all packages
+# Bump version for all packages
 echo "Setting version to $VERSION..."
 yarn workspaces foreach -A -t version $VERSION
 
-# Step 2: Commit the version changes
+# Commit the version changes
 git add .
 git commit -m "chore: release version $VERSION"
-git tag "v$VERSION"
-git push && git push --tags
 
-# Step 3: Publish packages
+# Check if the tag already exists
+if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+  echo "Tag v$VERSION already exists. Skipping tag creation."
+else
+  git tag "v$VERSION"
+fi
+
+# Push changes
+git push
+git push --tags
+
+# Publish packages
 echo "Publishing packages..."
 yarn workspaces foreach -A -t --include actor-core --include @actor-core/cloudflare-workers --include @actor-core/rivet npm publish --access public --tolerate-republish
 
