@@ -72,7 +72,7 @@ const loggers: Record<string, Logger> = {};
 
 export function getLogger(name = "default"): Logger {
 	if (!loggers[name]) {
-		loggers[name] = new Logger(name, "DEBUG");
+		loggers[name] = new Logger(name, "INFO");
 	}
 	return loggers[name];
 }
