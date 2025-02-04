@@ -14,6 +14,8 @@ For example:
 <CodeGroup>
 
 ```typescript actor.ts
+import { Actor, type OnBeforeConnectOptions } from "actor-core";
+
 interface ConnectionParams {
   authToken: string;
 }
@@ -44,8 +46,10 @@ The data returned from `_onBeforeConnect` is used as the initial state of the co
 For example:
 
 ```typescript actor.ts
+import { Actor, type OnBeforeConnectOptions } from "actor-core";
+
 interface ConnectionState {
-  userId: string;
+  userId: number;
   role: string;
 }
 
@@ -76,9 +80,11 @@ This is frequently used with `conn.send(name, event)` to send messages directly 
 For example:
 
 ```typescript actor.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
-  sendDirectMessage(rpc: Rpc<ChatRoom>, recipient: number, message: string) {
-    this._connections.get(recipient).send('directMessage', {
+  sendDirectMessage(rpc: Rpc<ChatRoom>, recipientConnectionId: number, message: string) {
+    this._connections.get(recipientConnectionId)?.send('directMessage', {
       from: rpc.connection.id,
       message: message
     });

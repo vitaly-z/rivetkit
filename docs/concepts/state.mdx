@@ -38,6 +38,8 @@ To update state, assign or update `this._state`. Any modifications will be autom
 For example:
 
 ```typescript actor.ts
+import { Actor, type Rpc } from "actor-core";
+
 // Define the state's structure
 interface State {
 	count: number;

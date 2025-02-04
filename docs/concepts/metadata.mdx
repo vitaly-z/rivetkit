@@ -20,9 +20,11 @@ For example:
 <CodeGroup>
 
 ```typescript chat_room.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
-  // Internal method used to get the channel ID. Returns `random` for this example.
-  #getChannelId(rpc: Rpc<ChatRoom>): string {
+  // Method used to get the channel ID. Returns `random` for this example.
+  getChannelId(rpc: Rpc<ChatRoom>): string {
     return this._tags['channel'];
   }
 }

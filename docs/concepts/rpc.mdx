@@ -19,6 +19,8 @@ RPCs can be written as native JavaScript methods on the actor class.
 For example, the `multiplyByTwo` method is written as:
 
 ```typescript
+import { Actor, type Rpc } from "actor-core";
+
 export class Example extends Actor {
 	// This is an RPC
 	multiplyByTwo(rpc: Rpc<Example>, x: number) {
@@ -36,6 +38,8 @@ All provided methods start with `_` (e.g. `_broadcast`) so clients cannot call t
 For example:
 
 ```typescript
+import { Actor, type Rpc } from "actor-core";
+
 export default class Example extends Actor {
 	// This is private and cannot be called by clients
 	#calcFibonacci(n: number): number {
@@ -85,6 +89,8 @@ await actor.nonexistentMethod(123); // compile error
 ```
 
 ```typescript actor.ts
+import { Actor, type Rpc } from "actor-core";
+
 // ...setup...
 
 export class Counter extends Actor {
@@ -157,6 +163,7 @@ Data schemas are not validated by default. For production applications, use a li
 In the previous example, providing a non-number value to `count` could corrupt the actor's state (e.g. by passing a string instead of a number). For example, to validate the `increment` request schema:
 
 ```typescript
+import { Actor, type Rpc } from "actor-core";
 import { z } from "zod";
 
 // Define schemas for user requests

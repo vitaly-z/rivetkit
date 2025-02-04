@@ -46,6 +46,8 @@ Consider this example:
 <CodeGroup>
 
 ```typescript structured_logging.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class Counter extends Actor<State> {
   increment(rpc: Rpc<Counter>, count: number): number {
     // Prints: level=INFO msg=increment connection=123 count=456
@@ -60,6 +62,8 @@ export default class Counter extends Actor<State> {
 ```
 
 ```typescript unstructured_logging.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class Counter extends Actor<State> {
   increment(rpc: Rpc<Counter>, count: number): number {
     // Prints: Increment for connection 123 with count 456

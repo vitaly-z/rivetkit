@@ -18,6 +18,8 @@ Actors can publish events to all connected clients with `this._broadcast(name, d
 <CodeGroup>
 
 ```typescript chat_room.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
   sendMessage(rpc: Rpc<ChatRoom>, message: string) {
     this._broadcast('newMessage', { message });
@@ -39,6 +41,8 @@ Actors can send messages to specific client connections. All connections are ava
 <CodeGroup>
 
 ```typescript chat_room.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
   sendPrivateMessage(rpc: Rpc<ChatRoom>, connectionId: number, message: string) {
     const conn = this._connections.find(c => c.id == connectionId);
@@ -74,6 +78,8 @@ actor.on('newMessage', ({ message }) => {
 ```
 
 ```typescript chat_room.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
   sendMessage(rpc: Rpc<ChatRoom>, message: string) {
     this._broadcast('newMessage', { message });
@@ -101,13 +107,15 @@ await actor.requestJoin();
 ```
 
 ```typescript chat_root.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class ChatRoom extends Actor {
   requestJoin(rpc: Rpc<ChatRoom>) {
     // ...ask the admin to approve the request...
   }
 
   approveJoinRequest(rpc: Rpc<ChatRoom>, connectionId: number) {
-    const conn = this._connections.get(c.id);
+    const conn = this._connections.get(connectionId);
     conn.send('joinRequestApproved');
   }
 }

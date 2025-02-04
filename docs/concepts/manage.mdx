@@ -185,6 +185,8 @@ const actor = await client.get<Example>(
 ```
 
 ```typescript actor.ts
+import { Actor, type OnBeforeConnectOptions } from "actor-core";
+
 interface ConnectionParams {
   authToken: string;
 }
@@ -266,6 +268,8 @@ For security reasons, actors must be shut down from within the actor itself usin
 <CodeGroup>
 
 ```typescript actor.ts
+import { Actor, type Rpc } from "actor-core";
+
 export default class Example extends Actor {
   // client will call this rpc to shut down actor
   myShutdownRpc(rpc: Rpc<Example>) {

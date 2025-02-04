@@ -14,6 +14,8 @@ Throwing an error in `_onBeforeConnect` will abort the connection.
 Here's a basic example:
 
 ```typescript
+import { Actor, type OnBeforeConnectOptions } from "actor-core";
+
 interface State {
   // ...
 }
@@ -49,6 +51,8 @@ export default class ExampleActor extends Actor<State, ConnectionParams, Connect
 After authentication, you can access the connection state in any actor method using `rpc.connection.state`:
 
 ```typescript
+import { Actor, type Rpc } from "actor-core";
+
 export default class AuthenticatedActor extends Actor<State, ConnectionParams, ConnectionState> {
   exampleAdminCommand(rpc: Rpc<AuthenticatedActor>) {
     // Example of validating admin access
@@ -64,6 +68,8 @@ export default class AuthenticatedActor extends Actor<State, ConnectionParams, C
 ### With API Server Authentication
 
 ```typescript
+import { Actor, type Rpc, type OnBeforeConnectOptions } from "actor-core";
+
 interface State {
   // ...
 }
@@ -104,6 +110,8 @@ When authentication fails, throwing an error in `_onBeforeConnect` will prevent 
 ### With JWT Authentication
 
 ```typescript
+import { Actor, type OnBeforeConnectOptions } from "actor-core";
+
 interface State {
   // ...
 }
