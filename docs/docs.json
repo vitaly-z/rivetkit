@@ -47,7 +47,29 @@
       {
         "group": "Concepts",
         "pages": [
-          "concepts/TODO"
+          "concepts/manage",
+          "concepts/rpc",
+          "concepts/state",
+          "concepts/events",
+          "concepts/lifecycle",
+          "concepts/edge",
+          "concepts/scaling",
+          {
+            "group": "More",
+            "pages": [
+              "concepts/authentication",
+              "concepts/connections",
+              "concepts/external-sql",
+              "concepts/logging",
+              "concepts/metadata"
+            ]
+          },
+          {
+            "group": "Clients",
+            "pages": [
+              "concepts/client/react"
+            ]
+          }
         ]
       }
     ]
