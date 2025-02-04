@@ -51,7 +51,9 @@
           "concepts/rpc",
           "concepts/state",
           "concepts/events",
+          "concepts/schedule",
           "concepts/lifecycle",
+          "concepts/metadata",
           "concepts/edge",
           "concepts/scaling",
           {
@@ -60,16 +62,15 @@
               "concepts/authentication",
               "concepts/connections",
               "concepts/external-sql",
-              "concepts/logging",
-              "concepts/metadata"
-            ]
-          },
-          {
-            "group": "Clients",
-            "pages": [
-              "concepts/client/react"
+              "concepts/logging"
             ]
           }
+        ]
+      },
+      {
+        "group": "Frameworks",
+        "pages": [
+          "frameworks/react"
         ]
       }
     ]
