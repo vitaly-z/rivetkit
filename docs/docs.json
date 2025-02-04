@@ -36,22 +36,22 @@
   },
   "navigation": {
     "groups": [
-    {
-      "group": "Get Started",
-      "pages": [
-        "introduction",
-        "platforms/cloudflare-workers",
-        "platforms/rivet",
-        "platforms/supabase",
-        "platforms/vercel"
-      ]
-    },
-    {
-      "group": "Concepts",
-      "pages": [
-        "concepts/TODO"
-      ]
-    }
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "platforms/cloudflare-workers",
+          "platforms/rivet",
+          "platforms/supabase",
+          "platforms/vercel"
+        ]
+      },
+      {
+        "group": "Concepts",
+        "pages": [
+          "concepts/TODO"
+        ]
+      }
     ]
   },
   "footer": {
