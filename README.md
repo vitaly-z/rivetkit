@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://actorcore.org">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./media/icon-text-white.svg" alt="ActorCore" width="400">
-      <img src="./media/icon-text-white.svg" alt="ActorCore" width="400">
+      <source media="(prefers-color-scheme: dark)" srcset="./.github/media/icon-text-white.svg" alt="ActorCore" width="400">
+      <img src="./.github/media/icon-text-white.svg" alt="ActorCore" width="400">
     </picture>
   </a>
 </p>
@@ -21,7 +21,7 @@
   <a href="/LICENSE"><img alt="License Apache-2.0" src="https://img.shields.io/github/license/rivet-gg/rivet?logo=open-source-initiative&logoColor=white"></a>
 </p>
 
-![Code snippets](./media/code.png)
+![Code snippets](./.github/media/code.png)
 
 ## Intro
 
