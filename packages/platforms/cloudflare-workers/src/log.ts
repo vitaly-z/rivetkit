@@ -1,5 +1,5 @@
 // @ts-types="../../common/dist/log.d.ts"
-import { getLogger } from "@actor-core/common/log";
+import { getLogger } from "actor-core/log";
 
 export const LOGGER_NAME = "driver-cloudflare-workers";
 

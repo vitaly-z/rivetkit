@@ -8,8 +8,10 @@
     "allowSyntheticDefaultImports": true,
     "stripInternal": true,
     "moduleResolution": "bundler",
-    "types": ["node", "deno"],
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ESNext", "DOM"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*"]
 }

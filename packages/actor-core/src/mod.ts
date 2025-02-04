@@ -1,1 +1,1 @@
-export * from "@actor-core/actor-runtime";
+export * from "@/actor/runtime/mod";

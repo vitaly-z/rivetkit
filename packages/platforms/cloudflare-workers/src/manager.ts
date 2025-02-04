@@ -1,11 +1,11 @@
-import { assertUnreachable } from "@actor-core/common/utils";
-import type { ActorTags } from "@actor-core/common/utils";
-import type {
+import {
+	assertUnreachable,
+	ActorTags,
 	ActorsRequest,
 	ActorsResponse,
-} from "@actor-core/manager-protocol";
-import type { CreateRequest } from "@actor-core/manager-protocol/query";
-import type { ManagerDriver } from "@actor-core/manager-runtime";
+	CreateRequest,
+	ManagerDriver,
+} from "actor-core/platform";
 import type { Env } from "./env";
 import { logger } from "./log";
 

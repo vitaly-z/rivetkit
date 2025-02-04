@@ -1,19 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
-import type { Actor } from "@actor-core/actor-runtime";
-import type { Config } from "@actor-core/actor-runtime";
-import type { ActorDriver } from "@actor-core/actor-runtime/driver";
-import type { ActorTags } from "@actor-core/common/utils";
+import type { Actor, ActorTags } from "actor-core";
+import type { Config, ActorDriver } from "actor-core/platform";
 import { upgradeWebSocket } from "hono/cloudflare-workers";
 import { logger } from "./log";
 
 const KEYS = {
-	//SCHEDULE: {
-	//	SCHEDULE: ["actor", "schedule", "schedule"],
-	//	EVENT_PREFIX: ["actor", "schedule", "event"],
-	//	event(id: string): string[] {
-	//		return [...this.EVENT_PREFIX, id];
-	//	},
-	//},
 	STATE: {
 		INITIALIZED: "actor:state:initialized",
 		TAGS: "actor:state:tags",
@@ -110,35 +101,6 @@ export function createActorDurableObject(
 		async fetch(request: Request): Promise<Response> {
 			const actor = await this.#loadActor();
 			return await actor.__router.fetch(request);
-
-			// TODO: Serve actor
-
-			//// TODO: Expose Actor hono router
-			//
-			//// Creates two ends of a WebSocket connection.
-			//const webSocketPair = new WebSocketPair();
-			//const [client, server] = Object.values(webSocketPair);
-			//
-			//server.accept();
-			//
-			////// Upon receiving a message from the client, the server replies with the same message,
-			////// and the total number of connections with the "[Durable Object]: " prefix
-			////server.addEventListener("message", (event: MessageEvent) => {
-			////	server.send(
-			////		`[Durable Object] currentlyConnectedWebSockets: ${this.currentlyConnectedWebSockets}`,
-			////	);
-			////});
-			//
-			//// If the client closes the connection, the runtime will close the connection too.
-			//server.addEventListener("close", (cls: CloseEvent) => {
-			//	//this.currentlyConnectedWebSockets -= 1;
-			//	server.close(cls.code, "Durable Object is closing WebSocket");
-			//});
-			//
-			//return new Response(null, {
-			//	status: 101,
-			//	webSocket: client,
-			//});
 		}
 
 		async alarm(): Promise<void> {

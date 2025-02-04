@@ -48,6 +48,9 @@
     "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "actor-core": "workspace:*"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250129.0",
     "tsup": "^8.3.6",

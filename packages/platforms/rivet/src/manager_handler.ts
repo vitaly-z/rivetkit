@@ -1,5 +1,5 @@
-import { setupLogging } from "@actor-core/common/log";
-import { Manager } from "@actor-core/manager-runtime";
+import { setupLogging } from "actor-core/log";
+import { Manager } from "actor-core/platform";
 import type { ActorContext } from "@rivet-gg/actor-core";
 import { logger } from "./log";
 import { buildManager } from "./manager";

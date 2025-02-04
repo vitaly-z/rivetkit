@@ -48,8 +48,12 @@
     "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "actor-core": "workspace:*"
+  },
   "devDependencies": {
-    "@rivet-gg/actor-core": "^0.0.1",
+    "@rivet-gg/actor-core": "^25.1.0",
+    "@types/deno": "^2.0.0",
     "tsup": "^8.3.6",
     "typescript": "^5.5.2"
   },

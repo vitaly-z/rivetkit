@@ -1,5 +1,4 @@
-import type { Config } from "@actor-core/actor-runtime";
-import { Manager } from "@actor-core/manager-runtime";
+import { Manager, type Config } from "actor-core/platform";
 import {
 	type DurableObjectConstructor,
 	createActorDurableObject,
@@ -38,7 +37,7 @@ export function createHandler(config: Config): Handler {
 				const id = env.ACTOR_DO.idFromString(actorId);
 				const stub = env.ACTOR_DO.get(id);
 
-				// Modify the path tor emove the prefix
+				// Modify the path to remove the prefix
 				const url = new URL(request.url);
 				url.pathname = subpath;
 				const actorRequest = new Request(url.toString(), c.req.raw);

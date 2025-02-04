@@ -1,5 +1,5 @@
 import { Client } from "actor-core/client";
-import { setupLogging } from "@actor-core/common/log";
+import { setupLogging } from "actor-core/log";
 import type ChatRoom from "../src/chat-room.ts";
 
 async function main() {

@@ -22,26 +22,51 @@
       }
     },
     "./client": {
-      "deno": "./src/client.ts",
+      "deno": "./src/client/mod.ts",
       "import": {
-        "types": "./dist/client.d.ts",
-        "default": "./dist/client.js"
+        "types": "./dist/client/mod.d.ts",
+        "default": "./dist/client/mod.js"
       },
       "require": {
-        "types": "./dist/client.d.cts",
-        "default": "./dist/client.cjs"
+        "types": "./dist/client/mod.d.cts",
+        "default": "./dist/client/mod.cjs"
+      }
+    },
+    "./platform": {
+      "deno": "./src/platform.ts",
+      "import": {
+        "types": "./dist/platform.d.ts",
+        "default": "./dist/platform.js"
+      },
+      "require": {
+        "types": "./dist/platform.d.cts",
+        "default": "./dist/platform.cjs"
+      }
+    },
+    "./log": {
+      "deno": "./src/common/log.ts",
+      "import": {
+        "types": "./dist/common/log.d.ts",
+        "default": "./dist/common/log.js"
+      },
+      "require": {
+        "types": "./dist/common/log.d.cts",
+        "default": "./dist/common/log.cjs"
       }
     }
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/mod.ts src/client.ts",
+    "build": "tsup src/mod.ts src/client/mod.ts src/platform.ts src/common/log.ts",
     "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
+  "dependencies": {
+    "cbor-x": "^1.6.0",
+    "on-change": "^5.0.1",
+    "zod": "^3.24.1"
+  },
   "devDependencies": {
-    "@actor-core/actor-runtime": "workspace:*",
-    "@actor-core/client": "workspace:*",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3"
   }

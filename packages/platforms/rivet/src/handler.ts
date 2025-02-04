@@ -1,6 +1,6 @@
-import { setupLogging } from "@actor-core/common/log";
+import { setupLogging } from "actor-core/log";
 import type { ActorContext } from "@rivet-gg/actor-core";
-import type { Actor } from "actor-core";
+import type { Actor, ActorTags } from "actor-core";
 import { upgradeWebSocket } from "hono/deno";
 import { logger } from "./log";
 import type { RivetHandler } from "./util";
@@ -77,7 +77,7 @@ export function createHandler(
 				//	if (server) await server.shutdown();
 				//	Deno.exit(0);
 				//}
-			}, ctx.metadata.actor.tags, ctx.metadata.region.id);
+			}, ctx.metadata.actor.tags as ActorTags, ctx.metadata.region.id);
 
 			const app = actor.__router;
 
