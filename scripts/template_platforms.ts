@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import dedent from "dedent";
-import { stringifyJson } from "./utils";
 import { z } from "zod";
+import { stringifyJson } from "./utils";
 
 const PackageJsonSchema = z.object({
 	name: z.string(),
@@ -45,7 +45,7 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 			builds: {
 				manager: {
 					script: "src/_manager.ts",
-					access: "private"
+					access: "private",
 				},
 			},
 			unstable: {

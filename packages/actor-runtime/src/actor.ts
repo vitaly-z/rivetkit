@@ -1,13 +1,12 @@
-import { setupLogging, type Logger } from "@actor-core/common/log";
-import { listObjectMethods } from "@actor-core/common/reflect";
-import { isJsonSerializable } from "@actor-core/common/utils";
-import type { ActorDriver } from "./driver";
 import * as protoHttpRpc from "@actor-core/actor-protocol/http/rpc";
 import {
 	type ProtocolFormat,
 	ProtocolFormatSchema,
 } from "@actor-core/actor-protocol/ws";
 import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
+import type { Logger } from "@actor-core/common/log";
+import { listObjectMethods } from "@actor-core/common/reflect";
+import { isJsonSerializable } from "@actor-core/common/utils";
 import { Hono, type Context as HonoContext } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { WSContext, WSEvents } from "hono/ws";
@@ -18,6 +17,7 @@ import {
 	type ConnectionId,
 	type OutgoingWebSocketMessage,
 } from "./connection";
+import type { ActorDriver } from "./driver";
 import * as errors from "./errors";
 import { handleMessageEvent } from "./event";
 //import { ActorInspection } from "./inspect";
@@ -163,9 +163,9 @@ export abstract class Actor<
 	}
 
 	async __start(driver: ActorDriver) {
-		console.log('start');
+		console.log("start");
 		this.#driver = driver;
-		console.log('build router');
+		console.log("build router");
 		this.__router = this.#buildRouter();
 
 		//// Create inspector after receiving `ActorDriver`
@@ -372,7 +372,7 @@ export abstract class Actor<
 
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
-		console.log('upgrade ws', this.#driver)
+		console.log("upgrade ws", this.#driver);
 		app.get(
 			"/connect",
 			this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)),

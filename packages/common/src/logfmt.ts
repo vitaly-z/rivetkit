@@ -189,9 +189,7 @@ export function errorToLogEntries(base: string, error: unknown): LogEntry[] {
 			...(LOGGER_CONFIG.enableErrorStack && error.stack
 				? [[`${base}.stack`, formatStackTrace(error.stack)] as LogEntry]
 				: []),
-			...(error.cause
-				? errorToLogEntries(`${base}.cause`, error.cause)
-				: []),
+			...(error.cause ? errorToLogEntries(`${base}.cause`, error.cause) : []),
 		];
 	}
 	return [[base, `${error}`]];

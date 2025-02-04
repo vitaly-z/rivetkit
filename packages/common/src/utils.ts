@@ -36,15 +36,11 @@ export function safeStringify(obj: unknown, maxSize: number) {
 	function replacer(key: string, value: unknown) {
 		if (value === null || value === undefined) return value;
 		const valueSize =
-			typeof value === "string"
-				? value.length
-				: JSON.stringify(value).length;
+			typeof value === "string" ? value.length : JSON.stringify(value).length;
 		size += key.length + valueSize;
 
 		if (size > maxSize) {
-			throw new Error(
-				`JSON object exceeds size limit of ${maxSize} bytes.`,
-			);
+			throw new Error(`JSON object exceeds size limit of ${maxSize} bytes.`);
 		}
 
 		return value;

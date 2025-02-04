@@ -8,12 +8,12 @@ import type {
 	BuildTags,
 	RivetEnvironment,
 } from "@actor-core/common/utils";
-import type { Rivet, RivetClient } from "@rivet-gg/api";
 // @ts-types="../../manager-protocol/dist/query.d.ts"
 import type {
 	ActorQuery,
 	CreateRequest,
 } from "@actor-core/manager-protocol/query";
+import type { Rivet, RivetClient } from "@rivet-gg/api";
 import { logger } from "./log";
 
 export async function queryActor(

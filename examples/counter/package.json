@@ -10,9 +10,7 @@
     "typescript": "^5.5.2"
   },
   "example": {
-    "platforms": [
-      "*"
-    ],
+    "platforms": ["*"],
     "actors": {
       "counter": "src/counter.ts"
     }

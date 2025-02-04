@@ -7,7 +7,7 @@ export default defineConfig({
 	clean: true,
 	dts: true,
 	// Bundle only local dependencies
-	 noExternal: [/@rivet-gg\/.*?/],
+	noExternal: [/@rivet-gg\/.*?/],
 	minify: true,
 	platform: "neutral",
 });

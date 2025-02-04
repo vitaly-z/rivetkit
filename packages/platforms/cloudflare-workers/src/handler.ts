@@ -1,12 +1,12 @@
+import type { Config } from "@actor-core/actor-runtime";
 import { Manager } from "@actor-core/manager-runtime";
+import {
+	type DurableObjectConstructor,
+	createActorDurableObject,
+} from "./actor";
+import type { Env } from "./env";
 import { logger } from "./log";
 import { buildManager } from "./manager";
-import type { Env } from "./env";
-import {
-	createActorDurableObject,
-	type DurableObjectConstructor,
-} from "./actor";
-import type { Config } from "@actor-core/actor-runtime";
 
 export interface Handler {
 	handler: ExportedHandler<Env>;

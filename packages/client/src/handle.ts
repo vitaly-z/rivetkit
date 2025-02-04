@@ -1,8 +1,8 @@
-import { MAX_CONN_PARAMS_SIZE } from "@actor-core/common/network";
-import { assertUnreachable } from "@actor-core/common/utils";
 import type { ProtocolFormat } from "@actor-core/actor-protocol/ws";
 import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
 import type * as wsToServer from "@actor-core/actor-protocol/ws/to_server";
+import { MAX_CONN_PARAMS_SIZE } from "@actor-core/common/network";
+import { assertUnreachable } from "@actor-core/common/utils";
 import * as cbor from "cbor-x";
 import * as errors from "./errors";
 import { logger } from "./log";

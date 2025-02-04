@@ -1,11 +1,11 @@
 import { assertUnreachable } from "@actor-core/common/utils";
 import type { ActorTags, BuildTags } from "@actor-core/common/utils";
-import type { ManagerDriver } from "@actor-core/manager-runtime";
 import type {
 	ActorsRequest,
 	ActorsResponse,
 } from "@actor-core/manager-protocol";
 import type { CreateRequest } from "@actor-core/manager-protocol/query";
+import type { ManagerDriver } from "@actor-core/manager-runtime";
 import { logger } from "./log";
 import { type RivetClientConfig, rivetRequest } from "./rivet_client";
 

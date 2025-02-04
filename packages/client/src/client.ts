@@ -1,5 +1,5 @@
-import type { ActorTags } from "@actor-core/common/utils";
 import type { ProtocolFormat } from "@actor-core/actor-protocol/ws";
+import type { ActorTags } from "@actor-core/common/utils";
 import type {
 	ActorsRequest,
 	ActorsResponse,

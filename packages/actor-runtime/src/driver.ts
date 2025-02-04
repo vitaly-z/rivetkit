@@ -1,4 +1,4 @@
-import { UpgradeWebSocket } from "hono/ws";
+import type { UpgradeWebSocket } from "hono/ws";
 
 export interface LoadOutput {
 	actor: {
@@ -10,7 +10,7 @@ export interface LoadOutput {
 }
 
 export interface ActorDriver {
-	upgradeWebSocket: UpgradeWebSocket<WebSocket>,
+	upgradeWebSocket: UpgradeWebSocket<WebSocket>;
 	//load(): Promise<LoadOutput>;
 
 	// HACK: Clean these up

@@ -1,10 +1,10 @@
+import { setupLogging } from "@actor-core/common/log";
 import { Manager } from "@actor-core/manager-runtime";
 import type { ActorContext } from "@rivet-gg/actor-core";
-import type { RivetHandler } from "./util";
-import { setupLogging } from "@actor-core/common/log";
 import { logger } from "./log";
 import { buildManager } from "./manager";
 import type { RivetClientConfig } from "./rivet_client";
+import type { RivetHandler } from "./util";
 
 export function createManagerHandler(): RivetHandler {
 	const handler = {
