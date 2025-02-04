@@ -10,11 +10,11 @@ import { buildManager } from "./manager";
 
 export interface Handler {
 	handler: ExportedHandler<Env>;
-	Actor: DurableObjectConstructor;
+	ActorHandler: DurableObjectConstructor;
 }
 
 export function createHandler(config: Config): Handler {
-	const Actor = createActorDurableObject(config);
+	const ActorHandler = createActorDurableObject(config);
 
 	const handler = {
 		async fetch(request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -39,11 +39,11 @@ export function createHandler(config: Config): Handler {
 				const stub = env.ACTOR_DO.get(id);
 
 				// Modify the path tor emove the prefix
-				//const url = new URL(request.url);
-				//url.pathname = subpath;
-				//const actorRequest = new Request(url.toString(), c.req.raw);
+				const url = new URL(request.url);
+				url.pathname = subpath;
+				const actorRequest = new Request(url.toString(), c.req.raw);
 
-				return stub.fetch(c.req.raw);
+				return stub.fetch(actorRequest);
 			});
 
 			app.all("*", (c) => {
@@ -54,5 +54,5 @@ export function createHandler(config: Config): Handler {
 		},
 	} satisfies ExportedHandler<Env>;
 
-	return { handler, Actor };
+	return { handler, ActorHandler };
 }

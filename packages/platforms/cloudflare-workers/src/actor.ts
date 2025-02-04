@@ -42,7 +42,7 @@ export function createActorDurableObject(
 	 * 2. Load actor
 	 * 3. Start service requests
 	 */
-	return class ActorAdapter extends DurableObject {
+	return class ActorHandler extends DurableObject {
 		#initialized?: InitializedData;
 		#initializedPromise?: PromiseWithResolvers<void>;
 

@@ -93,48 +93,93 @@ title: Introduction
     	</CodeGroup>
     </Step>
     <Step title="Create Actor">
-		```typescript
-		import { Actor, type Rpc } from "actor-core";
+      <CodeGroup>
 
-		export interface State {
-			messages: { username: string; message: string }[];
-		}
+      ```typescript Actor (TypeScript)
+      import { Actor, type Rpc } from "actor-core";
 
-		export default class ChatRoom extends Actor<State> {
-			// initialize this._state
-			_onInitialize() {
-				return { messages: [] };
-			}
+      export interface State {
+        messages: { username: string; message: string }[];
+      }
 
-			// receive an remote procedure call from the client
-			sendMessage(rpc: Rpc<ChatRoom>, username: string, message: string) {
-				// save message to persistent storage
-				this._state.messages.push({ username, message });
+      export default class ChatRoom extends Actor<State> {
+        // initialize this._state
+        _onInitialize() {
+          return { messages: [] };
+        }
 
-				// broadcast message to all clients
-				this._broadcast("newMessage", username, message);
-			}
-		}
-		```
+        // receive an remote procedure call from the client
+        sendMessage(rpc: Rpc<ChatRoom>, username: string, message: string) {
+          // save message to persistent storage
+          this._state.messages.push({ username, message });
+
+          // broadcast message to all clients
+          this._broadcast("newMessage", username, message);
+        }
+      }
+      ```
+
+      ```javascript Actor (JavaScript)
+      import { Actor } from "actor-core";
+
+      export default class ChatRoom extends Actor {
+        // initialize this._state
+        _onInitialize() {
+          return { messages: [] };
+        }
+
+        // receive an remote procedure call from the client
+        sendMessage(rpc, username, message) {
+          // save message to persistent storage
+          this._state.messages.push({ username, message });
+
+          // broadcast message to all clients
+          this._broadcast("newMessage", username, message);
+        }
+      }
+      ```
+
+      </CodeGroup>
     </Step>
     <Step title="Connect to Actor">
-		```typescript
-		import { Client } from "actor-core/client";
-		import type ChatRoom from "../src/chat-room.ts";
+      <CodeGroup>
 
-		const client = new Client(/* manager endpoint */);
+      ```typescript Browser (TypeScript)
+      import { Client } from "actor-core/client";
+      import type ChatRoom from "../src/chat-room.ts";
 
-		// connect to chat room
-		const chatRoom = await client.get<ChatRoom>({ name: "chat" });
+      const client = new Client(/* manager endpoint */);
 
-		// listen for new messages
-		chatRoom.on("newMessage", (username: string, message: string) =>
-			console.log(`Message from ${username}: ${message}`),
-		);
+      // connect to chat room
+      const chatRoom = await client.get<ChatRoom>({ name: "chat" });
 
-		// send message to room
-		await chatRoom.sendMessage("william", "All the world's a stage.");
-		```
+      // listen for new messages
+      chatRoom.on("newMessage", (username: string, message: string) =>
+        console.log(`Message from ${username}: ${message}`),
+      );
+
+      // send message to room
+      await chatRoom.sendMessage("william", "All the world's a stage.");
+      ```
+
+      ```javascript Browser (JavaScript)
+      import { Client } from "actor-core/client";
+
+      const client = new Client(/* manager endpoint */);
+
+      // connect to chat room
+      const chatRoom = await client.get({ name: "chat" });
+
+      // listen for new messages
+      chatRoom.on("newMessage", (username, message) =>
+        console.log(`Message from ${username}: ${message}`),
+      );
+
+      // send message to room
+      await chatRoom.sendMessage("william", "All the world's a stage.");
+      ```
+
+      </CodeGroup>
     </Step>
 
 </Steps>

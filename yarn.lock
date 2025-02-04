@@ -1189,6 +1189,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chat-room-cloudflare-workers@workspace:examples/chat-simple/platforms/cloudflare-workers":
+  version: 0.0.0-use.local
+  resolution: "chat-room-cloudflare-workers@workspace:examples/chat-simple/platforms/cloudflare-workers"
+  dependencies:
+    "@actor-core/cloudflare-workers": "workspace:*"
+    "@cloudflare/workers-types": "npm:^4.20250129.0"
+    actor-core: "workspace:*"
+    typescript: "npm:^5.5.2"
+    wrangler: "npm:^3.101.0"
+  languageName: unknown
+  linkType: soft
+
+"chat-room-rivet@workspace:examples/chat-simple/platforms/rivet":
+  version: 0.0.0-use.local
+  resolution: "chat-room-rivet@workspace:examples/chat-simple/platforms/rivet"
+  dependencies:
+    "@actor-core/rivet": "workspace:*"
+    actor-core: "workspace:*"
+    typescript: "npm:^5.5.2"
+  languageName: unknown
+  linkType: soft
+
+"chat-room@workspace:examples/chat-simple":
+  version: 0.0.0-use.local
+  resolution: "chat-room@workspace:examples/chat-simple"
+  dependencies:
+    actor-core: "workspace:*"
+    typescript: "npm:^5.5.2"
+  languageName: unknown
+  linkType: soft
+
 "chokidar@npm:^4.0.1":
   version: 4.0.3
   resolution: "chokidar@npm:4.0.3"

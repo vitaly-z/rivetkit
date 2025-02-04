@@ -1,4 +1,4 @@
-import { Actor } from "actor-core";
+import { Actor, type Rpc } from "actor-core";
 
 export interface State {
 	count: number;
@@ -9,8 +9,9 @@ export default class Counter extends Actor<State> {
 		return { count: 0 };
 	}
 
-	increment() {
-		this._state.count += 1;
+	increment(rpc: Rpc<Counter>, x: number) {
+		this._state.count += x;
+		this._broadcast("newCount", this._state.count);
 		return this._state.count;
 	}
 }

@@ -87,6 +87,9 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 			"cf-typegen": "wrangler types",
 		});
 
+		const actorImports = Object.entries(input.packageJson.example.actors).map(([k, v]) => `import ${k.replace("-", "_")} from "../../../${v}";`).join("\n");
+		const actorList = Object.entries(input.packageJson.example.actors).map(([k, v]) => `"${k}": ${k.replace("-", "_")}`)
+
 		return {
 			files: {
 				"package.json": stringifyJson(input.packageJson),
@@ -96,14 +99,14 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 					compatibility_date: "2025-01-29",
 					migrations: [
 						{
-							new_classes: ["Actor"],
+							new_classes: ["ActorHandler"],
 							tag: "v1",
 						},
 					],
 					durable_objects: {
 						bindings: [
 							{
-								class_name: "Actor",
+								class_name: "ActorHandler",
 								name: "ACTOR_DO",
 							},
 						],
@@ -120,11 +123,13 @@ const PLATFORMS: Record<string, PlatformConfigFn> = {
 				}),
 				"src/index.ts": dedent`
 				import { createHandler } from "@actor-core/cloudflare-workers";
-				import config from "../../../src/config";
+				${actorImports}
 
-				const { Actor, handler } = createHandler(config);
+				const { handler, ActorHandler } = createHandler({
+					actors: { ${actorList} }
+				});
 
-				export { handler as default, Actor };
+				export { handler as default, ActorHandler };
                 `,
 			},
 		};
