@@ -10,17 +10,17 @@ fi
 
 # Step 1: Bump version for all packages
 echo "Setting version to $VERSION..."
-yarn workspaces foreach -pt version $VERSION --no-git-tag-version
+yarn workspaces foreach -A -t version $VERSION
 
 # Step 2: Commit the version changes
-# git add .
-# git commit -m "chore: release version $VERSION"
-# git tag "v$VERSION"
-# git push && git push --tags
+git add .
+git commit -m "chore: release version $VERSION"
+git tag "v$VERSION"
+git push && git push --tags
 
-# Step 3: Publish specified packages
-echo "Publishing specified packages..."
-yarn workspaces foreach -pt --topological-dev --include actor-core,@actor-core/cloudflare-workers,@actor-core/rivet publish --access public --new-version $VERSION
+# Step 3: Publish packages
+echo "Publishing packages..."
+yarn workspaces foreach -A -t --include actor-core --include @actor-core/cloudflare-workers --include @actor-core/rivet npm publish --access public --tolerate-republish
 
 echo "✅ Published specified packages at version $VERSION"
 

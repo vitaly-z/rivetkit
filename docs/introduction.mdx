@@ -19,19 +19,17 @@ title: Introduction
 </p>
 
 <CardGroup cols={2}>
-  <Card title="Persistent & In-Memory State" icon="floppy-disk">
-    Supports storing actor state in-memory that's automatically persisted for
-    high-performance workloads.
+  <Card title="Durable, In-Memory State" icon="floppy-disk">
+	Fast in-memory access with built-in durability—no external databases or caches needed.
   </Card>
-  <Card title="High-Performance" icon="bolt">
-    Build realtime or multiplayer applications on top of actors.
+  <Card title="Ultra-Fast State Updates" icon="bolt">
+	Real-time state updates with ultra-low latency, powered by co-locating compute and data.
   </Card>
-  <Card title="Batteries Included" icon="battery-bolt">
-    State, RPC, events, scheduling, multiplayer, and more included out of the box.
+  <Card title="RPC, Events, Scheduling, & Multiplayer" icon="battery-bolt">
+    Integrated support for state, RPC, events, scheduling, and multiplayer — no extra boilerplate cdoe needed.
   </Card>
   <Card title="Serverless & Scalable" icon="microchip">
-    Built on your serverless runtime of choice to make deploying, scaling, and
-    cost management easy.
+    Effortless scaling, scale-to-zero, and easy deployments on any serverless runtime.
   </Card>
 </CardGroup>
 
@@ -95,40 +93,48 @@ title: Introduction
     	</CodeGroup>
     </Step>
     <Step title="Create Actor">
-    	```typescript
-    	import { Actor } from "actor-core";
+		```typescript
+		import { Actor, type Rpc } from "actor-core";
 
-    	export interface State {
-    		count: number;
-    	}
+		export interface State {
+			messages: { username: string; message: string }[];
+		}
 
-    	export default class Counter extends Actor<State> {
-    		_onInitialize() {
-    			return { count: 0 };
-    		}
+		export default class ChatRoom extends Actor<State> {
+			// initialize this._state
+			_onInitialize() {
+				return { messages: [] };
+			}
 
-    		increment() {
-    			this._state.count += 1;
-    			return this._state.count;
-    		}
-    	}
-    	```
+			// receive an remote procedure call from the client
+			sendMessage(rpc: Rpc<ChatRoom>, username: string, message: string) {
+				// save message to persistent storage
+				this._state.messages.push({ username, message });
+
+				// broadcast message to all clients
+				this._broadcast("newMessage", username, message);
+			}
+		}
+		```
     </Step>
     <Step title="Connect to Actor">
-    	```typescript
-    	const client = new Client("http://localhost:8787");
+		```typescript
+		import { Client } from "actor-core/client";
+		import type ChatRoom from "../src/chat-room.ts";
 
-    	const counter = await client.get<Counter>({ name: "counter" });
+		const client = new Client(/* manager endpoint */);
 
-    	counter.on("countUpdate", (count: number) =>
-    		console.log("New count:", count),
-    	);
+		// connect to chat room
+		const chatRoom = await client.get<ChatRoom>({ name: "chat" });
 
-    	const count1 = await counter.increment(1);
-    	console.log(count1);
-    	const count2 = await counter.increment(2);
-    	console.log(count2);
-    	```
+		// listen for new messages
+		chatRoom.on("newMessage", (username: string, message: string) =>
+			console.log(`Message from ${username}: ${message}`),
+		);
+
+		// send message to room
+		await chatRoom.sendMessage("william", "All the world's a stage.");
+		```
     </Step>
 
 </Steps>

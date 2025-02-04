@@ -1,8 +1,13 @@
 {
   "name": "@actor-core/manager-protocol",
   "private": true,
-  "version": "25.1.0-rc.1",
-  "files": ["dist", "src", "deno.json", "package.json"],
+  "version": "0.0.1",
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -75,37 +75,47 @@ bun add actor-core
 ### Step 2: Create an Actor
 
 ```typescript
-import { Actor } from "actor-core";
+import { Actor, type Rpc } from "actor-core";
 
 export interface State {
-  count: number;
+    messages: { username: string; message: string }[];
 }
 
-export default class Counter extends Actor<State> {
-  _onInitialize() {
-    return { count: 0 };
-  }
+export default class ChatRoom extends Actor<State> {
+    // initialize this._state
+    _onInitialize() {
+        return { messages: [] };
+    }
 
-  increment() {
-    this._state.count += 1;
-    return this._state.count;
-  }
+    // receive an remote procedure call from the client
+    sendMessage(rpc: Rpc<ChatRoom>, username: string, message: string) {
+        // save message to persistent storage
+        this._state.messages.push({ username, message });
+
+        // broadcast message to all clients
+        this._broadcast("newMessage", username, message);
+    }
 }
 ```
 
 ### Step 3: Connect to Actor
 
 ```typescript
-const client = new Client("http://localhost:8787");
+import { Client } from "actor-core/client";
+import type ChatRoom from "../src/chat-room.ts";
 
-const counter = await client.get<Counter>({ name: "counter" });
+const client = new Client(/* manager endpoint */);
 
-counter.on("countUpdate", (count: number) => console.log("New count:", count));
+// connect to chat room
+const chatRoom = await client.get<ChatRoom>({ name: "chat" });
 
-const count1 = await counter.increment(1);
-console.log(count1);
-const count2 = await counter.increment(2);
-console.log(count2);
+// listen for new messages
+chatRoom.on("newMessage", (username: string, message: string) =>
+    console.log(`Message from ${username}: ${message}`),
+);
+
+// send message to room
+await chatRoom.sendMessage("william", "All the world's a stage.");
 ```
 
 ## Community & Support

@@ -1,8 +1,13 @@
 {
   "name": "@actor-core/manager-runtime",
-  "version": "25.1.0-rc.1",
+  "version": "0.0.1",
   "license": "Apache-2.0",
-  "files": ["dist", "src", "deno.json", "package.json"],
+  "files": [
+    "dist",
+    "src",
+    "deno.json",
+    "package.json"
+  ],
   "type": "module",
   "private": true,
   "exports": {

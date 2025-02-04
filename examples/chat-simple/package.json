@@ -1,5 +1,5 @@
 {
-  "name": "counter",
+  "name": "chat-room",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
       "*"
     ],
     "actors": {
-      "counter": "src/counter.ts"
+      "chat-room": "src/chat-room.ts"
     }
   }
 }
