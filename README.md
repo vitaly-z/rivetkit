@@ -7,48 +7,72 @@
   </a>
 </p>
 
-<h3 align="center">The Stateful Serverless Framework.</h3>
+<h3 align="center">The Stateful Serverless Framework</h3>
 <h4 align="center">
-  OpenCore is the stateful serverless framework to build AI agents, realtime apps, game servers, and more.<br/>
-  Supports Rivet, Cloudflare Workers,Supabase, and Vercel.
+  Build AI agents, realtime apps, game servers, and more.<br/>
+  Supports Rivet, Cloudflare Workers, Supabase, and Vercel.
 </h4>
 <p align="center">
   <!-- <a href="https://github.com/rivet-gg/rivet/graphs/commit-activity"><img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/rivet-gg/rivet?style=flat-square"/></a> -->
   <a href="https://github.com/orgs/rivet-gg/discussions"><img alt="GitHub Discussions" src="https://img.shields.io/github/discussions/rivet-gg/rivet?logo=github&logoColor=fff"></a>
+    <a href="https://rivet.gg/discord"><img alt="Discord" src="https://img.shields.io/discord/822914074136018994?color=7389D8&label&logo=discord&logoColor=ffffff"/></a>
+   <a href="https://twitter.com/rivet_gg"><img src="https://img.shields.io/twitter/follow/rivet_gg" alt="Rivet Twitter" /></a>
+   <a href="https://bsky.app/profile/rivet.gg"><img src="https://img.shields.io/badge/Follow%20%40rivet.gg-4C1?color=0285FF&logo=bluesky&logoColor=ffffff" alt="Rivet Bluesky" /></a>
   <a href="/LICENSE"><img alt="License Apache-2.0" src="https://img.shields.io/github/license/rivet-gg/rivet?logo=open-source-initiative&logoColor=white"></a>
 </p>
 
 ![Code snippets](./media/code.png)
 
-## Features
+## Intro
 
--   [**State & Persistence**](https://actorcore.dev/concepts/state): State that feels like memory but works like storage. Ideal for dynamic, fast-moving apps.
--   [**Remote Procedure Calls**](https://rivet.gg/docs/rpc): Lightweight messaging built for speed. Complete client/server type safety included.
--   [**Runs Forever, Sleeps When Idle**](https://rivet.gg/docs/lifecycle): Always available, sleeps on network inactivity or timeouts, and wakes instantly on demand.
--   [**Edge Networking**](https://rivet.gg/docs/edge): Automatically distribute your applications near your users for ultra-low latency.
--   [**Fault Tolerance**](https://rivet.gg/docs/fault-tolerance): Ensure application & state resilience through crashes with zero downtime.
+### Features
+
+- **Batteries Included**: State, RPC, events, & scheduling included out of the box. :battery_bolt:
+- **Persistent & In-Memory**: Supports storing actor state in-memory that's automatically persisted for high-performance workloads. :floppy_disk:
+- **Multiplayer & Realtime**: Build realtime or multiplayer applications on top of actors. :floppy_disk:
+- **Serverless & Scalable**: Built on your serverless runtime of choice to make deploying, scaling, and cost management easy. :microchip:
+
+### Supported Platforms
+
+- [**Cloudflare Workers**](https://actorcore.dev/platforms/cloudflare-workers) - Using Durable Objects
+- [**Rivet**](https://actorcore.dev/platforms/rivet) - Managed ActorCore platform
+- [**Supabase Edge Functions**](https://actorcore.dev/platforms/supabase) - Serverless platform
+- [**Vercel**](https://actorcore.dev/platforms/vercel) - Serverless platform
+
+### Use Cases
+
+ActorCore is ideal for applications that need coordinated state across multiple clients. Some common use cases include:
+
+- AI agents
+- Game Servers
+- Collaborative applications
+- Local-first apps
+- Discord Activities
+- Chat Apps
+- Yjs Sync & Storage
+- Sandboxed Code Execution
+
+By handling the complexities of state management and coordination, ActorCore lets you focus on building your application logic rather than wrestling with distributed systems primitives.
 
 ## Getting Started
 
-### Installation
+### Step 1: Installation
 
 ```bash npm
+# npm
 npm install actor-core
-```
 
-```bash yarn
-yarn add actor-core
-```
-
-```bash pnpm
+# pnpm
 pnpm install actor-core
-```
 
-```bash bun
+# Yarn
+yarn add actor-core
+
+# Bun
 bun install actor-core
 ```
 
-### Create an Actor
+### Step 2: Create an Actor
 
 ```typescript
 import { Actor } from "actor-core";
@@ -69,16 +93,14 @@ export default class Counter extends Actor<State> {
 }
 ```
 
-### Connect to Actor
+### Step 3: Connect to Actor
 
 ```typescript
 const client = new Client("http://localhost:8787");
 
 const counter = await client.get<Counter>({ name: "counter" });
 
-counter.on("countUpdate", (count: number) =>
-  console.log("New count:", count),
-);
+counter.on("countUpdate", (count: number) => console.log("New count:", count));
 
 const count1 = await counter.increment(1);
 console.log(count1);
@@ -86,57 +108,14 @@ const count2 = await counter.increment(2);
 console.log(count2);
 ```
 
-### Supported Platforms
-
-- [**Cloudflare Workers**](https://actorcore.dev/platforms/cloudflare-workers) - Using Durable Objects
-- [**Rivet**](https://actorcore.dev/platforms/rivet) - Managed ActorCore platform
-- [**Supabase Edge Functions**](https://actorcore.dev/platforms/supabase) - Serverless platform
-- [**Vercel**](https://actorcore.dev/platforms/vercel) - Serverless platform
-
-## Use Cases
-
-ActorCore is ideal for applications that need coordinated state across multiple clients. Some common use cases include:
-
--   AI agents
--   Game Servers
--   Collaborative applications
--   Local-first apps
--   Discord Activities
--   Chat Apps
--   Yjs Sync & Storage
--   Sandboxed Code Execution
-
-By handling the complexities of state management and coordination, ActorCore lets you focus on building your application logic rather than wrestling with distributed systems primitives.
-
 ## Community & Support
--   File bug reports in [**GitHub Issues**](https://github.com/rivet-gg/rivet/issues)
--   Post questions & ideas in [**GitHub Discussions**](https://github.com/orgs/rivet-gg/discussions)
+
+-   Join our [**Discord**](https://rivet.gg/discord)
+-   Follow us on [**X**](https://x.com/rivet_gg)
+-   Follow us on [**Bluesky**](https://bsky.app/profile/rivet-gg.bsky.social)
+- File bug reports in [**GitHub Issues**](https://github.com/rivet-gg/ActorCore/issues)
+- Post questions & ideas in [**GitHub Discussions**](https://github.com/orgs/rivet-gg/discussions)
 
 ## License
 
 Apache 2.0
-
-## Project layout
-
-```
-docker/                      Docker-related files
-    dev-full/                Full development environment setup
-    monolith/                Monolithic Docker setup
-    universal/               Universal multi-stage builder image
-docs/                        Documentation
-docs-internal/               Internal documentation
-examples/                    Example projects
-frontend/                    Rivet Hub & other frontend components
-packages/                    Project packages
-    api/                     API package
-    common/                  Common utilities
-    infra/                   Infrastructure-related code
-    services/                Service implementations
-    toolchain/               Toolchain-related code
-resources/                   Misc resources supporting Rivet
-scripts/                     Scripts for various tasks
-sdks/                        SDKs
-    actor/                   Actor SDK
-    api/                     Low-level SDK for calling API
-site/                        Website & documentation
-```

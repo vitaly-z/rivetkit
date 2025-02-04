@@ -12,44 +12,61 @@ title: Introduction
   src="/images/hero-dark.svg"
   alt="Hero Dark"
 />
-The stateful serverless framework for AI agents, realtime apps, game servers, and more. Supports Rivet, Cloudflare Workers,Supabase, and Vercel.
+
+<p class="text-center">
+  The stateful serverless framework for AI agents, realtime apps, game servers,
+  and more.
+</p>
 
 <CardGroup cols={2}>
-  <Card
-    title="State, RPC, Events, & Scheduling"
-    icon="palette"
-  >
-    TODO
+  <Card title="Batteries Included" icon="battery-bolt">
+    State, RPC, events, & scheduling included out of the box.
   </Card>
-  <Card
-    title="Fast as fuck"
-    icon="code"
-  >
-    TODO
+  <Card title="Persistent & In-Memory" icon="floppy-disk">
+    Supports storing actor state in-memory that's automatically persisted for
+    high-performance workloads.
   </Card>
-  <Card
-    title="Works with your serverless runtime"
-    icon="screwdriver-wrench"
-  >
-    TODO
+  <Card title="Multiplayer & Realtime" icon="floppy-disk">
+    Build realtime or multiplayer applications on top of actors.
   </Card>
-  <Card
-    title="Scalable Realtime"
-    icon="stars"
-  >
-    TODO
+  <Card title="Serverless & Scalable" icon="microchip">
+    Built on your serverless runtime of choice to make deploying, scaling, and
+    cost management easy.
   </Card>
 </CardGroup>
 
 <div class="text-center">
-	<h3>Supports</h3>
+  <h3>Supports</h3>
 </div>
 
 <CardGroup>
-	<Card title="Cloudflare Workers (Durable Objects)" href="/getting-started/cloudflare-workers" horizontal={true} />
-	<Card title="Rivet Actors" href="/getting-started/rivet" horizontal={true} />
-	<Card title="Supabase Edge Functions" href="/getting-started/supabase" horizontal={true} />
-	<Card title="Vercel Functions" href="/getting-started/vercel" horizontal={true} />
+  <Card title="Rivet Actors" href="/getting-started/rivet" horizontal={true} />
+  <Card
+    title="Cloudflare Workers"
+    href="/getting-started/cloudflare-workers"
+    horizontal={true}
+  />
+  <Card
+    title="Supabase Edge Functions"
+    href="/getting-started/supabase"
+    horizontal={true}
+  />
+  <Card
+    title="Vercel Functions"
+    href="/getting-started/vercel"
+    horizontal={true}
+  />
+</CardGroup>
+
+<div class="text-center">
+  <h3>Features</h3>
+</div>
+
+<CardGroup>
+  <Card title="State" href="/" icon="floppy-disk" horizontal={true} />
+  <Card title="RPC" href="/" icon="code" horizontal={true} />
+  <Card title="Events" href="/" icon="tower-cell" horizontal={true} />
+  <Card title="Scheduling" href="/" icon="clock" horizontal={true} />
 </CardGroup>
 
 ## Quickstart
@@ -61,53 +78,54 @@ The stateful serverless framework for AI agents, realtime apps, game servers, an
 			npm install actor-core
 			```
 
-			```sh pnpm
-			pnpm install actor-core
-			```
+    		```sh pnpm
+    		pnpm install actor-core
+    		```
 
-			```sh bun
-			bun install actor-core
-			```
+    		```sh bun
+    		bun install actor-core
+    		```
 
-			```sh yarn
-			yarn add actor-core
-			```
-		</CodeGroup>
-	</Step>
-	<Step title="Create Actor">
-		```typescript
-		import { Actor } from "actor-core";
+    		```sh yarn
+    		yarn add actor-core
+    		```
+    	</CodeGroup>
+    </Step>
+    <Step title="Create Actor">
+    	```typescript
+    	import { Actor } from "actor-core";
 
-		export interface State {
-			count: number;
-		}
+    	export interface State {
+    		count: number;
+    	}
 
-		export default class Counter extends Actor<State> {
-			_onInitialize() {
-				return { count: 0 };
-			}
+    	export default class Counter extends Actor<State> {
+    		_onInitialize() {
+    			return { count: 0 };
+    		}
 
-			increment() {
-				this._state.count += 1;
-				return this._state.count;
-			}
-		}
-		```
-	</Step>
-	<Step title="Connect to Actor">
-		```typescript
-		const client = new Client("http://localhost:8787");
+    		increment() {
+    			this._state.count += 1;
+    			return this._state.count;
+    		}
+    	}
+    	```
+    </Step>
+    <Step title="Connect to Actor">
+    	```typescript
+    	const client = new Client("http://localhost:8787");
 
-		const counter = await client.get<Counter>({ name: "counter" });
+    	const counter = await client.get<Counter>({ name: "counter" });
 
-		counter.on("countUpdate", (count: number) =>
-			console.log("New count:", count),
-		);
+    	counter.on("countUpdate", (count: number) =>
+    		console.log("New count:", count),
+    	);
 
-		const count1 = await counter.increment(1);
-		console.log(count1);
-		const count2 = await counter.increment(2);
-		console.log(count2);
-		```
-	</Step>
+    	const count1 = await counter.increment(1);
+    	console.log(count1);
+    	const count2 = await counter.increment(2);
+    	console.log(count2);
+    	```
+    </Step>
+
 </Steps>

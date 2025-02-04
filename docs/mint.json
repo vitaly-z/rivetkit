@@ -34,8 +34,8 @@
       "group": "Get Started",
       "pages": [
         "introduction",
-        "platforms/cloudflare-workers",
         "platforms/rivet",
+        "platforms/cloudflare-workers",
         "platforms/supabase",
         "platforms/vercel"
       ]
