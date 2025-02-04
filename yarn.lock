@@ -1032,6 +1032,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"actorcore@workspace:packages/misc/actorcore":
+  version: 0.0.0-use.local
+  resolution: "actorcore@workspace:packages/misc/actorcore"
+  languageName: unknown
+  linkType: soft
+
 "agent-base@npm:^7.1.0, agent-base@npm:^7.1.2":
   version: 7.1.3
   resolution: "agent-base@npm:7.1.3"
