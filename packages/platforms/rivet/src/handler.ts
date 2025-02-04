@@ -47,21 +47,47 @@ export function createHandler(
 				upgradeWebSocket,
 
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				async kvPut(key: any, value: any) {
-					await ctx.kv.put(key, value);
+				async kvGet(key: any): Promise<any> {
+					return await ctx.kv.get(key);
 				},
+
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 				async kvGetBatch(key: any[]) {
 					const response = await ctx.kv.getBatch(key);
 					const resultList = key.map((key) => {
+						// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 						return [key, response.get(key)] as [any, any];
 					});
 					return resultList;
 				},
+
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				async kvPut(key: any, value: any) {
+					await ctx.kv.put(key, value);
+				},
+
 				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 				async kvPutBatch(key: [any, any][]) {
 					await ctx.kv.putBatch(new Map(key));
 				},
+
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				async kvDelete(key: any) {
+					await ctx.kv.delete(key);
+				},
+
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				async kvDeleteBatch(keys: any[]) {
+					await ctx.kv.deleteBatch(keys);
+				},
+
+				async setAlarm(timestamp: number): Promise<void> {
+					const timeout = Math.max(0, timestamp - Date.now());
+					setTimeout(() => {
+						actor.__onAlarm();
+					}, timeout);
+				},
+
 				//async onShutdown() {
 				//	if (server) await server.shutdown();
 				//	Deno.exit(0);

@@ -20,25 +20,11 @@ import {
 import type { ActorDriver } from "./driver";
 import * as errors from "./errors";
 import { handleMessageEvent } from "./event";
-//import { ActorInspection } from "./inspect";
-//import type { Kv } from "./kv";
 import { instanceLogger, logger } from "./log";
 import { Rpc } from "./rpc";
 import { Lock, deadline } from "./utils";
-
-const KEYS = {
-	SCHEDULE: {
-		SCHEDULE: ["actor", "schedule", "schedule"],
-		EVENT_PREFIX: ["actor", "schedule", "event"],
-		event(id: string): string[] {
-			return [...this.EVENT_PREFIX, id];
-		},
-	},
-	STATE: {
-		INITIALIZED: ["actor", "state", "initialized"],
-		DATA: ["actor", "state", "data"],
-	},
-};
+import { Schedule } from "./schedule";
+import { KEYS } from "./keys";
 
 /**
  * Options for the `_onBeforeConnect` method.
@@ -144,12 +130,12 @@ export abstract class Actor<
 	#connections = new Map<ConnectionId, Connection<this>>();
 	#eventSubscriptions = new Map<string, Set<Connection<this>>>();
 
+	#schedule!: Schedule;
+
 	#lastSaveTime = 0;
 	#pendingSaveTimeout?: number | NodeJS.Timeout;
 
 	public __router!: Hono;
-
-	//#inspection!: ActorInspection<this>;
 
 	/**
 	 * This constructor should never be used directly.
@@ -165,27 +151,10 @@ export abstract class Actor<
 	async __start(driver: ActorDriver) {
 		console.log("start");
 		this.#driver = driver;
+		this.#schedule = new Schedule(this, driver);
+
 		console.log("build router");
 		this.__router = this.#buildRouter();
-
-		//// Create inspector after receiving `ActorDriver`
-		//this.#inspection = new ActorInspection(
-		//	this.#config,
-		//	this.#driver.metadata,
-		//	{
-		//		state: () => ({
-		//			enabled: this.#stateEnabled,
-		//			state: this.#stateProxy,
-		//		}),
-		//		connections: () => this.#connections.values(),
-		//		rpcs: () => this.#rpcNames,
-		//		setState: (state) => {
-		//			this.#validateStateEnabled();
-		//			this.#setStateWithoutChange(state);
-		//		},
-		//		onRpcCall: (ctx, rpc, args) => this.#executeRpc(ctx, rpc, args),
-		//	},
-		//);
 
 		// Initialize server
 		//
@@ -200,6 +169,10 @@ export abstract class Actor<
 
 		logger().info("ready");
 		this.#ready = true;
+	}
+
+	async __onAlarm() {
+		await this.#schedule.__onAlarm();
 	}
 
 	get #stateEnabled() {
@@ -303,7 +276,6 @@ export abstract class Actor<
 					throw new errors.InvalidStateType({ path });
 				}
 				this.#stateChanged = true;
-				//this.#inspection.notifyStateChanged();
 
 				// Call onStateChange if it exists
 				if (this._onStateChange && this.#ready) {
@@ -377,25 +349,6 @@ export abstract class Actor<
 			"/connect",
 			this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)),
 		);
-
-		//app.get(
-		//	"/__inspect/connect",
-		//	// cors({
-		//	// 	// TODO: Fetch configuration from config, manager, or env?
-		//	// 	origin: (origin, c) => {
-		//	// 		return [
-		//	// 			"http://localhost:5080",
-		//	// 			"https://hub.rivet.gg",
-		//	// 		].includes(origin) ||
-		//	// 			origin.endsWith(".rivet-hub-7jb.pages.dev")
-		//	// 			? origin
-		//	// 			: "https://hub.rivet.gg";
-		//	// 	},
-		//	// }),
-		//	upgradeWebSocket((_c) => {
-		//		this.#inspection.handleWebsocketConnection(c),
-		//	}),
-		//);
 
 		app.all("*", (c) => {
 			return c.text(`Not Found (actor) (${c.req.path})`, 404);
@@ -637,8 +590,6 @@ export abstract class Actor<
 	// MARK: Events
 	#addSubscription(eventName: string, connection: Connection<this>) {
 		connection.subscriptions.add(eventName);
-		//this.#inspection.notifyConnectionsChanged();
-
 		let subscribers = this.#eventSubscriptions.get(eventName);
 		if (!subscribers) {
 			subscribers = new Set();
@@ -649,8 +600,6 @@ export abstract class Actor<
 
 	#removeSubscription(eventName: string, connection: Connection<this>) {
 		connection.subscriptions.delete(eventName);
-		//this.#inspection.notifyConnectionsChanged();
-
 		const subscribers = this.#eventSubscriptions.get(eventName);
 		if (subscribers) {
 			subscribers.delete(connection);
@@ -855,9 +804,7 @@ export abstract class Actor<
 	 * @param connection - The connection object.
 	 * @see {@link https://rivet.gg/docs/lifecycle|Lifecycle Documentation}
 	 */
-	protected _onConnect?(connection: Connection<this>): void | Promise<void> {
-		//this.#inspection.notifyConnectionsChanged();
-	}
+	protected _onConnect?(connection: Connection<this>): void | Promise<void> {}
 
 	/**
 	 * Called when a client disconnects from the actor. Use this to clean up any connection-specific resources.
@@ -865,9 +812,9 @@ export abstract class Actor<
 	 * @param connection - The connection object.
 	 * @see {@link https://rivet.gg/docs/lifecycle|Lifecycle Documentation}
 	 */
-	protected _onDisconnect?(connection: Connection<this>): void | Promise<void> {
-		//this.#inspection.notifyConnectionsChanged();
-	}
+	protected _onDisconnect?(
+		connection: Connection<this>,
+	): void | Promise<void> {}
 
 	// MARK: Exposed methods
 	/**
@@ -895,6 +842,13 @@ export abstract class Actor<
 	 */
 	protected get _log(): Logger {
 		return instanceLogger();
+	}
+
+	/**
+	 * Gets the scheduler for this actor.
+	 */
+	protected get _schedule(): Schedule {
+		return this.#schedule;
 	}
 
 	/**

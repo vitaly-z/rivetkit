@@ -14,9 +14,15 @@ export interface ActorDriver {
 	//load(): Promise<LoadOutput>;
 
 	// HACK: Clean these up
-	kvPut(key: any, value: any): Promise<void>;
+	kvGet(key: any): Promise<any>;
 	kvGetBatch(key: any[]): Promise<[any, any][]>;
+	kvPut(key: any, value: any): Promise<void>;
 	kvPutBatch(key: [any, any][]): Promise<void>;
+	kvDelete(key: any): Promise<void>;
+	kvDeleteBatch(key: any[]): Promise<void>;
+
+	// Schedule
+	setAlarm(timestamp: number): Promise<void>;
 
 	// TODO:
 	//destroy(): Promise<void>;

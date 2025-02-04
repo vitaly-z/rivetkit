@@ -141,6 +141,11 @@ export function createActorDurableObject(
 			//	webSocket: client,
 			//});
 		}
+
+		async alarm(): Promise<void> {
+			const actor = await this.#loadActor();
+			await actor.__onAlarm();
+		}
 	};
 }
 
@@ -157,9 +162,10 @@ function buildActorDriver(ctx: DurableObjectState): ActorDriver {
 	return {
 		upgradeWebSocket,
 
-		async kvPut(key: any, value: any): Promise<void> {
-			await ctx.storage.put(serializeKey(key), value);
+		async kvGet(key: any): Promise<any> {
+			return await ctx.storage.get(serializeKey(key));
 		},
+
 		async kvGetBatch(keys: any[]): Promise<[any, any][]> {
 			const resultMap = await ctx.storage.get(keys.map(serializeKey));
 			const resultList = keys.map((key) => {
@@ -167,10 +173,27 @@ function buildActorDriver(ctx: DurableObjectState): ActorDriver {
 			});
 			return resultList;
 		},
+
+		async kvPut(key: any, value: any): Promise<void> {
+			await ctx.storage.put(serializeKey(key), value);
+		},
+
 		async kvPutBatch(keys: [any, any][]): Promise<void> {
 			await ctx.storage.put(
 				Object.fromEntries(keys.map(([k, v]) => [serializeKey(k), v])),
 			);
+		},
+
+		async kvDelete(key: any): Promise<void> {
+			await ctx.storage.delete(serializeKey(key));
+		},
+
+		async kvDeleteBatch(keys: any[]): Promise<void> {
+			await ctx.storage.delete(keys.map(serializeKey));
+		},
+
+		async setAlarm(timestamp: number): Promise<void> {
+			await ctx.storage.setAlarm(timestamp);
 		},
 	};
 }
