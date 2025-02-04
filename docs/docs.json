@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "ActorCore",
-  "description": "The stateful serverless framework for AI agents, realtime apps, game servers, and more. Supports  Cloudflare Workers, Rivet, Supabase, and Vercel.",
+  "description": "The stateful serverless framework for AI agents, realtime apps, game servers, and more. Supports  Cloudflare Workers and Rivet.",
   "theme": "mint",
   "logo": {
     "dark": "/logo/dark.svg",

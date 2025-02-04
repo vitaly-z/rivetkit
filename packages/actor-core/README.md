@@ -4,7 +4,7 @@ _The Stateful Serverless Framework_
 
 Build AI agents, realtime apps, game servers, and more.
 
-Supports Cloudflare Workers, Rivet, Supabase, and Vercel.
+Supports Cloudflare Workers and Rivet.
 
 ## Resources
 

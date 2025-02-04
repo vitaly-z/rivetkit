@@ -10,7 +10,7 @@
 <h3 align="center">The Stateful Serverless Framework</h3>
 <h4 align="center">
   Build AI agents, realtime apps, game servers, and more.<br/>
-  Supports Cloudflare Workers, Rivet, Supabase, and Vercel.
+  Supports Cloudflare Workers and Rivet.
 </h4>
 <p align="center">
   <!-- <a href="https://github.com/rivet-gg/rivet/graphs/commit-activity"><img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/rivet-gg/rivet?style=flat-square"/></a> -->
@@ -36,8 +36,8 @@
 
 - [**Cloudflare Workers**](https://actorcore.dev/platforms/cloudflare-workers) - Using Durable Objects
 - [**Rivet**](https://actorcore.dev/platforms/rivet) - Managed ActorCore platform
-- [**Supabase Edge Functions**](https://actorcore.dev/platforms/supabase) - Serverless platform
-- [**Vercel**](https://actorcore.dev/platforms/vercel) - Serverless platform
+<!--- [**Supabase Edge Functions**](https://actorcore.dev/platforms/supabase) - Serverless platform-->
+<!--- [**Vercel**](https://actorcore.dev/platforms/vercel) - Serverless platform-->
 
 ### Use Cases
 
