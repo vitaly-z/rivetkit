@@ -26,7 +26,7 @@ The following examples show different ways tags can be used to organize actors:
 
 <CodeGroup>
 
-```typescript {{ "title": "Party Code" }}
+```typescript Party Code
 // Connect to a game server using a party code
 const gameServer = await client.get<GameServer>({
   name: 'game_server',
@@ -34,7 +34,7 @@ const gameServer = await client.get<GameServer>({
 });
 ```
 
-```typescript {{ "title": "Chat Room Channel" }}
+```typescript Chat Room Channel
 // Connect to a specific chat room channel
 const chatRoom = await client.get<ChatRoom>({
   name: 'chat_room',
@@ -42,7 +42,7 @@ const chatRoom = await client.get<ChatRoom>({
 });
 ```
 
-```typescript {{ "title": "User ID" }}
+```typescript User ID
 // Connect to a user's profile actor using their database ID
 const userProfile = await client.get<UserProfile>({
   name: 'user_profile',
@@ -50,7 +50,7 @@ const userProfile = await client.get<UserProfile>({
 });
 ```
 
-```typescript {{ "title": "Document Workspace" }}
+```typescript Document Workspace
 // Connect to a shared document within a specific workspace
 const document = await client.get<SharedDocument>({
   name: 'shared_document',
@@ -59,7 +59,7 @@ const document = await client.get<SharedDocument>({
 });
 ```
 
-```typescript {{ "title": "Game Instance" }}
+```typescript Game Instance
 // Connect to a game instance with specific mode and difficulty
 const gameInstance = await client.get<GameInstance>({
   name: 'game_instance',
@@ -68,7 +68,7 @@ const gameInstance = await client.get<GameInstance>({
 });
 ```
 
-```typescript {{ "title": "Matchmaking Queue" }}
+```typescript Matchmaking Queue
 // Connect to a regional matchmaking queue for specific skill level
 const matchmaker = await client.get<Matchmaker>({
   name: 'matchmaker',
@@ -77,7 +77,7 @@ const matchmaker = await client.get<Matchmaker>({
 });
 ```
 
-```typescript {{ "title": "App Feature" }}
+```typescript App Feature
 // Connect to a feature flag actor for a specific app feature
 const featureFlag = await client.get<FeatureFlag>({
   name: 'feature_flag',
@@ -86,7 +86,7 @@ const featureFlag = await client.get<FeatureFlag>({
 });
 ```
 
-```typescript {{ "title": "Service Owner" }}
+```typescript Service Owner
 // Connect to an analytics actor owned by a specific service
 const analytics = await client.get<Analytics>({
   name: 'analytics',
@@ -103,12 +103,12 @@ Clients are used to connect & manage actors.
 
 To create a new client, write:
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 import { Client } from "actor-core/client";
 const client = new Client(/* CONNECTION ADDRESS */);
 ```
 
-<Tip>See [setup guide](/docs/setup) for how to access `/* CONNECTION ADDRESS */`.</Tip>
+<Tip>See the setup guide for your platform on how to access `/* CONNECTION ADDRESS */`.</Tip>
 
 ### `get(tags, opts)`
 
@@ -116,7 +116,7 @@ const client = new Client(/* CONNECTION ADDRESS */);
 
 Attempts to find an existing actor matching the provided tags. If no matching actor is found, it creates a new one with those tags.
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const room = await client.get<ChatRoom>({
   name: 'chat_room',
   // Get or create the actor for the channel `random`
@@ -157,7 +157,7 @@ It's recommended to use tags instead of using actor IDs directly (e.g. see `docI
 
 For example:
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 // Get the actor with the given ID
 const myActorId = '55425f42-82f8-451f-82c1-6227c83c9372';
 const doc = await client.getWithId<MyDocument>(myActorId);
@@ -175,7 +175,7 @@ For example:
 
 <CodeGroup>
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = await client.get<Example>(
   { name: 'example' },
   {
@@ -184,7 +184,7 @@ const actor = await client.get<Example>(
 );
 ```
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 interface ConnectionParams {
   authToken: string;
 }
@@ -201,13 +201,13 @@ export default class Example extends Actor<State, ConnectionParams> {
 
 This is available on `client.get`, `client.create`, and `client.getWithId`.
 
-Read more about parameters & connections [here](/docs/connections).
+Read more about parameters & connections [here](/concepts/connections).
 
 #### `opts.create.tags`
 
 When creating an actor, you can specify additional tags beyond those used for querying. If `opts.create.tags` is not provided, the query tags will be used. For example:
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<MyDocument>(
   // Tags used to find the actor
   {
@@ -233,7 +233,7 @@ This is available on `client.get` and `client.create`.
 
 By default, actors are created in the region with the lowest latency for the client. You can override this by specifying `create.region`:
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get(
   { name: 'example' },
   {
@@ -250,7 +250,7 @@ This is available on `client.get` and `client.create`.
 
 To prevent creating a new actor if it does not exist, pass the `noCreate` option. For example:
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 // Get the actor, do not create
 const doc = await client.get<MyDocument>({ name: 'my_document', docId: '123' }, { noCreate: true });
 
@@ -265,7 +265,7 @@ For security reasons, actors must be shut down from within the actor itself usin
 
 <CodeGroup>
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 export default class Example extends Actor {
   // client will call this rpc to shut down actor
   myShutdownRpc(rpc: Rpc<Example>) {
@@ -274,7 +274,7 @@ export default class Example extends Actor {
 }
 ```
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<Example>({ name: 'example' });
 
 // send rpc to shut down actor
@@ -283,4 +283,4 @@ await actor.myShutdownRpc();
 
 </CodeGroup>
 
-Read more about the [actor lifecycle](/docs/lifecycle).
+Read more about the [actor lifecycle](/concepts/lifecycle).

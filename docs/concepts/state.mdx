@@ -5,23 +5,25 @@ icon: floppy-disk
 
 Actor state provides the best of both worlds: it's stored in-memory and persisted automatically. This lets you work with the data without added latency while still being able to survive crashes & upgrades.
 
-<Tip title="Using External SQL Databases">
+<Tip>
+**Using External SQL Databases**
+
 Actors can also be used with external SQL databases. This can be useful to integrate actors with existing
-applications or for storing relational data. Read more [here](/docs/external-sql).
+applications or for storing relational data. Read more [here](/concepts/external-sql).
 </Tip>
 
 ## State Isolation
 
 Each actor's state is completely isolated, meaning it cannot be accessed directly by other actors or clients. This allows actors to maintain a high level of security and data integrity, ensuring that state changes are controlled and predictable
 
-To interact with an actor's state, you must use [Remote Procedure Calls](/docs/rpc) (RPC). RPCs provide a controlled way to read from and write to the state.
+To interact with an actor's state, you must use [Remote Procedure Calls](/concepts/rpc) (RPC). RPCs provide a controlled way to read from and write to the state.
 
 ### Shared State
 
 If you need a shared state between multiple actors, you have two options:
 
 1. Create an actor that holds the shared state that actors can make RPCs to
-2. Use an external database, see [External SQL Databases](/docs/external-sql)
+2. Use an external database, see [External SQL Databases](/concepts/external-sql)
 
 ## Native State
 
@@ -29,13 +31,13 @@ Native state is a native JavaScript object stored in-memory on `this._state`. Th
 
 ### Initializing & Updating State
 
-Actors with native state require an `_initializeState` method. The object returned will be automatically persisted and assigned to `this._state`. `_initializeState` is only called once when the actor is created. See [Lifecycle](/docs/lifcycle) for more details.
+Actors with native state require an `_initializeState` method. The object returned will be automatically persisted and assigned to `this._state`. `_initializeState` is only called once when the actor is created. See [Lifecycle](/concepts/lifecycle) for more details.
 
 To update state, assign or update `this._state`. Any modifications will be automatically persisted.
 
 For example:
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 // Define the state's structure
 interface State {
 	count: number;

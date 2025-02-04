@@ -14,19 +14,19 @@ First, add Rivet's Actor Client SDK to your project.
 
 <CodeGroup>
 
-```bash {{ "title": "npm" }}
+```bash npm
 npm i @rivet-gg/actor-client --save
 ```
 
-```bash {{ "title": "yarn" }}
+```bash yarn
 yarn add @rivet-gg/actor-client
 ```
 
-```bash {{ "title": "pnpm" }}
+```bash pnpm
 pnpm add @rivet-gg/actor-client
 ```
 
-```bash {{ "title": "jsr" }}
+```bash jsr
 npx jsr add @rivet-gg/actor-client
 ```
 </CodeGroup>
@@ -37,7 +37,7 @@ npx jsr add @rivet-gg/actor-client
 
 If you're using Create React App or Vite, you can put `ActorClientProvider` in `App.tsx`.
 
-```tsx {{ "title": "App.tsx" }}
+```tsx App.tsx
 import { Client } from "@rivet-gg/actor-client";
 import { ActorClientProvider } from "@rivet-gg/actor-client/unstable-react";
 
@@ -212,7 +212,7 @@ export const MyComponent = () => {
 
 If you're getting this error, you need to add types for React. Normally React does not come with types, so you need to tell Deno to use the types from the different package.
 
-```tsx {{ "title": "your-actor.tsx" }}
+```tsx your-actor.tsx
 // @deno-types=npm:@types/react
 import React from "react";
 ```
@@ -284,7 +284,7 @@ export const MyComponent = () => {
 
 If you need to re-render the component when the something happens in your actor, use `this._updateRsc()` method. This will trigger a re-render of the RSC elements in your actor. Behind the scenes, this method broadcasts an internal event `__rsc` that all RSC elements are listening to.
 
-```tsx {{ "title": "your-actor.tsx" }}
+```tsx your-actor.tsx
 import { Rpc } from "@rivet-gg/actor";
 import { RscActor } from "@rivet-gg/actor/unstable-react";
 

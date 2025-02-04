@@ -5,7 +5,9 @@ icon: code
 
 Remote procedure calls (RPC) are how clients communicate with actors. RPCs are as simple as writing a method on the actor class and then calling it from the client.
 
-<Tip title="Performance">
+<Tip>
+	**Performance**
+
 	RPCs are very lightweight. They can be called hundreds of times per second to send realtime data to the
 	actor.
 </Tip>
@@ -50,7 +52,7 @@ export default class Example extends Actor {
 
 ### Streaming Return Data
 
-RPCs have a single return value. In order to stream realtime data in response to an RPC, use [events](/docs/events).
+RPCs have a single return value. In order to stream realtime data in response to an RPC, use [events](/concepts/events).
 
 ## Calling RPCs
 
@@ -73,7 +75,7 @@ The actor client includes type safety out of the box. The first generic paramete
 
 <CodeGroup>
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 import type { Counter } from "./counter.ts";
 // ...setup...
 const actor = await client.get<Counter>(/* ... */);
@@ -82,7 +84,7 @@ await actor.increment("non-number type"); // compile error
 await actor.nonexistentMethod(123); // compile error
 ```
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 // ...setup...
 
 export class Counter extends Actor {
@@ -112,7 +114,7 @@ For example:
 
 <CodeGroup>
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 // Throw a simple error with a message
 throw new UserError("Invalid username");
 
@@ -130,7 +132,7 @@ throw new UserError("Invalid username", {
 });
 ```
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 try {
 	await myActor.myRpc();
 } catch (error) {
@@ -176,4 +178,4 @@ export class Counter extends Actor {
 
 ## Authentication
 
-By default, clients can call all RPCs on an actor without restriction. Make sure to implement authentication if needed. Documentation on authentication is available [here](/docs/authentication).
+By default, clients can call all RPCs on an actor without restriction. Make sure to implement authentication if needed. Documentation on authentication is available [here](/concepts/authentication).

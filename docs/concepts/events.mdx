@@ -17,7 +17,7 @@ Actors can publish events to all connected clients with `this._broadcast(name, d
 
 <CodeGroup>
 
-```typescript {{ "title": "chat_room.ts" }}
+```typescript chat_room.ts
 export default class ChatRoom extends Actor {
   sendMessage(rpc: Rpc<ChatRoom>, message: string) {
     this._broadcast('newMessage', { message });
@@ -25,7 +25,7 @@ export default class ChatRoom extends Actor {
 }
 ```
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<ChatRoom>({ name: 'chat_room' });
 await actor.sendMessage('Hello, world!');
 ```
@@ -38,7 +38,7 @@ Actors can send messages to specific client connections. All connections are ava
 
 <CodeGroup>
 
-```typescript {{ "title": "chat_room.ts" }}
+```typescript chat_room.ts
 export default class ChatRoom extends Actor {
   sendPrivateMessage(rpc: Rpc<ChatRoom>, connectionId: number, message: string) {
     const conn = this._connections.find(c => c.id == connectionId);
@@ -47,7 +47,7 @@ export default class ChatRoom extends Actor {
 }
 ```
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<ChatRoom>({ name: 'chat_room' });
 await actor.sendPrivateMessage(123, 'Hello, world!');
 ```
@@ -66,14 +66,14 @@ Clients can subscribe to events that will happen repeatedly using `actor.on(name
 
 <CodeGroup>
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<ChatRoom>({ name: 'chat_room' });
 actor.on('newMessage', ({ message }) => {
   console.log('Message', message);
 });
 ```
 
-```typescript {{ "title": "chat_room.ts" }}
+```typescript chat_room.ts
 export default class ChatRoom extends Actor {
   sendMessage(rpc: Rpc<ChatRoom>, message: string) {
     this._broadcast('newMessage', { message });
@@ -91,7 +91,7 @@ Clients can listen for an event only one time with `actor.once(name, callback)`.
 
 <CodeGroup>
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<ChatRoom>({ name: 'chat_room' });
 actor.once('joinRequestApproved', () => {
   // This will only be called once
@@ -100,7 +100,7 @@ actor.once('joinRequestApproved', () => {
 await actor.requestJoin();
 ```
 
-```typescript {{ "title": "chat_root.ts" }}
+```typescript chat_root.ts
 export default class ChatRoom extends Actor {
   requestJoin(rpc: Rpc<ChatRoom>) {
     // ...ask the admin to approve the request...
@@ -119,4 +119,4 @@ export default class ChatRoom extends Actor {
 
 Connections are used to communicate with clients from the actor.
 
-Read more about connections [here](/docs/connections).
+Read more about connections [here](/concepts/connections).

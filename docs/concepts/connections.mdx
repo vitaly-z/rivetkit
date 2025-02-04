@@ -13,7 +13,7 @@ For example:
 
 <CodeGroup>
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 interface ConnectionParams {
   authToken: string;
 }
@@ -26,7 +26,7 @@ export default class Example extends Actor<State, ConnectionParams> {
 }
 ```
 
-```typescript {{ "title": "client.ts" }}
+```typescript client.ts
 const actor = client.get<Example>(
   { name: 'example' },
   {
@@ -43,7 +43,7 @@ The data returned from `_onBeforeConnect` is used as the initial state of the co
 
 For example:
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 interface ConnectionState {
   userId: string;
   role: string;
@@ -63,9 +63,9 @@ export default class Example extends Actor<State, ConnectionState> {
 
 See the documentation on the following lifecycle hooks:
 
-- [`_onBeforeConnect`](/docs/lifecycle#on-before-connect)
-- [`_onConnect`](/docs/lifecycle#on-connect)
-- [`_onDisconnect`](/docs/lifecycle#on-disconnect)
+- [`_onBeforeConnect`](/concepts/lifecycle#on-before-connect)
+- [`_onConnect`](/concepts/lifecycle#on-connect)
+- [`_onDisconnect`](/concepts/lifecycle#on-disconnect)
 
 ## Connection List
 
@@ -75,7 +75,7 @@ This is frequently used with `conn.send(name, event)` to send messages directly 
 
 For example:
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 export default class ChatRoom extends Actor {
   sendDirectMessage(rpc: Rpc<ChatRoom>, recipient: number, message: string) {
     this._connections.get(recipient).send('directMessage', {
@@ -90,13 +90,13 @@ export default class ChatRoom extends Actor {
 
 Connections can be disconnected with:
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 await connection.disconnect();
 ```
 
 A reason can optionally be provided like:
 
-```typescript {{ "title": "actor.ts" }}
+```typescript actor.ts
 await connection.disconnect('Too many requests');
 ```
 

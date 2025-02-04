@@ -11,7 +11,7 @@ Lifecycle hooks can be implemented by overriding the following methods of actors
 
 {/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onInitialize) */}
 
-Called only once when the actor is first created. This method returns the initial state of the actor (see [state documentation](/docs/state)).
+Called only once when the actor is first created. This method returns the initial state of the actor (see [state documentation](/concepts/state)).
 
 If you need to call code when the actor is started (e.g. after restarting for upgrading code), see `_onStart`.
 
@@ -39,7 +39,7 @@ Called whenever a new client connects to the actor. Clients can pass parameters 
 
 The returned value becomes the connection's initial state and can be accessed later via `connection.state`.
 
-Connections cannot interact with the actor until this method completes successfully. Throwing an error will abort the connection. This can be used for authentication - see [Authentication](/docs/authentication) for details.
+Connections cannot interact with the actor until this method completes successfully. Throwing an error will abort the connection. This can be used for authentication - see [Authentication](/concepts/authentication) for details.
 
 ### `_onConnect(connection)`
 
@@ -62,8 +62,6 @@ Called when a client disconnects from the actor. Use this to clean up any connec
 Actors can be shut down gracefully with `this._shutdown()`. Clients will be gracefully disconnected.
 
 This action is permanent and cannot be reverted.
-
-Actors can also be destroyed externally via the platform API with [actors.destroy](/docs/api/actor/destroy).
 
 ## Full Example
 

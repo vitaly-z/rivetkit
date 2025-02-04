@@ -45,7 +45,7 @@ Consider this example:
 
 <CodeGroup>
 
-```typescript {{ "title": "structured_logging.ts" }}
+```typescript structured_logging.ts
 export default class Counter extends Actor<State> {
   increment(rpc: Rpc<Counter>, count: number): number {
     // Prints: level=INFO msg=increment connection=123 count=456
@@ -59,7 +59,7 @@ export default class Counter extends Actor<State> {
 }
 ```
 
-```typescript {{ "title": "unstructured_logging.ts" }}
+```typescript unstructured_logging.ts
 export default class Counter extends Actor<State> {
   increment(rpc: Rpc<Counter>, count: number): number {
     // Prints: Increment for connection 123 with count 456
