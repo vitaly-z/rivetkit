@@ -5,6 +5,7 @@
   "workspaces": [
     "packages/*",
     "packages/platforms/*",
+    "packages/misc/actorcore",
     "examples/*",
     "examples/*/platforms/*"
   ],

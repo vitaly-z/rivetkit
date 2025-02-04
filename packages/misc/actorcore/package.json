@@ -1,0 +1,6 @@
+{
+  "name": "actorcore",
+  "description": "Placeholder for developers trying to use actor-core (with a dash).",
+  "packageManager": "yarn@4.2.2",
+  "private": false
+}

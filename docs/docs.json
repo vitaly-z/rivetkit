@@ -59,9 +59,9 @@
             "pages": [
               "concepts/metadata",
               "concepts/authentication",
-              "concepts/external-sql",
               "concepts/logging",
-              "concepts/scaling"
+              "concepts/scaling",
+              "concepts/external-sql"
             ]
           }
         ]

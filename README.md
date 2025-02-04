@@ -118,6 +118,13 @@ chatRoom.on("newMessage", (username: string, message: string) =>
 await chatRoom.sendMessage("william", "All the world's a stage.");
 ```
 
+### Step 4: Deploy
+
+Deploy to your platform of choice:
+
+- [Cloudflare Workers](https://actorcore.org/platforms/cloudflare-workers)
+- [Rivet](https://actorcore.org/platforms/rivet)
+
 ## Community & Support
 
 -   Join our [**Discord**](https://rivet.gg/discord)
