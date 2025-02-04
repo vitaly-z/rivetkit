@@ -29,7 +29,7 @@ export class Example extends Actor {
 
 Methods starting with `_` or `#` (e.g. `_myMethod` and `#myMethod`) are private and cannot be called by clients.
 
-All Rivet-provided methods start with `_` (e.g. `_broadcast`) so clients cannot call them.
+All provided methods start with `_` (e.g. `_broadcast`) so clients cannot call them.
 
 For example:
 
@@ -69,7 +69,7 @@ await actor.increment(42);
 
 ### Type Safety
 
-The Rivet client includes type safety out of the box. The first generic parameter in `get<Actor>(...)` defines the actor class. You can safely import the actor's type with `import type` in to the client, like this:
+The actor client includes type safety out of the box. The first generic parameter in `get<Actor>(...)` defines the actor class. You can safely import the actor's type with `import type` in to the client, like this:
 
 <CodeGroup>
 
@@ -98,7 +98,7 @@ export class Counter extends Actor {
 
 ## Error Handling
 
-Rivet provides robust error handling out of the box for RPCs.
+Actors provide robust error handling out of the box for RPCs.
 
 ### User Errors
 
@@ -142,7 +142,7 @@ try {
 
 </CodeGroup>
 
-Read the documentation for `UserError` [here](https://jsr.io/@rivet-gg/actor/doc/~/UserError).
+{/* Read the documentation for `UserError` [here](https://jsr.io/@rivet-gg/actor/doc/~/UserError). */}
 
 ### Internal Errors
 

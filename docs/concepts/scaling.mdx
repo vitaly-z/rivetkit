@@ -3,7 +3,7 @@ title: Scaling & Concurrency
 icon: maximize
 ---
 
-This document covers how Rivet Actors are able to scale better than traditional applications & provides tips on architecting your actors.
+This document covers how actors are able to scale better than traditional applications & provides tips on architecting your actors.
 
 ## How actors scale
 
@@ -13,7 +13,7 @@ Actors scale by design through these key properties:
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Independent State**                | Each actor manages its own private data separately from other actors, so they never conflict with each other when running at the same time (i.e. using locking mechanisms).                                                                                                                     |
 | **RPC- & Event-Based Communication** | Actors communicate through asynchronous [RPCs](/docs/rpc) or [events](/docs/events), making it easy to distribute them across different machines.                                                                                                                                               |
-| **Location Transparency**            | Unlike traditional servers, actors don't need to know which machine other actors are running on in order to communicate with each other. They can run on the same machine, across a network, and across the world. Rivet handles the network routing for you under the hood.                    |
+| **Location Transparency**            | Unlike traditional servers, actors don't need to know which machine other actors are running on in order to communicate with each other. They can run on the same machine, across a network, and across the world. Actors handle the network routing for you under the hood.                    |
 | **Horizontal Scaling**               | Actors distribute workload by splitting responsibilities into small, focused units. Since each actor handles a limited scope (like a single user, document, or chat room), the system automatically spreads load across many independent actors rather than concentrating it in a single place. |
 
 ## Tips for architecting actors for scale

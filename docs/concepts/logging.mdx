@@ -78,12 +78,3 @@ export default class Counter extends Actor<State> {
 If you need to search through a lot of logs, it's easier to read the structured logs. To find increments for a single connection, you can search `connection=123`.
 
 Additionally, structured logs can be parsed and queried at scale using tools like Elasticsearch, Loki, or Datadog. For example, you can parse the log `level=INFO msg=increment connection=123 count=456` in to the JSON object `{"level":"INFO","msg":"increment","connection":123,"count":456}` and then query it as you would any other structured data.
-
-## Configuring logging
-
-The Rivet logging API is powered by the [@std/log](https://jsr.io/@std/log) package.
-
-By default, logs are printed in [logfmt](https://brandur.org/logfmt) format for
-a balance between machine & human readability. To configure the logging format
-yourself, you can call the [`setup`](https://jsr.io/@std/log/doc/~/setup)
-function in `_onStart`.

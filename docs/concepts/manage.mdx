@@ -3,13 +3,13 @@ title: Create & Manage Actors
 icon: square-plus
 ---
 
-This guide will walk through creating & managing Rivet Actors.
+This guide will walk through creating & managing actors.
 
 ## Actor tags
 
 Tags are simple key-value pairs attached to every actor. Tags serve two purposes:
 
-1. **Actor Discovery**: Find specific actors using [`client.get(tags, opts)`](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.get)
+1. **Actor Discovery**: Find specific actors using `client.get(tags, opts)`
 2. **Organization**: Group actors for monitoring & administration purposes
 
 When choosing tags, follow these best practices:
@@ -104,7 +104,7 @@ Clients are used to connect & manage actors.
 To create a new client, write:
 
 ```typescript {{ "title": "client.ts" }}
-import { Client } from '@rivet-gg/actor-client';
+import { Client } from "actor-core/client";
 const client = new Client(/* CONNECTION ADDRESS */);
 ```
 
@@ -112,7 +112,7 @@ const client = new Client(/* CONNECTION ADDRESS */);
 
 ### `get(tags, opts)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.get)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.get) */}
 
 Attempts to find an existing actor matching the provided tags. If no matching actor is found, it creates a new one with those tags.
 
@@ -129,7 +129,7 @@ await room.sendMessage('Hello, world!');
 
 ### `create(opts)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.create)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.create) */}
 
 Explicitly create a new actor with the provided tags.
 
@@ -149,7 +149,7 @@ await doc.doSomething();
 
 ### `getWithId(id, opts)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.getWithId)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor-client/doc/~/Client.prototype.getWithId) */}
 
 Connects to an actor based on its ID.
 
@@ -261,7 +261,7 @@ This is available only on `client.get`.
 
 ## Shutdown actor
 
-For security reasons, actors must be shut down from within the actor itself using [`this._shutdown()`](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._shutdown). For example:
+For security reasons, actors must be shut down from within the actor itself using `this._shutdown()`. For example:
 
 <CodeGroup>
 

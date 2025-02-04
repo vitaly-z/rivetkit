@@ -3,9 +3,9 @@ title: External SQL Database
 icon: database
 ---
 
-While Rivet Actors can serve as a complete database solution, they can also complement your existing databases. For example, you might use Rivet Actors to handle frequently-changing data that needs real-time access, while keeping less frequently accessed data in your traditional database.
+While actors can serve as a complete database solution, they can also complement your existing databases. For example, you might use actors to handle frequently-changing data that needs real-time access, while keeping less frequently accessed data in your traditional database.
 
-Rivet can be used with common SQL databases, such as PostgreSQL and MySQL.
+Actors can be used with common SQL databases, such as PostgreSQL and MySQL.
 
 ## Libraries
 
@@ -36,7 +36,7 @@ There are several options for places to host your SQL database:
 Here's a basic example of how you might set up a connection to a PostgreSQL database using Drizzle:
 
 ```typescript {{ "title": "actor.ts" }}
-import { Actor } from "@rivet-gg/actor";
+import { Actor } from "actor-core";
 import { Pool } from "pg";
 
 export default class DatabaseActor extends Actor {

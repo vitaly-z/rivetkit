@@ -9,7 +9,7 @@ Lifecycle hooks can be implemented by overriding the following methods of actors
 
 ### `_onInitialize()`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onInitialize)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onInitialize) */}
 
 Called only once when the actor is first created. This method returns the initial state of the actor (see [state documentation](/docs/state)).
 
@@ -17,7 +17,7 @@ If you need to call code when the actor is started (e.g. after restarting for up
 
 ### `_onStart()`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onStart)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onStart) */}
 
 This method is called any time the actor is started (e.g. after restarting, upgrading code, or crashing).
 
@@ -27,13 +27,13 @@ Use this method to set up any resources or start any background tasks, such as `
 
 ### `_onStateChange(newState)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onStateChange)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onStateChange) */}
 
 Called whenever the actor's state changes. This is often used to broadcast state updates.
 
 ### `_onBeforeConnect(opts)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onBeforeConnect)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onBeforeConnect) */}
 
 Called whenever a new client connects to the actor. Clients can pass parameters when connecting, accessible via `opts.parameters`.
 
@@ -43,7 +43,7 @@ Connections cannot interact with the actor until this method completes successfu
 
 ### `_onConnect(connection)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onConnect)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onConnect) */}
 
 Executed after the client has successfully connected.
 
@@ -53,7 +53,7 @@ Errors thrown from this method will cause the client to disconnect.
 
 ### `_onDisconnect(connection)`
 
-[Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onDisconnect)
+{/* [Documentation](https://jsr.io/@rivet-gg/actor/doc/~/Actor.prototype._onDisconnect) */}
 
 Called when a client disconnects from the actor. Use this to clean up any connection-specific resources.
 
