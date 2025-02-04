@@ -17,7 +17,6 @@ const KEYS = {
 	STATE: {
 		INITIALIZED: "actor:state:initialized",
 		TAGS: "actor:state:tags",
-		DATA: "actor:state:data",
 	},
 };
 
@@ -89,7 +88,7 @@ export function createActorDurableObject(
 			// Create & start actor
 			const driver = buildActorDriver(this.ctx);
 			this.#actor = new (prototype as any)() as Actor;
-			await this.#actor.__start(driver);
+			await this.#actor.__start(driver, this.#initialized.tags, "unknown");
 			return this.#actor;
 		}
 

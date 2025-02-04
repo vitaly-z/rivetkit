@@ -6,7 +6,7 @@ import {
 import type * as wsToClient from "@actor-core/actor-protocol/ws/to_client";
 import type { Logger } from "@actor-core/common/log";
 import { listObjectMethods } from "@actor-core/common/reflect";
-import { isJsonSerializable } from "@actor-core/common/utils";
+import { ActorTags, isJsonSerializable } from "@actor-core/common/utils";
 import { Hono, type Context as HonoContext } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { WSContext, WSEvents } from "hono/ws";
@@ -124,6 +124,8 @@ export abstract class Actor<
 	#backgroundPromises: Promise<void>[] = [];
 	#config: ActorConfig;
 	#driver!: ActorDriver;
+	#tags!: ActorTags;
+	#region!: string;
 	#ready = false;
 
 	#connectionIdCounter = 0;
@@ -148,8 +150,10 @@ export abstract class Actor<
 		this.#config = mergeActorConfig(config);
 	}
 
-	async __start(driver: ActorDriver) {
+	async __start(driver: ActorDriver, tags: ActorTags, region: string) {
 		this.#driver = driver;
+		this.#tags = tags;
+		this.#region = region;
 		this.#schedule = new Schedule(this, driver);
 
 		this.__router = this.#buildRouter();
@@ -842,7 +846,21 @@ export abstract class Actor<
 	}
 
 	/**
-	 * Gets the scheduler for this actor.
+	 * Gets the tags.
+	 */
+	protected get _tags(): ActorTags {
+		return this.#tags;
+	}
+
+	/**
+	 * Gets the region.
+	 */
+	protected get _region(): string {
+		return this.#region;
+	}
+
+	/**
+	 * Gets the scheduler.
 	 */
 	protected get _schedule(): Schedule {
 		return this.#schedule;

@@ -77,7 +77,7 @@ export function createHandler(
 				//	if (server) await server.shutdown();
 				//	Deno.exit(0);
 				//}
-			});
+			}, ctx.metadata.actor.tags, ctx.metadata.region.id);
 
 			const app = actor.__router;
 
