@@ -41,9 +41,7 @@
         "pages": [
           "introduction",
           "platforms/cloudflare-workers",
-          "platforms/rivet",
-          "platforms/supabase",
-          "platforms/vercel"
+          "platforms/rivet"
         ]
       },
       {

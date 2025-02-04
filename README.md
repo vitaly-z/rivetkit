@@ -60,16 +60,16 @@ By handling the complexities of state management and coordination, ActorCore let
 
 ```bash npm
 # npm
-npm install actor-core
+npm add actor-core
 
 # pnpm
-pnpm install actor-core
+pnpm add actor-core
 
 # Yarn
 yarn add actor-core
 
 # Bun
-bun install actor-core
+bun add actor-core
 ```
 
 ### Step 2: Create an Actor

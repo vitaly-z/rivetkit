@@ -2,3 +2,58 @@
 title: Cloudflare Workers
 ---
 
+1. create new project
+2. write index.json
+3. write wrangler.json
+4. write KV for actors
+5. 
+
+<Steps>
+	<Step title="Create New Workers Project">
+		<CodeGroup>
+			```sh npm
+			npm create cloudflare@latest -- my-project --type=hello-world --ts --deploy=false
+			cd my-project
+			```
+
+			```sh pnpm
+			pnpm create cloudflare@latest my-project --type=hello-world --ts --deploy=false
+			cd my-project
+			```
+
+			```sh yarn
+			yarn create cloudflare@latest my-project --type=hello-world --ts --deploy=false
+			cd my-project
+			```
+
+			```sh bun
+			bun create cloudflare@latest my-project --type=hello-world --ts --deploy=false
+			cd my-project
+			```
+		</CodeGroup>
+
+		<Tip>This guide can be used with any existing Cloudflare project or 
+	</Step>
+	<Step title="Install ActorCore">
+		<CodeGroup>
+			```sh npm
+			npm add actor-core @actor-core/cloudflare-workers
+			```
+
+    		```sh pnpm
+    		pnpm add actor-core @actor-core/cloudflare-workers
+    		```
+
+    		```sh yarn
+    		yarn add actor-core @actor-core/cloudflare-workers
+    		```
+
+    		```sh bun
+    		bun add actor-core @actor-core/cloudflare-workers
+    		```
+    	</CodeGroup>
+	</Step>
+</Steps>
+
+
+## Combining with existing workers
