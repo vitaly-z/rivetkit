@@ -2,3 +2,152 @@
 title: Rivet
 ---
 
+import SetupActor from '/snippets/setup-actor.mdx';
+
+<Steps>
+	<Step title="Create New Rivet Project">
+		Ensure you've installed the [Rivet CLI](https://rivet.gg/docs/setup).
+
+		<CodeGroup>
+			```sh npm
+			# Create project
+			rivet init
+
+    		cd my-project
+
+    		# Install ActorCore
+    		npm add actor-core @actor-core/rivet
+    		```
+
+    		```sh pnpm
+			# Create project
+			rivet init
+
+			cd my-project
+
+    		# Install ActorCore
+    		pnpm add actor-core @actor-core/cloudflare-workers
+    		```
+
+    		```sh yarn
+			# Create project
+			rivet init
+
+			cd my-project
+
+    		# Install ActorCore
+    		yarn add actor-core @actor-core/cloudflare-workers
+    		```
+
+    		```sh bun
+			# Create project
+			rivet init
+
+			cd my-project
+
+    		# Install ActorCore
+    		bun add actor-core @actor-core/cloudflare-workers
+    		```
+    	</CodeGroup>
+
+    	<Tip>ActorCore can also be used with existing Rivet projects.</Tip>
+    </Step>
+    <Step title="Create Actor">
+    	Create a new file for your actor at `src/counter.ts`:
+
+    	<SetupActor />
+    </Step>
+    <Step title="Configure Rivet">
+    	Update both `src/manager.ts` and `rivet.json` to look like this:
+
+		<CodeGroup>
+
+    	```typescript src/manager.ts
+		import { createManagerHandler } from "@actor-core/rivet";
+		export default createManagerHandler();
+    	```
+
+    	```json rivet.json
+		{
+			"builds": {
+				"manager": {
+					"script": "src/manager.ts",
+					"access": "private"
+				},
+				"counter": {
+					"script": "src/counter.ts",
+					"access": "public"
+				}
+			},
+			"unstable": {
+				"manager": {
+					"enable": false
+				}
+			}
+		}
+    	```
+
+		</CodeGroup>
+
+		The `manager` actor is a special type of actor used for exposing a public API to create & manage actors easily.
+    </Step>
+    <Step title="Deploy">
+		1. Deploy your project with:
+
+			```sh
+			rivet deploy
+			```
+		1. Navigate to the [Rivet Dashboard](https://hub.rivet.gg) (or run `rivet view` for a shortcut). Navigate to _Your Team > Your Project > Production > Tokens_. Under _Service token_, click _Generate_.
+
+			![Service Token](/media/platforms/rivet/service-token.png)
+
+		2. Run this command to create the manager actor. Replace `your-service-token-here` with the token above.  (This command only needs to be ran once.)
+
+			```sh
+			# Only works on macOS & Linux
+			rivet actor create -r atl -t name=manager --env-var RIVET_SERVICE_TOKEN=your-service-token-here -p name=http,protocol=https,guard --durable | grep -o 'https://[^"]*'
+			```
+
+			This will output a URL that looks something like: `https://xxxx.actor.xxxx.rivet.run:443`
+	</Step>
+    <Step title="Create Client & Test">
+		Now, write a file named `client.ts`. Make sure to replace `your-manager-url-here` with the URL from above.
+
+		```typescript client.ts
+		import { Client } from "actor-core/client";
+		import type Counter from "../src/counter.ts";
+
+		async function main() {
+			const client = new Client("your-manager-url-here");
+
+			const counter = await client.get<Counter>({ name: "counter" });
+
+			counter.on("newCount", (count: number) => console.log("Event:", count));
+
+			const out = await counter.increment(5);
+			console.log("RPC:", out);
+
+			await counter.disconnect();
+		}
+
+		main();
+		```
+
+		Run the file with:
+
+		```sh
+		npx tsx client.ts
+		# Outputs:
+		# Event: 43
+		# RPC: 43
+		```
+    </Step>
+    <Step title="(Optional) Monitor">
+		Visit the [Rivet Dashboard](https://hub.rivet.gg) (or run `rivet view` as a shortcut) to view your project.
+
+		You'll see the actor you created here:
+
+		![Dashboard](/media/platforms/rivet/dash.png)
+	</Step>
+</Steps>
+

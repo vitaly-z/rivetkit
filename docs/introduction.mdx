@@ -20,13 +20,13 @@ title: Introduction
 
 <CardGroup cols={2}>
   <Card title="Durable, In-Memory State" icon="floppy-disk">
-	Fast in-memory access with built-in durability—no external databases or caches needed.
+	Fast in-memory access with built-in durability — no external databases or caches needed.
   </Card>
   <Card title="Ultra-Fast State Updates" icon="bolt">
 	Real-time state updates with ultra-low latency, powered by co-locating compute and data.
   </Card>
-  <Card title="RPC, Events, Scheduling, & Multiplayer" icon="battery-bolt">
-    Integrated support for state, RPC, events, scheduling, and multiplayer — no extra boilerplate cdoe needed.
+  <Card title="RPC, Events, Scheduling, & Multiplayer" icon="hammer-brush">
+    Integrated support for state, RPC, events, scheduling, and multiplayer — no extra boilerplate code needed.
   </Card>
   <Card title="Serverless & Scalable" icon="microchip">
     Effortless scaling, scale-to-zero, and easy deployments on any serverless runtime.
@@ -40,11 +40,11 @@ title: Introduction
 <CardGroup>
   <Card
     title="Cloudflare Workers"
-    href="/getting-started/cloudflare-workers"
+    href="/platforms/cloudflare-workers"
     horizontal={true}
   />
-  <Card title="Rivet" href="/getting-started/rivet" horizontal={true} />
-  <Card
+  <Card title="Rivet" href="/platforms/rivet" horizontal={true} />
+  {/*<Card
     title="Supabase Edge Functions"
     href="/getting-started/supabase"
     horizontal={true}
@@ -53,7 +53,7 @@ title: Introduction
     title="Vercel Functions"
     href="/getting-started/vercel"
     horizontal={true}
-  />
+  />*/}
 </CardGroup>
 
 <div class="text-center">
@@ -181,7 +181,12 @@ title: Introduction
 
       </CodeGroup>
     </Step>
+    <Step title="Deploy">
+		Deploy to your platform of choice:
 
+		- [Cloudflare Workers](/platforms/cloudflare-workers)
+		- [Rivet](/platforms/rivet)
+	</Step>
 </Steps>
 
 ## Community & Support

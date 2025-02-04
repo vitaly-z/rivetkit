@@ -149,11 +149,9 @@ export abstract class Actor<
 	}
 
 	async __start(driver: ActorDriver) {
-		console.log("start");
 		this.#driver = driver;
 		this.#schedule = new Schedule(this, driver);
 
-		console.log("build router");
 		this.__router = this.#buildRouter();
 
 		// Initialize server
@@ -344,7 +342,6 @@ export abstract class Actor<
 
 		app.post("/rpc/:name", this.#handleHttpRpc.bind(this));
 
-		console.log("upgrade ws", this.#driver);
 		app.get(
 			"/connect",
 			this.#driver.upgradeWebSocket(this.#handleWebSocket.bind(this)),

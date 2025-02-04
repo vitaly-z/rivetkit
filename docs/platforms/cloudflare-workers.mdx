@@ -2,6 +2,8 @@
 title: Cloudflare Workers
 ---
 
+import SetupActor from '/snippets/setup-actor.mdx';
+
 <Note>
 	ActorCore relies on features only available in the Workers Paid plan ([more info](https://developers.cloudflare.com/durable-objects/platform/pricing/)).
 
@@ -9,7 +11,7 @@ title: Cloudflare Workers
 </Note>
 
 <Steps>
-	<Step title="Create New Workers Project">
+	<Step title="Create New Cloudflare Workers Project">
 		<CodeGroup>
 			```sh npm
 			# Create project
@@ -57,25 +59,7 @@ title: Cloudflare Workers
     <Step title="Create Actor">
     	Create a new file for your actor at `src/counter.ts`:
 
-    	```typescript src/counter.ts
-		import { Actor, type Rpc } from "actor-core";
-
-		export interface State {
-			count: number;
-		}
-
-		export default class Counter extends Actor<State> {
-			_onInitialize() {
-				return { count: 0 };
-			}
-
-			increment(rpc: Rpc<Counter>, x: number) {
-				this._state.count += x;
-				this._broadcast("newCount", this._state.count);
-				return this._state.count;
-			}
-		}
-    	```
+		<SetupActor />
     </Step>
     <Step title="Configure Cloudflare">
     	Update both `src/index.ts` and `wrangler.json` to look like this:
@@ -127,7 +111,7 @@ title: Cloudflare Workers
 
 		In `src/index.ts`, `handler` is used to handle HTTP requests made to the worker. `ActorHandler` is a Durable Object used to provide state for your actors.
     </Step>
-    <Step title="Test">
+    <Step title="Create Client & Test">
 		To start your development server, run:
 
 		```sh
