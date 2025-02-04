@@ -10,7 +10,7 @@
 <h3 align="center">The Stateful Serverless Framework</h3>
 <h4 align="center">
   Build AI agents, realtime apps, game servers, and more.<br/>
-  Supports Rivet, Cloudflare Workers, Supabase, and Vercel.
+  Supports Cloudflare Workers, Rivet, Supabase, and Vercel.
 </h4>
 <p align="center">
   <!-- <a href="https://github.com/rivet-gg/rivet/graphs/commit-activity"><img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/rivet-gg/rivet?style=flat-square"/></a> -->
@@ -27,10 +27,10 @@
 
 ### Features
 
-- **Batteries Included**: State, RPC, events, & scheduling included out of the box. :battery_bolt:
-- **Persistent & In-Memory**: Supports storing actor state in-memory that's automatically persisted for high-performance workloads. :floppy_disk:
-- **Multiplayer & Realtime**: Build realtime or multiplayer applications on top of actors. :floppy_disk:
-- **Serverless & Scalable**: Built on your serverless runtime of choice to make deploying, scaling, and cost management easy. :microchip:
+- 🔋 **Batteries Included**: State, RPC, events, & scheduling included out of the box.
+- 💾 **Persistent & In-Memory**: Supports storing actor state in-memory that's automatically persisted for high-performance workloads.
+- ⚡ **Multiplayer & Realtime**: Build realtime or multiplayer applications on top of actors. :floppy_disk:
+- ⚙️ **Serverless & Scalable**: Built on your serverless runtime of choice to make deploying, scaling, and cost management easy. :microchip:
 
 ### Supported Platforms
 

@@ -19,15 +19,15 @@ title: Introduction
 </p>
 
 <CardGroup cols={2}>
-  <Card title="Batteries Included" icon="battery-bolt">
-    State, RPC, events, & scheduling included out of the box.
-  </Card>
-  <Card title="Persistent & In-Memory" icon="floppy-disk">
+  <Card title="Persistent & In-Memory State" icon="floppy-disk">
     Supports storing actor state in-memory that's automatically persisted for
     high-performance workloads.
   </Card>
-  <Card title="Multiplayer & Realtime" icon="floppy-disk">
+  <Card title="High-Performance" icon="bolt">
     Build realtime or multiplayer applications on top of actors.
+  </Card>
+  <Card title="Batteries Included" icon="battery-bolt">
+    State, RPC, events, scheduling, multiplayer, and more included out of the box.
   </Card>
   <Card title="Serverless & Scalable" icon="microchip">
     Built on your serverless runtime of choice to make deploying, scaling, and
@@ -40,12 +40,12 @@ title: Introduction
 </div>
 
 <CardGroup>
-  <Card title="Rivet Actors" href="/getting-started/rivet" horizontal={true} />
   <Card
     title="Cloudflare Workers"
     href="/getting-started/cloudflare-workers"
     horizontal={true}
   />
+  <Card title="Rivet" href="/getting-started/rivet" horizontal={true} />
   <Card
     title="Supabase Edge Functions"
     href="/getting-started/supabase"
@@ -67,6 +67,9 @@ title: Introduction
   <Card title="RPC" href="/" icon="code" horizontal={true} />
   <Card title="Events" href="/" icon="tower-cell" horizontal={true} />
   <Card title="Scheduling" href="/" icon="clock" horizontal={true} />
+  <Card title="Connections & Multiplayer" href="/" icon="bolt" horizontal={true} />
+  {/*<Card title="Authentication" href="/" icon="fingerprint" horizontal={true} />*/}
+  <Card title="Metadata" href="/" icon="tag" horizontal={true} />
 </CardGroup>
 
 ## Quickstart
