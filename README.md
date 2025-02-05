@@ -34,10 +34,10 @@
 
 ### Supported Platforms
 
-- [**Cloudflare Workers**](https://actorcore.dev/platforms/cloudflare-workers) - Using Durable Objects
-- [**Rivet**](https://actorcore.dev/platforms/rivet) - Managed ActorCore platform
-<!--- [**Supabase Edge Functions**](https://actorcore.dev/platforms/supabase) - Serverless platform-->
-<!--- [**Vercel**](https://actorcore.dev/platforms/vercel) - Serverless platform-->
+- [**Cloudflare Workers**](https://actorcore.org/platforms/cloudflare-workers) - Using Durable Objects
+- [**Rivet**](https://actorcore.org/platforms/rivet) - Managed ActorCore platform
+<!--- [**Supabase Edge Functions**](https://actorcore.org/platforms/supabase) - Serverless platform-->
+<!--- [**Vercel**](https://actorcore.org/platforms/vercel) - Serverless platform-->
 
 ### Use Cases
 
