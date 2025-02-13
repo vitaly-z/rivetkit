@@ -1,6 +1,6 @@
 {
   "name": "@actor-core/cloudflare-workers",
-  "version": "0.4.0-rc.1",
+  "version": "0.3.0",
   "files": [
     "src",
     "dist",
@@ -37,6 +37,5 @@
   },
   "dependencies": {
     "hono": "^4.7.0"
-  },
-  "stableVersion": "0.2.0"
+  }
 }

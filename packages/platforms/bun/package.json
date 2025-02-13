@@ -1,6 +1,6 @@
 {
   "name": "@actor-core/bun",
-  "version": "0.4.0-rc.1",
+  "version": "0.3.0",
   "files": [
     "src",
     "dist",
@@ -39,6 +39,5 @@
     "hono": "^4.7.0",
     "ioredis": "^5.4.2",
     "p-retry": "^6.2.1"
-  },
-  "stableVersion": "0.2.0"
+  }
 }
