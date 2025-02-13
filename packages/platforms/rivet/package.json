@@ -1,6 +1,6 @@
 {
   "name": "@actor-core/rivet",
-  "version": "0.2.0",
+  "version": "0.3.0-rc.1",
   "files": [
     "src",
     "dist",
@@ -37,5 +37,6 @@
   },
   "dependencies": {
     "hono": "^4.7.0"
-  }
+  },
+  "stableVersion": "0.2.0"
 }
