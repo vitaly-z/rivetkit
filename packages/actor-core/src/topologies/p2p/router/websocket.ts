@@ -1,21 +1,20 @@
-import { RedisConfig } from "@/config";
-import { GlobalState } from "@/router/mod";
-import Redis from "ioredis";
-import { RelayConnection } from "../actor/relay_conn";
+import type { GlobalState } from "@/topologies/p2p/topology";
 import type { WSContext } from "hono/ws";
-import {
-	ConnectWebSocketOpts,
-	ConnectWebSocketOutput,
-} from "actor-core/platform";
-import { logger } from "@/log";
-import { serialize } from "actor-core/actor/protocol/serde";
-import * as messageToServer from "actor-core/actor/protocol/message/to_server";
-import { publishMessageToLeader } from "@/node/message";
-import * as errors from "actor-core/actor/errors";
+import { logger } from "../log";
+import { serialize } from "@/actor/protocol/serde";
+import type * as messageToServer from "@/actor/protocol/message/to_server";
+import * as errors from "@/actor/errors";
+import type { P2PDriver } from "../driver";
+import { RelayConnection } from "../conn/mod";
+import { publishMessageToLeader } from "../node/message";
+import type { ActorDriver } from "@/actor/runtime/driver";
+import type { BaseConfig } from "@/actor/runtime/config";
+import type { ConnectWebSocketOpts, ConnectWebSocketOutput } from "@/actor/runtime/actor_router";
 
 export async function serveWebSocket(
-	redis: Redis,
-	config: RedisConfig,
+	config: BaseConfig,
+	actorDriver: ActorDriver,
+	p2pDriver: P2PDriver,
 	globalState: GlobalState,
 	actorId: string,
 	{ req, encoding, parameters }: ConnectWebSocketOpts,
@@ -24,8 +23,9 @@ export async function serveWebSocket(
 	return {
 		onOpen: async (ws: WSContext) => {
 			conn = new RelayConnection(
-				redis,
 				config,
+				actorDriver,
+				p2pDriver,
 				globalState,
 				{
 					sendMessage: (message) => {
@@ -47,8 +47,8 @@ export async function serveWebSocket(
 			}
 
 			await publishMessageToLeader(
-				redis,
 				config,
+				p2pDriver,
 				globalState,
 				actorId,
 				{

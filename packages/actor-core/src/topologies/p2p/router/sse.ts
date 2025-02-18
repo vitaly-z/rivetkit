@@ -1,14 +1,16 @@
-import { RedisConfig } from "@/config";
-import { GlobalState } from "@/router/mod";
-import { logger } from "@/log";
-import Redis from "ioredis";
-import { encodeDataToString, serialize } from "actor-core/actor/protocol/serde";
-import { RelayConnection } from "../actor/relay_conn";
-import type { ConnectSseOpts, ConnectSseOutput } from "actor-core/platform";
+import type { GlobalState } from "@/topologies/p2p/topology";
+import { logger } from "../log";
+import { encodeDataToString, serialize } from "@/actor/protocol/serde";
+import type { P2PDriver } from "../driver";
+import { RelayConnection } from "../conn/mod";
+import type { ActorDriver } from "@/actor/runtime/driver";
+import type { BaseConfig } from "@/actor/runtime/config";
+import type { ConnectSseOpts, ConnectSseOutput } from "@/actor/runtime/actor_router";
 
 export async function serveSse(
-	redis: Redis,
-	config: RedisConfig,
+	config: BaseConfig,
+	actorDriver: ActorDriver,
+	p2pDriver: P2PDriver,
 	globalState: GlobalState,
 	actorId: string,
 	{ encoding, parameters }: ConnectSseOpts,
@@ -17,8 +19,9 @@ export async function serveSse(
 	return {
 		onOpen: async (stream) => {
 			conn = new RelayConnection(
-				redis,
 				config,
+				actorDriver,
+				p2pDriver,
 				globalState,
 				{
 					sendMessage: (message) => {

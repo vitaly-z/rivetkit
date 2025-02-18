@@ -55,9 +55,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@actor-core/redis@workspace:*, @actor-core/redis@workspace:packages/platforms/redis":
+"@actor-core/redis@workspace:*, @actor-core/redis@workspace:packages/drivers/redis":
   version: 0.0.0-use.local
-  resolution: "@actor-core/redis@workspace:packages/platforms/redis"
+  resolution: "@actor-core/redis@workspace:packages/drivers/redis"
   dependencies:
     "@types/node": "npm:^22.13.1"
     actor-core: "workspace:*"

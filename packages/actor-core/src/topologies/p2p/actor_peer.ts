@@ -1,24 +1,25 @@
 import {
-	RedisConfig,
+	BaseConfig,
 	DEFAULT_ACTOR_PEER_CHECK_LEASE_INTERVAL,
 	DEFAULT_ACTOR_PEER_CHECK_LEASE_JITTER,
 	DEFAULT_ACTOR_PEER_LEASE_DURATION,
 	DEFAULT_ACTOR_PEER_RENEW_LEASE_GRACE,
-} from "@/config";
-import type { AnyActor } from "actor-core/platform";
-import { GlobalState } from "@/router/mod";
-import { logger } from "@/log";
-import Redis from "ioredis";
-import { buildActorLeaderDriver } from "./driver";
-import { Actor, ActorTags } from "actor-core";
-import { KEYS } from "@/redis";
+} from "@/actor/runtime/config";
+import type { GlobalState } from "@/topologies/p2p/topology";
+import { logger } from "./log";
+import type { P2PDriver } from "./driver";
+import type { Actor, AnyActor } from "@/actor/runtime/actor";
+import type { ActorTags } from "@/common/utils";
+import { ActorDriver } from "@/actor/runtime/driver";
+import { CONN_DRIVER_P2P_RELAY, createP2pRelayDriver } from "./conn/driver";
 
 export class ActorPeer {
-	#redis: Redis;
-	#config: RedisConfig;
+	#config: BaseConfig;
+	#p2pDriver: P2PDriver;
+	#actorDriver: ActorDriver;
 	#globalState: GlobalState;
 	#actorId: string;
-	#tags?: ActorTags;
+	#actorTags?: ActorTags;
 	#isDisposed = false;
 
 	/** Connections that hold a reference to this actor. If this set is empty, the actor should be shut down. */
@@ -42,21 +43,24 @@ export class ActorPeer {
 	}
 
 	constructor(
-		redis: Redis,
-		config: RedisConfig,
+		config: BaseConfig,
+		p2pDriver: P2PDriver,
+		actorDriver: ActorDriver,
 		globalState: GlobalState,
 		actorId: string,
 	) {
-		this.#redis = redis;
 		this.#config = config;
+		this.#p2pDriver = p2pDriver;
+		this.#actorDriver = actorDriver;
 		this.#globalState = globalState;
 		this.#actorId = actorId;
 	}
 
 	/** Acquires a `ActorPeer` for a connection and includes the connection ID in the references. */
 	static async acquire(
-		redis: Redis,
-		config: RedisConfig,
+		config: BaseConfig,
+		actorDriver: ActorDriver,
+		p2pDriver: P2PDriver,
 		globalState: GlobalState,
 		actorId: string,
 		connId: string,
@@ -65,7 +69,13 @@ export class ActorPeer {
 
 		// Create peer if needed
 		if (!peer) {
-			peer = new ActorPeer(redis, config, globalState, actorId);
+			peer = new ActorPeer(
+				config,
+				p2pDriver,
+				actorDriver,
+				globalState,
+				actorId,
+			);
 			globalState.actorPeers.set(actorId, peer);
 			await peer.#start();
 		}
@@ -116,62 +126,43 @@ export class ActorPeer {
 		// TODO: Do this in 1 round trip with a Lua script
 
 		// Acquire initial information
-		const execRes = await this.#redis
-			.multi()
-			.mget([
-				KEYS.ACTOR.initialized(this.#actorId),
-				KEYS.ACTOR.tags(this.#actorId),
-			])
-			.actorPeerAcquireLease(
-				KEYS.ACTOR.LEASE.node(this.#actorId),
-				this.#globalState.nodeId,
-				this.#config.actorPeer?.leaseDuration ??
-					DEFAULT_ACTOR_PEER_LEASE_DURATION,
-			)
-			.exec();
-		if (!execRes) throw new Error("Exec returned null");
-
-		const [[mgetErr, mgetRes], [leaseErr, leaseRes]] = execRes;
-
-		if (mgetErr) throw new Error(`Redis MGET error: ${mgetErr}`);
-		if (!mgetRes) throw new Error("MGET is null");
-		const [initialized, tagsRaw] = mgetRes as [string, string];
-
-		if (leaseErr) throw new Error(`Redis acquire lease error: ${leaseErr}`);
-		const leaseNode = leaseRes as string;
-
+		const leaseDuration =
+			this.#config.actorPeer?.leaseDuration ??
+			DEFAULT_ACTOR_PEER_LEASE_DURATION;
+		const { actor } = await this.#p2pDriver.startActorAndAcquireLease(
+			this.#actorId,
+			this.#globalState.nodeId,
+			leaseDuration,
+		);
 		// Log
 		logger().debug("starting actor peer", {
-			actorId: this.#actorId,
-			initialized,
-			node: leaseNode,
+			actor,
 		});
 
 		// Validate actor exists
-		if (!initialized || !tagsRaw) {
+		if (!actor) {
 			throw new Error("Actor does not exist");
 		}
 
 		// Parse tags
-		const tags = JSON.parse(tagsRaw);
-		this.#tags = tags;
+		this.#actorTags = actor.tags;
 
 		// Handle leadership
-		this.#leaderNodeId = leaseNode;
-		if (leaseNode === this.#globalState.nodeId) {
+		this.#leaderNodeId = actor.leaderNodeId;
+		if (actor.leaderNodeId === this.#globalState.nodeId) {
 			logger().debug("actor peer is leader", {
 				actorId: this.#actorId,
-				leaderNodeId: leaseNode,
+				leaderNodeId: actor.leaderNodeId,
 			});
 
 			await this.#convertToLeader();
 		} else {
 			logger().debug("actor peer is follower", {
 				actorId: this.#actorId,
-				leaderNodeId: leaseNode,
+				leaderNodeId: actor.leaderNodeId,
 			});
 
-			this.#leaderNodeId = leaseNode;
+			this.#leaderNodeId = actor.leaderNodeId;
 		}
 
 		// Schedule first heartbeat
@@ -215,12 +206,12 @@ export class ActorPeer {
 	}
 
 	async #convertToLeader() {
-		if (!this.#tags) throw new Error("missing tags");
+		if (!this.#actorTags) throw new Error("missing tags");
 
 		logger().debug("peer acquired leadership", { actorId: this.#actorId });
 
 		// Build actor
-		const actorName = this.#tags.name;
+		const actorName = this.#actorTags.name;
 		const prototype = this.#config.actors[actorName];
 		if (!prototype) throw new Error(`no actor for name ${prototype}`);
 
@@ -229,14 +220,15 @@ export class ActorPeer {
 		this.#loadedActor = actor;
 
 		await actor.__start(
-			buildActorLeaderDriver(
-				this.#redis,
-				this.#globalState,
-				this.#actorId,
-				actor,
-			),
+			{
+				[CONN_DRIVER_P2P_RELAY]: createP2pRelayDriver(
+					this.#globalState,
+					this.#p2pDriver,
+				),
+			},
+			this.#actorDriver,
 			this.#actorId,
-			this.#tags,
+			this.#actorTags,
 			"unknown",
 		);
 	}
@@ -247,21 +239,21 @@ export class ActorPeer {
 	 * If the lease has expired for any reason (e.g. connection latency or database purged), this will automatically shut down the actor.
 	 */
 	async #extendLease() {
-		const res = await this.#redis.actorPeerExtendLease(
-			KEYS.ACTOR.LEASE.node(this.#actorId),
-			this.#globalState.nodeId,
+		const leaseDuration =
 			this.#config.actorPeer?.leaseDuration ??
-				DEFAULT_ACTOR_PEER_LEASE_DURATION,
+			DEFAULT_ACTOR_PEER_LEASE_DURATION;
+		const { leaseValid } = await this.#p2pDriver.extendLease(
+			this.#actorId,
+			this.#globalState.nodeId,
+			leaseDuration,
 		);
-		if (res === 0) {
+		if (leaseValid) {
+			logger().debug("lease is valid", { actorId: this.#actorId });
+		} else {
 			logger().debug("lease is invalid", { actorId: this.#actorId });
 
 			// Shut down. SInce the lease is already lost, no need to clear it.
 			await this.#dispose(false);
-		} else if (res === 1) {
-			logger().debug("lease is valid", { actorId: this.#actorId });
-		} else {
-			throw new Error(`Unexpected extendLease res: ${res}`);
 		}
 	}
 
@@ -269,11 +261,13 @@ export class ActorPeer {
 	 * Attempts to acquire a lease (aka checks if the leader's lease has expired). Called on an interval for followers.
 	 */
 	async #attemptAcquireLease() {
-		const newLeaderNodeId = await this.#redis.actorPeerAcquireLease(
-			KEYS.ACTOR.LEASE.node(this.#actorId),
-			this.#globalState.nodeId,
+		const leaseDuration =
 			this.#config.actorPeer?.leaseDuration ??
-				DEFAULT_ACTOR_PEER_LEASE_DURATION,
+			DEFAULT_ACTOR_PEER_LEASE_DURATION;
+		const { newLeaderNodeId } = await this.#p2pDriver.attemptAcquireLease(
+			this.#actorId,
+			this.#globalState.nodeId,
+			leaseDuration,
 		);
 
 		// Check if the lease was successfully acquired and promoted to leader
@@ -331,8 +325,8 @@ export class ActorPeer {
 
 		// Clear the lease if needed
 		if (this.#isLeader && releaseLease) {
-			await this.#redis.actorPeerReleaseLease(
-				KEYS.ACTOR.LEASE.node(this.#actorId),
+			await this.#p2pDriver.releaseLease(
+				this.#actorId,
 				this.#globalState.nodeId,
 			);
 		}

@@ -1,56 +1,48 @@
-import { GlobalState } from "@/router/mod";
-import { logger } from "@/log";
+import type { GlobalState } from "../router/mod";
+import { logger } from "../log";
 import {
-	NodeMessage,
+	type NodeMessage,
 	NodeMessageSchema,
-	ToFollowerConnectionClose,
-	ToFollowerMessage,
-	Ack,
-	ToLeaderConnectionClose,
-	ToLeaderConnectionOpen,
-	ToLeaderMessage,
-} from "@/node/protocol";
-import { buildRedis } from "@/redis";
-import { assertUnreachable } from "actor-core/platform";
-import Redis from "ioredis";
-import { ActorPeer } from "../actor/peer";
-import { CONN_DRIVER_RELAY_REDIS, RelayRedisState } from "../actor/driver";
-import { PUBSUB } from "@/redis";
-import { RedisConfig } from "@/config";
+	type ToFollowerConnectionClose,
+	type ToFollowerMessage,
+	type Ack,
+	type ToLeaderConnectionClose,
+	type ToLeaderConnectionOpen,
+	type ToLeaderMessage,
+} from "./protocol";
+import { ActorPeer } from "../actor_peer";
+import type { P2PDriver } from "../driver";
+import { CONN_DRIVER_P2P_RELAY, type P2PRelayState } from "../conn/driver";
+import { assertUnreachable } from "@/common/utils";
 
 export class Node {
-	#redis: Redis;
+	#p2pDriver: P2PDriver;
 	#globalState: GlobalState;
 
-	/** Subscriber used for receiving node events. */
-	#nodeSub: Redis;
-
-	constructor(redis: Redis, config: RedisConfig, globalState: GlobalState) {
-		this.#redis = redis;
+	constructor(p2pDriver: P2PDriver, globalState: GlobalState) {
+		this.#p2pDriver = p2pDriver;
 		this.#globalState = globalState;
-
-		this.#nodeSub = buildRedis(config);
 	}
 
 	async start() {
 		logger().info("starting", { nodeId: this.#globalState.nodeId });
 
-		// TODO: support binary
-		this.#nodeSub.on("message", this.#onMessage.bind(this));
-
 		// Subscribe to events
 		//
-		// We intentionally design this so there's only one topic for the subscriber to listen on in order to reduce chattiness to Redis.
+		// We intentionally design this so there's only one topic for the subscriber to listen on in order to reduce chattiness to the pubsub server.
 		//
-		// If we had a dedicated topic to Redis for each actor, we'd have to send a SUB for each leader & follower for each actor.
+		// If we had a dedicated topic for each actor, we'd have to create a SUB for each leader & follower for each actor which is much more expensive than one for each node.
 		//
 		// Additionally, in most serverless environments, 1 node usually owns 1 actor, so this would double the RTT to create the required subscribers.
-		await this.#nodeSub.subscribe(PUBSUB.node(this.#globalState.nodeId));
+		await this.#p2pDriver.createNodeSubscriber(
+			this.#globalState.nodeId,
+			this.#onMessage.bind(this),
+		);
 
 		logger().info("started successfully", { nodeId: this.#globalState.nodeId });
 	}
 
-	async #onMessage(_channel: string, message: string) {
+	async #onMessage(message: string) {
 		// TODO: try catch this
 		// TODO: Support multiple protocols for the actor
 
@@ -75,7 +67,7 @@ export class Node {
 					},
 				},
 			};
-			this.#redis.publish(PUBSUB.node(data.n), JSON.stringify(messageRaw));
+			this.#p2pDriver.publishToNode(data.n, JSON.stringify(messageRaw));
 		}
 
 		// Handle message
@@ -125,9 +117,6 @@ export class Node {
 		// Connection open
 
 		try {
-			// TODO: Encoding doesn't matter because we don't manually ser/de at the actor level
-			const encoding = "json";
-
 			const actor = ActorPeer.getLeaderActor(this.#globalState, actorId);
 			if (!actor) {
 				logger().warn("received message for nonexistent actor leader", {
@@ -142,8 +131,8 @@ export class Node {
 				connToken,
 				connParams,
 				connState,
-				CONN_DRIVER_RELAY_REDIS,
-				{ nodeId } satisfies RelayRedisState,
+				CONN_DRIVER_P2P_RELAY,
+				{ nodeId } satisfies P2PRelayState,
 			);
 
 			// Connection init will be sent by `Actor`

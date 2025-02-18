@@ -1,21 +1,13 @@
-import { RedisConfig } from "@/config";
-import { GlobalState } from "@/router/mod";
-import { logger } from "@/log";
-import type { Context as HonoContext } from "hono";
-import Redis from "ioredis";
-import { streamSSE } from "hono/streaming";
-import { Actor, ActorTags } from "actor-core";
-import {
-	generateConnectionId,
-	generateConnectionToken,
-} from "actor-core/platform";
-import { encodeDataToString, serialize } from "actor-core/actor/protocol/serde";
-import { NodeMessage } from "@/node/protocol";
-import type * as messageToClient from "actor-core/actor/protocol/message/to_client";
-import { ActorPeer } from "./peer";
-import { KEYS, PUBSUB } from "@/redis";
-import * as errors from "actor-core/actor/errors";
-import { publishMessageToLeader } from "@/node/message";
+import type { GlobalState } from "@/topologies/p2p/topology";
+import type * as messageToClient from "@/actor/protocol/message/to_client";
+import * as errors from "@/actor/errors";
+import type { P2PDriver } from "../driver";
+import { logger } from "../log";
+import { ActorPeer } from "../actor_peer";
+import { publishMessageToLeader } from "../node/message";
+import { generateConnectionId, generateConnectionToken } from "@/actor/runtime/connection";
+import type { ActorDriver } from "@/actor/runtime/driver";
+import type { BaseConfig } from "@/actor/runtime/config";
 
 export interface RelayConnectionDriver {
 	sendMessage(message: messageToClient.ToClient): void;
@@ -26,8 +18,9 @@ export interface RelayConnectionDriver {
  * This is different than `Connection`. `Connection` represents the data of the connection state on the actor itself, `RelayConnection` supports managing a connection for an actor running on another machine over pubsub.
  */
 export class RelayConnection {
-	#redis: Redis;
-	#config: RedisConfig;
+	#config: BaseConfig;
+	#p2pDriver: P2PDriver;
+	#actorDriver: ActorDriver;
 	#globalState: GlobalState;
 	#driver: RelayConnectionDriver;
 	#actorId: string;
@@ -53,15 +46,17 @@ export class RelayConnection {
 	}
 
 	constructor(
-		redis: Redis,
-		config: RedisConfig,
+		config: BaseConfig,
+		actorDriver: ActorDriver,
+		p2pDriver: P2PDriver,
 		globalState: GlobalState,
 		driver: RelayConnectionDriver,
 		actorId: string,
 		parameters: unknown,
 	) {
-		this.#redis = redis;
 		this.#config = config;
+		this.#p2pDriver = p2pDriver;
+		this.#actorDriver = actorDriver;
 		this.#driver = driver;
 		this.#globalState = globalState;
 		this.#actorId = actorId;
@@ -84,8 +79,9 @@ export class RelayConnection {
 
 		// Create actor peer
 		this.#actorPeer = await ActorPeer.acquire(
-			this.#redis,
 			this.#config,
+			this.#actorDriver,
+			this.#p2pDriver,
 			this.#globalState,
 			this.#actorId,
 			connId,
@@ -95,8 +91,8 @@ export class RelayConnection {
 
 		// Publish connection open
 		await publishMessageToLeader(
-			this.#redis,
 			this.#config,
+			this.#p2pDriver,
 			this.#globalState,
 			this.#actorId,
 			{
@@ -143,8 +139,8 @@ export class RelayConnection {
 			if (!fromLeader && this.#actorPeer?.leaderNodeId) {
 				// Publish connection close
 				await publishMessageToLeader(
-					this.#redis,
 					this.#config,
+					this.#p2pDriver,
 					this.#globalState,
 					this.#actorId,
 					{
@@ -159,7 +155,7 @@ export class RelayConnection {
 				);
 			}
 
-			// Remove reference ot actor (will shut down if no more references)
+			// Remove reference to actor (will shut down if no more references)
 			//
 			// IMPORTANT: Do this last since we need to send the connection close event
 			await this.#actorPeer?.removeConnectionReference(this.#connId);

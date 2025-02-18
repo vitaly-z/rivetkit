@@ -5,6 +5,7 @@
   "workspaces": [
     "packages/*",
     "packages/platforms/*",
+    "packages/drivers/*",
     "packages/misc/*",
     "examples/*",
     "examples/*/platforms/*"

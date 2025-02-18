@@ -1,11 +1,7 @@
 {
   "name": "@actor-core/nodejs",
   "version": "0.3.0",
-  "files": [
-    "src",
-    "dist",
-    "package.json"
-  ],
+  "files": ["src", "dist", "package.json"],
   "type": "module",
   "exports": {
     ".": {
@@ -22,23 +18,19 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup src/mod.ts",
-    "dev": "yarn build --watch",
     "check-types": "tsc --noEmit"
   },
   "peerDependencies": {
     "actor-core": "workspace:*"
   },
   "devDependencies": {
-    "@actor-core/redis": "workspace:*",
     "hono": "^4.7.0",
     "tsup": "^8.3.6",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.2",
+    "actor-core": "workspace:*"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
-    "@hono/node-ws": "^1.0.8",
-    "dedent": "^1.5.3",
-    "ioredis": "^5.4.2",
-    "p-retry": "^6.2.1"
+    "@hono/node-ws": "^1.0.8"
   }
 }

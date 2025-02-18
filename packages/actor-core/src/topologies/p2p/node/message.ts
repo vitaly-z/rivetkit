@@ -1,12 +1,12 @@
-import { createActorRouter, Manager } from "actor-core/platform";
-import { GlobalState } from "@/router/mod";
-import Redis from "ioredis";
-import { logger } from "@/log";
-import * as messageToServer from "actor-core/actor/protocol/message/to_server";
-import { RedisConfig, DEFAULT_ACTOR_PEER_MESSAGE_ACK_TIMEOUT } from "@/config";
-import { NodeMessage } from "@/node/protocol";
+import type { GlobalState } from "@/topologies/p2p/topology";
+import { logger } from "../log";
 import pRetry, { AbortError } from "p-retry";
-import { KEYS, PUBSUB } from "@/redis";
+import type { P2PDriver } from "../driver";
+import {
+	type BaseConfig,
+	DEFAULT_ACTOR_PEER_MESSAGE_ACK_TIMEOUT,
+} from "@/actor/runtime/config";
+import type { NodeMessage } from "./protocol";
 
 /**
  * Publishes a message and waits for an ack. If no ack is received, then retries accordingly.
@@ -14,8 +14,8 @@ import { KEYS, PUBSUB } from "@/redis";
  * This should be used any time a message to the leader is being published since it correctly handles leadership transfer edge cases.
  */
 export async function publishMessageToLeader(
-	redis: Redis,
-	config: RedisConfig,
+	config: BaseConfig,
+	p2pDriver: P2PDriver,
 	globalState: GlobalState,
 	actorId: string,
 	message: NodeMessage,
@@ -32,8 +32,8 @@ export async function publishMessageToLeader(
 	await pRetry(
 		() =>
 			publishMessageToLeaderInner(
-				redis,
 				config,
+				p2pDriver,
 				globalState,
 				actorId,
 				messageId,
@@ -55,8 +55,8 @@ export async function publishMessageToLeader(
 }
 
 async function publishMessageToLeaderInner(
-	redis: Redis,
-	config: RedisConfig,
+	config: BaseConfig,
+	p2pDriver: P2PDriver,
 	globalState: GlobalState,
 	actorId: string,
 	messageId: string,
@@ -64,20 +64,17 @@ async function publishMessageToLeaderInner(
 	signal?: AbortSignal,
 ) {
 	// Find the leader node
-	const [initialized, nodeId] = await redis.mget([
-		KEYS.ACTOR.initialized(actorId),
-		KEYS.ACTOR.LEASE.node(actorId),
-	]);
+	const { actor }= await p2pDriver.getActorLeader(actorId);
 
 	// Validate initialized
-	if (!initialized) throw new AbortError("Actor not initialized");
+	if (!actor) throw new AbortError("Actor not initialized");
 
 	// Validate node
-	if (!nodeId) {
+	if (!actor.leaderNodeId) {
 		throw new Error("actor not leased, may be transferring leadership");
 	}
 
-	logger().debug("found actor leader node", { nodeId });
+	logger().debug("found actor leader node", { nodeId: actor.leaderNodeId });
 
 	// Create ack resolver
 	const {
@@ -102,7 +99,7 @@ async function publishMessageToLeaderInner(
 
 	try {
 		// Forward outgoing message
-		await redis.publish(PUBSUB.node(nodeId), JSON.stringify(message));
+		await p2pDriver.publishToNode(actor.leaderNodeId, JSON.stringify(message));
 
 		logger().debug("waiting for message ack", { messageId });
 
