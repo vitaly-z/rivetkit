@@ -89,7 +89,7 @@ Deploy to your platform of choice:
 - Follow us on [X](https://x.com/rivet_gg)
 - Follow us on [Bluesky](https://bsky.app/profile/rivet-gg.bsky.social)
 - File bug reports in [GitHub Issues](https://github.com/rivet-gg/actor-core/issues)
-- Post questions & ideas in [GitHub Discussions](https://github.com/orgs/rivet-gg/discussions)
+- Post questions & ideas in [GitHub Discussions](https://github.com/rivet-gg/actor-core/discussions)
 
 ## License
 
