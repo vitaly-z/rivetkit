@@ -112,6 +112,7 @@ __metadata:
     dedent: "npm:^1.5.3"
     lefthook: "npm:^1.6.12"
     turbo: "npm:^2.0.1"
+    zx: "npm:^8.3.2"
   languageName: unknown
   linkType: soft
 
@@ -1663,12 +1664,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/fs-extra@npm:>=11":
+  version: 11.0.4
+  resolution: "@types/fs-extra@npm:11.0.4"
+  dependencies:
+    "@types/jsonfile": "npm:*"
+    "@types/node": "npm:*"
+  checksum: 10c0/9e34f9b24ea464f3c0b18c3f8a82aefc36dc524cc720fc2b886e5465abc66486ff4e439ea3fb2c0acebf91f6d3f74e514f9983b1f02d4243706bdbb7511796ad
+  languageName: node
+  linkType: hard
+
+"@types/jsonfile@npm:*":
+  version: 6.1.4
+  resolution: "@types/jsonfile@npm:6.1.4"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/b12d068b021e4078f6ac4441353965769be87acf15326173e2aea9f3bf8ead41bd0ad29421df5bbeb0123ec3fc02eb0a734481d52903704a1454a1845896b9eb
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:^22.13.1":
   version: 22.13.1
   resolution: "@types/node@npm:22.13.1"
   dependencies:
     undici-types: "npm:~6.20.0"
   checksum: 10c0/d4e56d41d8bd53de93da2651c0a0234e330bd7b1b6d071b1a94bd3b5ee2d9f387519e739c52a15c1faa4fb9d97e825b848421af4b2e50e6518011e7adb4a34b7
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:>=20":
+  version: 22.13.8
+  resolution: "@types/node@npm:22.13.8"
+  dependencies:
+    undici-types: "npm:~6.20.0"
+  checksum: 10c0/bfc92b734a9dce6ac5daee0a52feccdf5dcb3804d895e4bc5384e2f4644612b8801725cd03c8c3c0888fb5eeb16b875877ac44b77641e0196dc1a837b1c2a366
   languageName: node
   linkType: hard
 
@@ -2048,6 +2077,7 @@ __metadata:
     "@cloudflare/workers-types": "npm:^4.20250129.0"
     "@types/prompts": "npm:^2"
     actor-core: "workspace:*"
+    hono: "npm:^4.7.0"
     prompts: "npm:^2.4.2"
     typescript: "npm:^5.5.2"
     wrangler: "npm:^3.101.0"
@@ -2262,6 +2292,7 @@ __metadata:
     "@cloudflare/workers-types": "npm:^4.20250129.0"
     actor-core: "workspace:*"
     eventsource: "npm:^3.0.5"
+    hono: "npm:^4.7.0"
     mitata: "npm:^1.0.34"
     typescript: "npm:^5.5.2"
     wrangler: "npm:^3.101.0"
@@ -4985,5 +5016,22 @@ __metadata:
   version: 3.24.2
   resolution: "zod@npm:3.24.2"
   checksum: 10c0/c638c7220150847f13ad90635b3e7d0321b36cce36f3fc6050ed960689594c949c326dfe2c6fa87c14b126ee5d370ccdebd6efb304f41ef5557a4aaca2824565
+  languageName: node
+  linkType: hard
+
+"zx@npm:^8.3.2":
+  version: 8.3.2
+  resolution: "zx@npm:8.3.2"
+  dependencies:
+    "@types/fs-extra": "npm:>=11"
+    "@types/node": "npm:>=20"
+  dependenciesMeta:
+    "@types/fs-extra":
+      optional: true
+    "@types/node":
+      optional: true
+  bin:
+    zx: build/cli.js
+  checksum: 10c0/50bc4d7c3537c19d7f78df7e42dd17e83d4218c44fd3932a21a8467a221df14f1a9f7debb2dfb9d816ac973456ce182a23544fdf54bd5959358250e3fa4e0877
   languageName: node
   linkType: hard

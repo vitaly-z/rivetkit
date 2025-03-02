@@ -27,7 +27,9 @@ export class RivetManagerDriver implements ManagerDriver {
 		this.#clientConfig = clientConfig;
 	}
 
-	async getForId({ origin, actorId }: GetForIdInput): Promise<GetActorOutput | undefined> {
+	async getForId({
+		actorId,
+	}: GetForIdInput): Promise<GetActorOutput | undefined> {
 		try {
 			// Get actor
 			const res = await rivetRequest<void, { actor: RivetActor }>(
@@ -40,7 +42,7 @@ export class RivetManagerDriver implements ManagerDriver {
 			if ((res.actor.tags as ActorTags).access !== "public") {
 				return undefined;
 			}
-			
+
 			// Check if actor is destroyed
 			if (res.actor.destroyedAt) {
 				return undefined;
@@ -57,7 +59,6 @@ export class RivetManagerDriver implements ManagerDriver {
 	}
 
 	async getWithTags({
-		origin,
 		tags,
 	}: GetWithTagsInput): Promise<GetActorOutput | undefined> {
 		const tagsJson = JSON.stringify({
@@ -100,7 +101,6 @@ export class RivetManagerDriver implements ManagerDriver {
 	}
 
 	async createActor({
-		origin,
 		region,
 		tags,
 	}: CreateActorInput): Promise<GetActorOutput> {

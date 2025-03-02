@@ -27,7 +27,8 @@
     "@types/ws": "^8.5.14",
     "dedent": "^1.5.3",
     "lefthook": "^1.6.12",
-    "turbo": "^2.0.1"
+    "turbo": "^2.0.1",
+    "zx": "^8.3.2"
   },
   "resolutions": {
     "react": "^19",

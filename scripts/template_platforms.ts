@@ -6,6 +6,7 @@ import { stringifyJson } from "./utils";
 
 const PackageJsonSchema = z.object({
 	name: z.string(),
+	private: z.literal(true),
 	example: z.object({
 		platforms: z.array(z.string()),
 		actors: z.record(z.string()),
