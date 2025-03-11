@@ -31,6 +31,7 @@ export const create = new Command()
 		).choices(Object.keys(PLATFORM_NAMES)),
 	)
 	.addOption(new Option("-v [version]", "Specify version of actor-core"))
+	.addOption(new Option("--skip-install", "Skip installing dependencies"))
 	.action(async (cmdPath, opts) => {
 		await workflow(
 			"Bootstrap Actor Core in your project",
@@ -153,9 +154,11 @@ export const create = new Command()
 					}
 				});
 
-				yield* ctx.task("Install dependencies", async () => {
-					await $({ cwd: wd })(...platformOptions.cmds.install);
-				});
+				if (!opts.skipInstall) {
+					yield* ctx.task("Install dependencies", async () => {
+						await $({ cwd: wd })(...platformOptions.cmds.install);
+					});
+				}
 
 				yield ctx.render(
 					<>
