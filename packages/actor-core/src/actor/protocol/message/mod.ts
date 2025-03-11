@@ -159,6 +159,7 @@ export async function processMessage<A extends AnyActor>(
 
 			logger().warn("internal error", {
 				error: String(error),
+				stack: (error as Error)?.stack,
 				connectionId: conn.id,
 				rpcId,
 				rpcName,
