@@ -28,10 +28,15 @@ export function createRouter(inputConfig: InputConfig): {
 
 	// Configure default configuration
 	if (!config.topology) config.topology = "standalone";
-	if (!config.drivers) config.drivers = {};
-	if (!config.drivers.manager)
-		config.drivers.manager = new MemoryManagerDriver();
-	if (!config.drivers.actor) config.drivers.actor = new MemoryActorDriver();
+	if (!config.drivers.manager || !config.drivers.actor) {
+		const memoryState = new MemoryGlobalState();
+		if (!config.drivers.manager) {
+			config.drivers.manager = new MemoryManagerDriver(memoryState);
+		}
+		if (!config.drivers.actor) {
+			config.drivers.actor = new MemoryActorDriver(memoryState);
+		}
+	}
 
 	// Setup topology
 	if (config.topology === "standalone") {
