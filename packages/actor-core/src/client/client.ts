@@ -8,7 +8,7 @@ import type {
 } from "@/manager/protocol/mod";
 import type { CreateRequest } from "@/manager/protocol/query";
 import * as errors from "./errors";
-import { ActorHandleRaw } from "./handle";
+import { ActorHandleRaw, CONNECT_SYMBOL } from "./handle";
 import { logger } from "./log";
 import { importWebSocket } from "@/common/websocket";
 import { importEventSource } from "@/common/eventsource";
@@ -127,11 +127,17 @@ export interface DynamicImports {
 	EventSource: typeof EventSource;
 }
 
+export const ACTOR_HANDLES_SYMBOL = Symbol("actorHandles");
+
 /**
  * Client for managing & connecting to actors.
  * @see {@link https://rivet.gg/docs/manage|Create & Manage Actors}
  */
 export class Client {
+	#disposed = false;
+
+	[ACTOR_HANDLES_SYMBOL] = new Set<ActorHandleRaw>();
+
 	#managerEndpointPromise: Promise<string>;
 	//#regionPromise: Promise<Region | undefined>;
 	#encodingKind: Encoding;
@@ -164,7 +170,10 @@ export class Client {
 		//this.#regionPromise = this.#fetchRegion();
 
 		this.#encodingKind = opts?.encoding ?? "cbor";
-		this.#supportedTransports = opts?.supportedTransports ?? ["websocket", "sse"];
+		this.#supportedTransports = opts?.supportedTransports ?? [
+			"websocket",
+			"sse",
+		];
 
 		// Import dynamic dependencies
 		this.#dynamicImportsPromise = (async () => {
@@ -198,13 +207,13 @@ export class Client {
 				getForId: {
 					actorId,
 				},
-			}
+			},
 		});
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
 			opts?.parameters,
-			resJson.supportedTransports
+			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<A>;
 	}
@@ -263,13 +272,13 @@ export class Client {
 					tags,
 					create,
 				},
-			}
+			},
 		});
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
 			opts?.parameters,
-			resJson.supportedTransports
+			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<A>;
 	}
@@ -315,13 +324,13 @@ export class Client {
 		>("POST", "/manager/actors", {
 			query: {
 				create,
-			}
+			},
 		});
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
 			opts?.parameters,
-			resJson.supportedTransports
+			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<A>;
 	}
@@ -334,6 +343,7 @@ export class Client {
 		const imports = await this.#dynamicImportsPromise;
 
 		const handle = new ActorHandleRaw(
+			this,
 			endpoint,
 			parameters,
 			this.#encodingKind,
@@ -341,7 +351,8 @@ export class Client {
 			serverTransports,
 			imports,
 		);
-		handle.__connect();
+		this[ACTOR_HANDLES_SYMBOL].add(handle);
+		handle[CONNECT_SYMBOL]();
 		return handle;
 	}
 
@@ -509,4 +520,25 @@ export class Client {
 	//		return undefined;
 	//	}
 	//}
+
+	/**
+	 * Disconnects from all actors.
+	 *
+	 * @returns {Promise<void>} A promise that resolves when the socket is gracefully closed.
+	 */
+	async dispose(): Promise<void> {
+		if (this.#disposed) {
+			logger().warn("client already disconnected");
+			return;
+		}
+		this.#disposed = true;
+
+		logger().debug("disposing client");
+
+		const disposePromises = [];
+		for (const handle of this[ACTOR_HANDLES_SYMBOL].values()) {
+			disposePromises.push(handle.dispose());
+		}
+		await Promise.all(disposePromises);
+	}
 }

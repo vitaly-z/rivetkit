@@ -11,7 +11,7 @@ import {
 	type WebSocketMessage as ConnectionMessage,
 	messageLength,
 } from "./utils";
-import { DynamicImports } from "./client";
+import { ACTOR_HANDLES_SYMBOL, Client, DynamicImports } from "./client";
 import pRetry from "p-retry";
 
 interface RpcInFlight {
@@ -39,6 +39,8 @@ interface SendOpts {
 export type ConnectionTransport =
 	| { websocket: WebSocket }
 	| { sse: EventSource };
+
+export const CONNECT_SYMBOL = Symbol("connect");
 
 /**
  * Provides underlying functions for {@link ActorHandle}. See {@link ActorHandle} for using type-safe remote procedure calls.
@@ -90,6 +92,7 @@ export class ActorHandleRaw {
 	 * @protected
 	 */
 	public constructor(
+		private readonly client: Client,
 		private readonly endpoint: string,
 		private readonly parameters: unknown,
 		private readonly encodingKind: Encoding,
@@ -171,7 +174,7 @@ enc
 	 *
 	 * @protected
 	 */
-	public __connect() {
+	public [CONNECT_SYMBOL]() {
 		this.#connectWithRetry();
 	}
 
@@ -656,14 +659,12 @@ enc
 		}
 	}
 
-	// TODO: Add destructor
-
 	/**
 	 * Disconnects from the actor.
 	 *
 	 * @returns {Promise<void>} A promise that resolves when the socket is gracefully closed.
 	 */
-	async disconnect(): Promise<void> {
+	async dispose(): Promise<void> {
 		// Internally, this "disposes" the handle
 
 		if (this.#disposed) {
@@ -672,13 +673,16 @@ enc
 		}
 		this.#disposed = true;
 
-		logger().debug("disconnecting");
+		logger().debug("disposing actor");
 
 		// Clear interval so NodeJS process can exit
 		clearInterval(this.#keepNodeAliveInterval);
 
 		// Abort
 		this.#abortController.abort();
+
+		// Remove from registry
+		this.client[ACTOR_HANDLES_SYMBOL].delete(this);
 
 		// Disconnect transport cleanly
 		if (!this.#transport) {
