@@ -29,11 +29,11 @@ export class Schedule {
 	}
 
 	async after(duration: number, fn: string, ...args: unknown[]) {
-		this.#scheduleEvent(Date.now() + duration, fn, args);
+		await this.#scheduleEvent(Date.now() + duration, fn, args);
 	}
 
 	async at(timestamp: number, fn: string, ...args: unknown[]) {
-		this.#scheduleEvent(timestamp, fn, args);
+		await this.#scheduleEvent(timestamp, fn, args);
 	}
 
 	async #scheduleEvent(
@@ -43,7 +43,8 @@ export class Schedule {
 	): Promise<void> {
 		// Save event
 		const eventId = crypto.randomUUID();
-		await this.#driver.kvPutBatch(this.#actor.id, [
+		await this.#driver.kvPut(
+			this.#actor.id,
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 			KEYS.SCHEDULE.event(eventId) as any,
 			{
@@ -51,7 +52,7 @@ export class Schedule {
 				fn,
 				args,
 			},
-		]);
+		);
 
 		// TODO: Clean this up to use list instead of get
 		// Read index
@@ -135,7 +136,7 @@ export class Schedule {
 					);
 
 				// Call function
-				const res = await fn(...event.args);
+				const res = await fn.apply(this.#actor, event.args);
 
 				// Write error if needed
 				if ("error" in res.result) {
