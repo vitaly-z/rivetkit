@@ -29,7 +29,7 @@ export function createManagerHandler(inputConfig: InputConfig): RivetHandler {
 			if (!token) throw new Error("missing RIVET_SERVICE_TOKEN");
 
 			const clientConfig: RivetClientConfig = {
-				endpoint,
+				endpoint: "http://rivet-server:8080",
 				token,
 				project: ctx.metadata.project.slug,
 				environment: ctx.metadata.environment.slug,

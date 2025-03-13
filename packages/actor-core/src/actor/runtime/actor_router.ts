@@ -352,10 +352,22 @@ export function createActorRouter(
 		}
 	});
 
-	app.route(
-		"/inspect",
-		createInspectorRouter(handler.upgradeWebSocket, handler.onConnectInspector),
-	);
+	if (
+		(typeof config.inspector === "object" &&
+			config.inspector.enabled === true) ||
+		config.inspector === true
+	) {
+		app.route(
+			"/inspect",
+			createInspectorRouter(
+				handler.upgradeWebSocket,
+				handler.onConnectInspector,
+				typeof config.inspector === "object"
+					? config.inspector.validateRequest
+					: undefined,
+			),
+		);
+	}
 
 	app.notFound(handleRouteNotFound);
 	app.onError(handleRouteError);

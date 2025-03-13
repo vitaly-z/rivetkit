@@ -2,7 +2,7 @@ import type { AnyActor } from "@/actor/runtime/actor";
 import type { Connection, ConnectionId } from "@/actor/runtime/connection";
 import { throttle } from "@/actor/runtime/utils";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
-import { Hono, type HonoRequest } from "hono";
+import { Hono, type HonoRequest, type Context as HonoContext } from "hono";
 import * as errors from "@/actor/errors";
 import { deconstructError, safeStringify } from "@/common/utils";
 import {
@@ -11,12 +11,22 @@ import {
 } from "@/actor/protocol/inspector/to_server";
 import type { ToClient } from "@/actor/protocol/inspector/to_client";
 import { logger } from "./log";
+import { z } from "zod";
+
+export type ValidateInspectorRequest = (c: HonoContext) => Promise<boolean>;
+
+export const InspectorConfigSchema = z
+	.object({
+		enabled: z.boolean().optional().default(false),
+		validateRequest: z.custom<ValidateInspectorRequest>().optional(),
+	})
+	.or(z.boolean());
 
 export interface ConnectInspectorOpts {
 	req: HonoRequest;
 }
 
-export interface ConnectInspectortOutput {
+export interface ConnectInspectorOutput {
 	onOpen: (ws: WSContext) => Promise<void>;
 	onMessage: (message: ToServer) => Promise<void>;
 	onClose: () => Promise<void>;
@@ -24,7 +34,7 @@ export interface ConnectInspectortOutput {
 
 export type InspectorConnectionHandler = (
 	opts: ConnectInspectorOpts,
-) => Promise<ConnectInspectortOutput>;
+) => Promise<ConnectInspectorOutput>;
 
 /**
  * Create a router for the inspector.
@@ -33,6 +43,7 @@ export type InspectorConnectionHandler = (
 export function createInspectorRouter(
 	upgradeWebSocket: UpgradeWebSocket | undefined,
 	onConnect: InspectorConnectionHandler | undefined,
+	validateRequest: ValidateInspectorRequest | undefined,
 ) {
 	const app = new Hono();
 
@@ -45,6 +56,13 @@ export function createInspectorRouter(
 	}
 	return app.get(
 		"/",
+		async (c, next) => {
+			const result = (await validateRequest?.(c)) ?? true;
+			if (!result) {
+				return c.json({ error: "Unauthorized" }, 403);
+			}
+			await next();
+		},
 		upgradeWebSocket(async (c) => {
 			try {
 				const handler = await onConnect({ req: c.req });

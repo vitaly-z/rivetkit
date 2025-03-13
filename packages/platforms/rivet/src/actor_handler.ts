@@ -7,10 +7,9 @@ import type { RivetHandler } from "./util";
 import { PartitionTopologyActor } from "actor-core/topologies/partition";
 import { ConfigSchema, type InputConfig } from "./config";
 import { RivetActorDriver } from "./actor_driver";
+import { rivetRequest } from "./rivet_client";
 
-export function createActorHandler(
-	inputConfig: InputConfig,
-): RivetHandler {
+export function createActorHandler(inputConfig: InputConfig): RivetHandler {
 	const config = ConfigSchema.parse(inputConfig);
 
 	const handler = {
@@ -31,7 +30,36 @@ export function createActorHandler(
 			if (!config.drivers.actor) {
 				config.drivers.actor = new RivetActorDriver(ctx);
 			}
-			
+
+			// Setup inspector
+			config.inspector = {
+				enabled: true,
+				async validateRequest(c) {
+					const token = c.req.query("token");
+
+					if (!token) {
+						return false;
+					}
+
+					try {
+						await rivetRequest(
+							{
+								endpoint: "http://rivet-server:8080",
+								token,
+								project: ctx.metadata.project.slug,
+								environment: ctx.metadata.environment.slug,
+							},
+							"GET",
+							"/cloud/auth/inspect",
+						);
+						return true;
+					} catch (e) {
+						console.log("error", e);
+						return false;
+					}
+				},
+			};
+
 			// Setup WebSocket upgrader
 			if (!config.getUpgradeWebSocket) {
 				config.getUpgradeWebSocket = () => upgradeWebSocket;
@@ -70,4 +98,3 @@ export function createActorHandler(
 
 	return handler;
 }
-

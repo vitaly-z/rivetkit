@@ -8,6 +8,7 @@ import type {
 	Handler as HonoHandler,
 } from "hono";
 import type { cors } from "hono/cors";
+import { InspectorConfigSchema } from "./inspect";
 
 // Define CORS options schema
 type CorsOptions = NonNullable<Parameters<typeof cors>[0]>;
@@ -56,7 +57,7 @@ export type GetUpgradeWebSocket = (
 /** Base config used for the actor config across all platforms. */
 export const BaseConfigSchema = z.object({
 	actors: z.record(z.string(), z.custom<AnyActorConstructor>()),
-	topology: TopologySchema.optional(),  // Default value depends on the platform selected
+	topology: TopologySchema.optional(), // Default value depends on the platform selected
 	drivers: z
 		.object({
 			manager: z.custom<ManagerDriver>().optional(),
@@ -82,5 +83,8 @@ export const BaseConfigSchema = z.object({
 
 	/** Peer configuration for coordinated topology. */
 	actorPeer: ActorPeerConfigSchema.optional().default({}),
+
+	/** Inspector configuration */
+	inspector: InspectorConfigSchema.optional().default(false),
 });
 export type BaseConfig = z.infer<typeof BaseConfigSchema>;

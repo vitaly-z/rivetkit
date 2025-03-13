@@ -210,83 +210,83 @@ export const deploy = new Command()
 							);
 						}
 
-						if (managers.length > 0) {
-							for (const manager of managers) {
-								await Rivet.actor.upgrade(manager.id, {
-									project: projectName,
-									environment: envName,
-									body: {
-										buildTags: {
-											name: "manager",
-											current: "true",
-										},
-									},
-								});
-							}
+						// if (managers.length > 0) {
+						// 	for (const manager of managers) {
+						// 		await Rivet.actor.upgrade(manager.id, {
+						// 			project: projectName,
+						// 			environment: envName,
+						// 			body: {
+						// 				buildTags: {
+						// 					name: "manager",
+						// 					current: "true",
+						// 				},
+						// 			},
+						// 		});
+						// 	}
 
-							const manager = managers.find(
-								(m) => !!createActorEndpoint(m.network),
+						// 	const manager = managers.find(
+						// 		(m) => !!createActorEndpoint(m.network),
+						// 	);
+
+						// 	if (!manager) {
+						// 		throw ctx.error("Failed to find Actor Core Endpoint.", {
+						// 			hint: "Any existing manager actor is not running or not accessible.",
+						// 		});
+						// 	}
+
+						// 	return manager;
+						// } else {
+						const serviceToken = await getServiceToken(RivetHttp, {
+							project: projectName,
+							env: envName,
+						});
+
+						const { regions } = await Rivet.actor.regions.list({
+							project: projectName,
+							environment: envName,
+						});
+
+						// find closest region
+						const region = regions.find(
+							(r) => r.id === "atl" || r.id === "local",
+						);
+
+						if (!region) {
+							throw ctx.error(
+								"No closest region found. Please contact support.",
 							);
+						}
 
-							if (!manager) {
-								throw ctx.error("Failed to find Actor Core Endpoint.", {
-									hint: "Any existing manager actor is not running or not accessible.",
-								});
-							}
-
-							return manager;
-						} else {
-							const serviceToken = await getServiceToken(RivetHttp, {
-								project: projectName,
-								env: envName,
-							});
-
-							const { regions } = await Rivet.actor.regions.list({
-								project: projectName,
-								environment: envName,
-							});
-
-							// find closest region
-							const region = regions.find(
-								(r) => r.id === "atl" || r.id === "local",
-							);
-
-							if (!region) {
-								throw ctx.error(
-									"No closest region found. Please contact support.",
-								);
-							}
-
-							const { actor } = await Rivet.actor.create({
-								project: projectName,
-								environment: envName,
-								body: {
-									region: region.id,
-									tags: { name: "manager", owner: "rivet" },
-									buildTags: { name: "manager", current: "true" },
-									runtime: {
-										environment: {
-											RIVET_SERVICE_TOKEN: serviceToken,
-										},
+						const { actor } = await Rivet.actor.create({
+							project: projectName,
+							environment: envName,
+							body: {
+								region: region.id,
+								tags: { name: "manager", owner: "rivet" },
+								buildTags: { name: "manager", current: "true" },
+								runtime: {
+									environment: {
+										RIVET_SERVICE_TOKEN: serviceToken,
 									},
-									network: {
-										mode: "bridge",
-										ports: {
-											http: {
-												protocol: "https",
-												routing: {
-													guard: {},
-												},
+								},
+								network: {
+									mode: "bridge",
+									ports: {
+										http: {
+											protocol: "https",
+											routing: {
+												guard: {},
 											},
 										},
 									},
-									lifecycle: {
-										durable: true,
-									},
 								},
-							});
-							return actor;
-						}
+								lifecycle: {
+									durable: true,
+								},
+							},
+						});
+						return actor;
+						// }
 					},
 				);
 
