@@ -16,7 +16,7 @@ async function main() {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
 
-	await counter.disconnect();
+	await counter.dispose();
 }
 
 main();
