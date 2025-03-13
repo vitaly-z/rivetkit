@@ -245,9 +245,82 @@ export const deploy = new Command()
 								(r) => r.id === "atl" || r.id === "local",
 							);
 
-							if (!region) {
-								throw ctx.error(
-									"No closest region found. Please contact support.",
+						return managers[0];
+					}
+
+					return yield* ctx.task("Create Actor Manager", async (ctx) => {
+						const serviceToken = await getServiceToken(RivetHttp, {
+							project: projectName,
+							env: envName,
+						});
+
+						const { regions } = await Rivet.actor.regions.list({
+							project: projectName,
+							environment: envName,
+						});
+
+						// find closest region
+						const region = regions.find(
+							(r) => r.id === "atl" || r.id === "local",
+						);
+
+						if (!region) {
+							throw ctx.error(
+								"No closest region found. Please contact support.",
+							);
+						}
+
+						const { actor } = await Rivet.actor.create({
+							project: projectName,
+							environment: envName,
+							body: {
+								region: region.id,
+								tags: { name: "manager", owner: "rivet" },
+								buildTags: { name: "manager", current: "true" },
+								runtime: {
+									environment: {
+										RIVET_SERVICE_TOKEN: serviceToken,
+									},
+								},
+								network: {
+									mode: "bridge",
+									ports: {
+										http: {
+											protocol: "https",
+											routing: {
+												guard: {},
+											},
+										},
+									},
+								},
+								lifecycle: {
+									durable: true,
+								},
+							},
+						});
+
+						return actor;
+					});
+				},
+			);
+
+			for (const [idx, actorName] of Object.keys(config.actors).entries()) {
+				yield* ctx.task(
+					`Deploy "${actorName}" to Rivet (${idx + 1}/${
+						Object.keys(config.actors).length
+					})`,
+					async function* (ctx) {
+						const entrypoint = yield* ctx.task(
+							`Create entrypoint for ${actorName}`,
+							async function* () {
+								yield fs.mkdir(path.join(cwd, ".actorcore"), {
+									recursive: true,
+								});
+
+								const entrypoint = path.join(
+									cwd,
+									".actorcore",
+									`entrypoint-${actorName}.js`,
 								);
 							}
 
