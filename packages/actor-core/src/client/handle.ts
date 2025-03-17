@@ -724,7 +724,7 @@ enc
 	}
 }
 
-type ExtractActorDefinitionRpcs<AD extends AnyActorDefinition> = AD extends ActorDefinition<infer R, any, any, any> ? R : never;
+type ExtractActorDefinitionRpcs<AD extends AnyActorDefinition> = AD extends ActorDefinition<any, any, any, infer R> ? R : never;
 
 type ActorDefinitionRpcs<AD extends AnyActorDefinition> = 
 {

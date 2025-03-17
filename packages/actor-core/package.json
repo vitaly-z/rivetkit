@@ -1,6 +1,6 @@
 {
   "name": "actor-core",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -126,7 +126,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup src/mod.ts src/client/mod.ts src/common/log.ts src/actor/errors.ts src/topologies/coordinate/mod.ts src/topologies/partition/mod.ts src/utils.ts src/driver-helpers/mod.ts src/cli/mod.ts src/actor/protocol/inspector/mod.ts src/actor/protocol/http/rpc.ts",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "boop": "tsc --outDir dist/test -d"
   },
   "dependencies": {
     "cbor-x": "^1.6.0",

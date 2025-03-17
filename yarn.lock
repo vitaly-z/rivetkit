@@ -3754,9 +3754,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chat-room@workspace:examples/chat-simple":
+"chat-room@workspace:examples/chat-room":
   version: 0.0.0-use.local
-  resolution: "chat-room@workspace:examples/chat-simple"
+  resolution: "chat-room@workspace:examples/chat-room"
   dependencies:
     "@types/node": "npm:^22.13.9"
     "@types/prompts": "npm:^2"

@@ -2,7 +2,7 @@ import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { assert, beforeAll, describe, expect, it, test } from "vitest";
 
 const PLATFORMS = ["rivet", "nodejs", "bun", "cloudflare-workers"];
-const EXAMPLES = ["chat-simple", "counter"];
+const EXAMPLES = ["chat-room", "counter"];
 
 let container: StartedTestContainer;
 beforeAll(async () => {
