@@ -14,7 +14,7 @@
     "start": "npx turbo watch build",
     "dev": "npx turbo watch dev",
     "build": "npx turbo build",
-    "test": "yarn workspaces foreach -A run test",
+    "test": "npx turbo test",
     "check-types": "npx turbo check-types",
     "fmt": "yarn biome check --write .",
     "dev-docs": "cd docs && yarn dlx mintlify@latest dev",
@@ -29,6 +29,7 @@
     "dedent": "^1.5.3",
     "lefthook": "^1.6.12",
     "turbo": "^2.0.1",
+    "vitest": "^3.0.9",
     "zx": "^8.3.2"
   },
   "resolutions": {
