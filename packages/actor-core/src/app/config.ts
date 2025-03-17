@@ -55,7 +55,7 @@ export const AppConfigSchema = z.object({
 	basePath: z.string().optional(),
 
 	/** This goes in the URL so it needs to be short. */
-	maxConnectionParametersSize: z.number().optional().default(8_192),
+	maxConnParamLength: z.number().optional().default(8_192),
 
 	maxIncomingMessageSize: z.number().optional().default(65_536),
 

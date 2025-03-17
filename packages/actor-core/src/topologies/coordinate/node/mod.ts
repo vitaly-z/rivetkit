@@ -125,8 +125,8 @@ export class Node {
 				return;
 			}
 
-			const connState = await actor.prepareConnection(connParams);
-			await actor.createConnection(
+			const connState = await actor.prepareConn(connParams);
+			await actor.createConn(
 				connId,
 				connToken,
 				connParams,
@@ -170,9 +170,9 @@ export class Node {
 			return;
 		}
 
-		const conn = actor.__getConnectionForId(connId);
+		const conn = actor.__getConnForId(connId);
 		if (conn) {
-			actor.__removeConnection(conn);
+			actor.__removeConn(conn);
 		} else {
 			logger().warn("received connection close for nonexisting connection", {
 				connId,
@@ -198,7 +198,7 @@ export class Node {
 		}
 
 		// Get connection
-		const conn = actor.__getConnectionForId(connId);
+		const conn = actor.__getConnForId(connId);
 		if (conn) {
 			// Validate token
 			if (conn._token !== connToken) {
@@ -218,7 +218,7 @@ export class Node {
 		ci: connId,
 		r: reason,
 	}: ToFollowerConnectionClose) {
-		const conn = this.#globalState.relayConnections.get(connId);
+		const conn = this.#globalState.relayConns.get(connId);
 		if (!conn) {
 			logger().warn("missing connection", { connId });
 			return;
@@ -228,7 +228,7 @@ export class Node {
 	}
 
 	async #onFollowerMessage({ ci: connId, m: message }: ToFollowerMessage) {
-		const conn = this.#globalState.relayConnections.get(connId);
+		const conn = this.#globalState.relayConns.get(connId);
 		if (!conn) {
 			logger().warn("missing connection", { connId });
 			return;

@@ -1,7 +1,7 @@
-import type { ConnectionDriver } from "@/actor/driver";
+import type { ConnDriver } from "@/actor/driver";
 import type { GlobalState } from "../topology";
 import type { AnyActorInstance } from "@/actor/instance";
-import type { AnyConnection, Connection } from "@/actor/connection";
+import type { AnyConn, Conn } from "@/actor/connection";
 import type { CachedSerializer } from "@/actor/protocol/serde";
 import type * as messageToClient from "@/actor/protocol/message/to-client";
 import { logger } from "../log";
@@ -17,11 +17,11 @@ export interface CoordinateRelayState {
 export function createCoordinateRelayDriver(
 	globalState: GlobalState,
 	CoordinateDriver: CoordinateDriver,
-): ConnectionDriver<CoordinateRelayState> {
+): ConnDriver<CoordinateRelayState> {
 	return {
 		sendMessage: (
 			actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			state: CoordinateRelayState,
 			message: CachedSerializer<messageToClient.ToClient>,
 		) => {
@@ -44,7 +44,7 @@ export function createCoordinateRelayDriver(
 		},
 		disconnect: async (
 			actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			state: CoordinateRelayState,
 			reason?: string,
 		) => {

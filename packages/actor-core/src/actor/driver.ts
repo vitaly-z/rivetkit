@@ -1,10 +1,9 @@
-import type { Connection } from "./mod";
 import type * as messageToClient from "@/actor/protocol/message/to-client";
 import type { CachedSerializer } from "@/actor/protocol/serde";
 import type { AnyActorInstance } from "./instance";
-import { AnyConnection } from "./connection";
+import { AnyConn } from "./connection";
 
-export type ConnectionDrivers = Record<string, ConnectionDriver>;
+export type ConnDrivers = Record<string, ConnDriver>;
 
 export type KvKey = unknown[];
 export type KvValue = unknown;
@@ -29,10 +28,10 @@ export interface ActorDriver {
 	//readState(): void;
 }
 
-export interface ConnectionDriver<ConnDriverState = unknown> {
+export interface ConnDriver<ConnDriverState = unknown> {
 	sendMessage(
 		actor: AnyActorInstance,
-		conn: AnyConnection,
+		conn: AnyConn,
 		state: ConnDriverState,
 		message: CachedSerializer<messageToClient.ToClient>,
 	): void;
@@ -42,7 +41,7 @@ export interface ConnectionDriver<ConnDriverState = unknown> {
 	 */
 	disconnect(
 		actor: AnyActorInstance,
-		conn: AnyConnection,
+		conn: AnyConn,
 		state: ConnDriverState,
 		reason?: string,
 	): Promise<void>;

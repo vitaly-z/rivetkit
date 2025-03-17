@@ -1,9 +1,9 @@
 import type { AnyActorInstance } from "./instance";
-import type { Connection } from "./connection";
+import type { Conn } from "./connection";
 import type { Logger } from "@/common/log";
 import type { ActorTags } from "@/common/utils";
 import type { Schedule } from "./schedule";
-import type { ConnectionId } from "./connection";
+import type { ConnId } from "./connection";
 import type { SaveStateOptions } from "./instance";
 import { Actions } from "./config";
 import { ActorContext } from "./context";
@@ -20,11 +20,11 @@ export class ActionContext<S, CP, CS> {
    * Should not be called directly.
    *
    * @param actorContext - The actor context
-   * @param connection - The connection associated with the action
+   * @param conn - The connection associated with the action
    */
   constructor(
     actorContext: ActorContext<S, CP, CS>,
-    public readonly connection: Connection<S, CP, CS>
+    public readonly conn: Conn<S, CP, CS>
   ) {
     this.#actorContext = actorContext;
   }
@@ -81,8 +81,8 @@ export class ActionContext<S, CP, CS> {
   /**
    * Gets the map of connections.
    */
-  get connections(): Map<ConnectionId, Connection<S, CP, CS>> {
-    return this.#actorContext.connections;
+  get conns(): Map<ConnId, Conn<S, CP, CS>> {
+    return this.#actorContext.conns;
   }
   
   /**

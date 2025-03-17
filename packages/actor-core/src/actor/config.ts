@@ -1,4 +1,4 @@
-import type { Connection } from "./connection";
+import type { Conn } from "./connection";
 import type { ActionContext } from "./action";
 import type { ActorContext } from "./context";
 import { z } from "zod";
@@ -47,10 +47,10 @@ export const ActorConfigSchema = z
 		]),
 	)
 	.and(
-		// CreateConnectionState<S, CP, CS>
+		// CreateConnState<S, CP, CS>
 		z.union([
-			z.object({ connectionState: z.any() }).strict(),
-			z.object({ createConnectionState: z.function() }).strict(),
+			z.object({ connState: z.any() }).strict(),
+			z.object({ createConnState: z.function() }).strict(),
 			z.object({}).strict(),
 		]),
 	);
@@ -62,7 +62,7 @@ export interface OnConnectOptions<CP> {
 	 * @experimental
 	 */
 	request?: Request;
-	parameters: CP;
+	params: CP;
 }
 
 // Creates state config
@@ -76,10 +76,10 @@ type CreateState<S, CP, CS> =
 // Creates connection state config
 //
 // This must have only one or the other or else S will not be able to be inferred
-type CreateConnectionState<S, CP, CS> =
-	| { connectionState: CS }
+type CreateConnState<S, CP, CS> =
+	| { connState: CS }
 	| {
-			createConnectionState: (
+			createConnState: (
 				c: ActorContext<S, CP, CS>,
 				opts: OnConnectOptions<CP>,
 			) => CS | Promise<CS>;
@@ -93,7 +93,7 @@ export interface Actions<S, CP, CS> {
 //export type ActorConfig<S, CP, CS> = BaseActorConfig<S, CP, CS> &
 //	ActorConfigLifecycle<S, CP, CS> &
 //	CreateState<S, CP, CS> &
-//	CreateConnectionState<S, CP, CS>;
+//	CreateConnState<S, CP, CS>;
 
 interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	/**
@@ -145,12 +145,12 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * Use this hook to perform actions when a connection is established,
 	 * such as sending initial data or updating the actor's state.
 	 *
-	 * @param connection The connection object
+	 * @param conn The connection object
 	 * @returns Void or a Promise that resolves when connection handling is complete
 	 */
 	onConnect?: (
 		c: ActorContext<S, CP, CS>,
-		connection: Connection<S, CP, CS>,
+		conn: Conn<S, CP, CS>,
 	) => void | Promise<void>;
 
 	/**
@@ -159,12 +159,12 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * Use this hook to clean up resources associated with the connection
 	 * or update the actor's state.
 	 *
-	 * @param connection The connection that is being closed
+	 * @param conn The connection that is being closed
 	 * @returns Void or a Promise that resolves when disconnect handling is complete
 	 */
 	onDisconnect?: (
 		c: ActorContext<S, CP, CS>,
-		connection: Connection<S, CP, CS>,
+		conn: Conn<S, CP, CS>,
 	) => void | Promise<void>;
 
 	/**
@@ -196,22 +196,22 @@ export type ActorConfig<S, CP, CS> = Omit<
 	z.infer<typeof ActorConfigSchema>,
 	| keyof BaseActorConfig<S, CP, CS, Actions<S, CP, CS>>
 	| keyof CreateState<S, CP, CS>
-	| keyof CreateConnectionState<S, CP, CS>
+	| keyof CreateConnState<S, CP, CS>
 > &
 	BaseActorConfig<S, CP, CS, Actions<S, CP, CS>> &
 	CreateState<S, CP, CS> &
-	CreateConnectionState<S, CP, CS>;
+	CreateConnState<S, CP, CS>;
 
 // See description on `ActorConfig`
 export type ActorConfigInput<S, CP, CS, R extends Actions<S, CP, CS>> = Omit<
 	z.input<typeof ActorConfigSchema>,
 	| keyof BaseActorConfig<S, CP, CS, R>
 	| keyof CreateState<S, CP, CS>
-	| keyof CreateConnectionState<S, CP, CS>
+	| keyof CreateConnState<S, CP, CS>
 > &
 	BaseActorConfig<S, CP, CS, R> &
 	CreateState<S, CP, CS> &
-	CreateConnectionState<S, CP, CS>;
+	CreateConnState<S, CP, CS>;
 
 // For testing type definitions:
 export function test<S, CP, CS, R extends Actions<S, CP, CS>>(

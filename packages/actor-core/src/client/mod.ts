@@ -19,7 +19,7 @@ export {
 	ActorClientError,
 	InternalError,
 	ManagerError,
-	ConnectionParametersTooLong,
+	ConnParamsTooLong,
 	MalformedResponseMessage,
 	NoSupportedTransport,
 	ActionError,

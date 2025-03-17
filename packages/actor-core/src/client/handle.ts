@@ -8,7 +8,7 @@ import * as cbor from "cbor-x";
 import * as errors from "./errors";
 import { logger } from "./log";
 import {
-	type WebSocketMessage as ConnectionMessage,
+	type WebSocketMessage as ConnMessage,
 	messageLength,
 } from "./utils";
 import { ACTOR_HANDLES_SYMBOL, ClientRaw, DynamicImports } from "./client";
@@ -37,7 +37,7 @@ interface SendOpts {
 	ephemeral: boolean;
 }
 
-export type ConnectionTransport =
+export type ConnTransport =
 	| { websocket: WebSocket }
 	| { sse: EventSource };
 
@@ -61,7 +61,7 @@ export class ActorHandleRaw {
 	#connectionId?: string;
 	#connectionToken?: string;
 
-	#transport?: ConnectionTransport;
+	#transport?: ConnTransport;
 
 	#messageQueue: wsToServer.ToServer[] = [];
 	#rpcInFlight = new Map<number, RpcInFlight>();
@@ -95,7 +95,7 @@ export class ActorHandleRaw {
 	public constructor(
 		private readonly client: ClientRaw,
 		private readonly endpoint: string,
-		private readonly parameters: unknown,
+		private readonly params: unknown,
 		private readonly encodingKind: Encoding,
 		private readonly supportedTransports: Transport[],
 		private readonly serverTransports: Transport[],
@@ -242,7 +242,7 @@ enc
 	#connectWebSocket() {
 		const { WebSocket } = this.dynamicImports;
 
-		const url = this.#buildConnectionUrl("websocket");
+		const url = this.#buildConnUrl("websocket");
 
 		logger().debug("connecting to websocket", { url });
 		const ws = new WebSocket(url);
@@ -275,7 +275,7 @@ enc
 	#connectSse() {
 		const { EventSource } = this.dynamicImports;
 
-		const url = this.#buildConnectionUrl("sse");
+		const url = this.#buildConnUrl("sse");
 
 		logger().debug("connecting to sse", { url });
 		const eventSource = new EventSource(url);
@@ -412,15 +412,15 @@ enc
 		logger().warn("socket error", { event });
 	}
 
-	#buildConnectionUrl(transport: Transport): string {
+	#buildConnUrl(transport: Transport): string {
 		let url = `${this.endpoint}/connect/${transport}?encoding=${this.encodingKind}`;
 
-		if (this.parameters !== undefined) {
-			const paramsStr = JSON.stringify(this.parameters);
+		if (this.params !== undefined) {
+			const paramsStr = JSON.stringify(this.params);
 
 			// TODO: This is an imprecise count since it doesn't count the full URL length & URI encoding expansion in the URL size
 			if (paramsStr.length > MAX_CONN_PARAMS_SIZE) {
-				throw new errors.ConnectionParametersTooLong();
+				throw new errors.ConnParamsTooLong();
 			}
 
 			url += `&params=${encodeURIComponent(paramsStr)}`;
@@ -611,7 +611,7 @@ enc
 		}
 	}
 
-	async #parse(data: ConnectionMessage): Promise<unknown> {
+	async #parse(data: ConnMessage): Promise<unknown> {
 		if (this.encodingKind === "json") {
 			if (typeof data !== "string") {
 				throw new Error("received non-string for json parse");
@@ -656,7 +656,7 @@ enc
 		}
 	}
 
-	#serialize(value: unknown): ConnectionMessage {
+	#serialize(value: unknown): ConnMessage {
 		if (this.encodingKind === "json") {
 			return JSON.stringify(value);
 		} else if (this.encodingKind === "cbor") {

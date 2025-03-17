@@ -133,11 +133,11 @@ actor.once("requestApproved", () => {
 
 ### Authentication and Connection Parameters
 
-Pass information with your connection using the `parameters` option:
+Pass information with your connection using the `params` option:
 
 ```typescript
 const chatRoom = await client.chatRoom.get({ channel: "super-secret" }, {
-  parameters: { 
+  params: { 
     userId: "1234",
     authToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     displayName: "Alice"
@@ -145,7 +145,7 @@ const chatRoom = await client.chatRoom.get({ channel: "super-secret" }, {
 });
 ```
 
-The actor can access these parameters in the `onBeforeConnect` or `createConnectionState` hook:
+The actor can access these parameters in the `onBeforeConnect` or `createConnState` hook:
 
 ```typescript
 import { actor } from "actor-core";
@@ -153,9 +153,9 @@ import { actor } from "actor-core";
 const chatRoom = actor({
   state: { messages: [] },
   
-  createConnectionState: (c) => {
+  createConnState: (c, { params }) => {
     // Validate authentication token
-    const { userId, authToken, displayName } = c.parameters;
+    const { userId, authToken, displayName } = params;
     if (!validateToken(userId, authToken)) {
       throw new Error("Invalid authentication");
     }

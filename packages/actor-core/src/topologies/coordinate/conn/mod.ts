@@ -5,12 +5,12 @@ import type { CoordinateDriver } from "../driver";
 import { logger } from "../log";
 import { ActorPeer } from "../actor-peer";
 import { publishMessageToLeader } from "../node/message";
-import { generateConnectionId, generateConnectionToken } from "@/actor/connection";
+import { generateConnId, generateConnToken } from "@/actor/connection";
 import type { ActorDriver } from "@/actor/driver";
 import { DriverConfig } from "@/driver-helpers/config";
 import { AppConfig } from "@/app/config";
 
-export interface RelayConnectionDriver {
+export interface RelayConnDriver {
 	sendMessage(message: messageToClient.ToClient): void;
 	disconnect(reason?: string): Promise<void>;
 }
@@ -18,13 +18,13 @@ export interface RelayConnectionDriver {
 /**
  * This is different than `Connection`. `Connection` represents the data of the connection state on the actor itself, `RelayConnection` supports managing a connection for an actor running on another machine over pubsub.
  */
-export class RelayConnection {
+export class RelayConn {
 	#appConfig: AppConfig;
 	#driverConfig: DriverConfig;
 	#coordinateDriver: CoordinateDriver;
 	#actorDriver: ActorDriver;
 	#globalState: GlobalState;
-	#driver: RelayConnectionDriver;
+	#driver: RelayConnDriver;
 	#actorId: string;
 	#parameters: unknown;
 
@@ -53,7 +53,7 @@ export class RelayConnection {
 		actorDriver: ActorDriver,
 		CoordinateDriver: CoordinateDriver,
 		globalState: GlobalState,
-		driver: RelayConnectionDriver,
+		driver: RelayConnDriver,
 		actorId: string,
 		parameters: unknown,
 	) {
@@ -71,8 +71,8 @@ export class RelayConnection {
 		// TODO: Handle errors graecfully
 
 		// Add connection
-		const connId = generateConnectionId();
-		const connToken = generateConnectionToken();
+		const connId = generateConnId();
+		const connToken = generateConnToken();
 		this.#connId = connId;
 		this.#connToken = connToken;
 
@@ -92,7 +92,7 @@ export class RelayConnection {
 			connId,
 		);
 
-		this.#globalState.relayConnections.set(connId, this);
+		this.#globalState.relayConns.set(connId, this);
 
 		// Publish connection open
 		await publishMessageToLeader(
@@ -139,7 +139,7 @@ export class RelayConnection {
 		// Clean up state
 		if (this.#connId) {
 			// Remove connection
-			this.#globalState.relayConnections.delete(this.#connId);
+			this.#globalState.relayConns.delete(this.#connId);
 
 			// Publish connection close
 			if (!fromLeader && this.#actorPeer?.leaderNodeId) {

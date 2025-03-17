@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const ConnectionSchema = z.object({
+const ConnSchema = z.object({
 	id: z.string(),
 	parameters: z.any(),
 	state: z.object({
@@ -10,7 +10,7 @@ const ConnectionSchema = z.object({
 });
 
 export const InspectDataSchema = z.object({
-	connections: z.array(ConnectionSchema),
+	connections: z.array(ConnSchema),
 	rpcs: z.array(z.string()),
 	state: z.object({
 		enabled: z.boolean(),

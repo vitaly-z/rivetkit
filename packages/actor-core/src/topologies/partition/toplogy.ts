@@ -4,10 +4,10 @@ import { createActorRouter } from "@/actor/router";
 import { AnyActorInstance } from "@/actor/instance";
 import * as errors from "@/actor/errors";
 import {
-    AnyConnection,
-	Connection,
-	generateConnectionId,
-	generateConnectionToken,
+    AnyConn,
+	Conn,
+	generateConnId,
+	generateConnToken,
 } from "@/actor/connection";
 import { logger } from "./log";
 import { ActionContext } from "@/actor/action";
@@ -21,7 +21,7 @@ import {
 	GenericSseDriverState,
 	GenericWebSocketDriverState,
 } from "../common/generic-conn-driver";
-import type { ConnectionDriver } from "@/actor/driver";
+import type { ConnDriver } from "@/actor/driver";
 import type { ActorTags } from "@/common/utils";
 import { InspectorConnection } from "@/actor/inspect";
 import { DriverConfig } from "@/driver-helpers/config";
@@ -42,7 +42,7 @@ export class PartitionTopologyActor {
 
 	#appConfig: AppConfig;
 	#driverConfig: DriverConfig;
-	#connDrivers: Record<string, ConnectionDriver>;
+	#connDrivers: Record<string, ConnDriver>;
 	#actor?: AnyActorInstance;
 
 	get actor(): AnyActorInstance {
@@ -73,7 +73,7 @@ export class PartitionTopologyActor {
 				onConnectWebSocket: async ({
 					req,
 					encoding,
-					parameters: connParams,
+					params: connParams,
 				}) => {
 					if (this.#actorStartedPromise)
 						await this.#actorStartedPromise.promise;
@@ -81,21 +81,21 @@ export class PartitionTopologyActor {
 					const actor = this.#actor;
 					if (!actor) throw new Error("Actor should be defined");
 
-					const connId = generateConnectionId();
-					const connToken = generateConnectionToken();
-					const connState = await actor.prepareConnection(
+					const connId = generateConnId();
+					const connToken = generateConnToken();
+					const connState = await actor.prepareConn(
 						connParams,
 						req.raw,
 					);
 
-					let conn: AnyConnection | undefined;
+					let conn: AnyConn | undefined;
 					return {
 						onOpen: async (ws) => {
 							// Save socket
 							genericConnGlobalState.websockets.set(connId, ws);
 
 							// Create connection
-							conn = await actor.createConnection(
+							conn = await actor.createConn(
 								connId,
 								connToken,
 
@@ -119,33 +119,33 @@ export class PartitionTopologyActor {
 							genericConnGlobalState.websockets.delete(connId);
 
 							if (conn) {
-								actor.__removeConnection(conn);
+								actor.__removeConn(conn);
 							}
 						},
 					};
 				},
-				onConnectSse: async ({ req, encoding, parameters: connParams }) => {
+				onConnectSse: async ({ req, encoding, params: connParams }) => {
 					if (this.#actorStartedPromise)
 						await this.#actorStartedPromise.promise;
 
 					const actor = this.#actor;
 					if (!actor) throw new Error("Actor should be defined");
 
-					const connId = generateConnectionId();
-					const connToken = generateConnectionToken();
-					const connState = await actor.prepareConnection(
+					const connId = generateConnId();
+					const connToken = generateConnToken();
+					const connState = await actor.prepareConn(
 						connParams,
 						req.raw,
 					);
 
-					let conn: AnyConnection | undefined;
+					let conn: AnyConn | undefined;
 					return {
 						onOpen: async (stream) => {
 							// Save socket
 							genericConnGlobalState.sseStreams.set(connId, stream);
 
 							// Create connection
-							conn = await actor.createConnection(
+							conn = await actor.createConn(
 								connId,
 								connToken,
 								connParams,
@@ -158,13 +158,13 @@ export class PartitionTopologyActor {
 							genericConnGlobalState.sseStreams.delete(connId);
 
 							if (conn) {
-								actor.__removeConnection(conn);
+								actor.__removeConn(conn);
 							}
 						},
 					};
 				},
-				onRpc: async ({ req, parameters: connParams, rpcName, rpcArgs }) => {
-					let conn: AnyConnection | undefined;
+				onRpc: async ({ req, params: connParams, rpcName, rpcArgs }) => {
+					let conn: AnyConn | undefined;
 					try {
 						// Wait for init to finish
 						if (this.#actorStartedPromise)
@@ -174,13 +174,13 @@ export class PartitionTopologyActor {
 						if (!actor) throw new Error("Actor should be defined");
 
 						// Create conn
-						const connState = await actor.prepareConnection(
+						const connState = await actor.prepareConn(
 							connParams,
 							req.raw,
 						);
-						conn = await actor.createConnection(
-							generateConnectionId(),
-							generateConnectionToken(),
+						conn = await actor.createConn(
+							generateConnId(),
+							generateConnToken(),
 							connParams,
 							connState,
 							CONN_DRIVER_GENERIC_HTTP,
@@ -194,11 +194,11 @@ export class PartitionTopologyActor {
 						return { output };
 					} finally {
 						if (conn) {
-							this.#actor?.__removeConnection(conn);
+							this.#actor?.__removeConn(conn);
 						}
 					}
 				},
-				onConnectionsMessage: async ({ connId, connToken, message }) => {
+				onConnMessage: async ({ connId, connToken, message }) => {
 					// Wait for init to finish
 					if (this.#actorStartedPromise)
 						await this.#actorStartedPromise.promise;
@@ -207,14 +207,14 @@ export class PartitionTopologyActor {
 					if (!actor) throw new Error("Actor should be defined");
 
 					// Find connection
-					const conn = actor.connections.get(connId);
+					const conn = actor.conns.get(connId);
 					if (!conn) {
-						throw new errors.ConnectionNotFound(connId);
+						throw new errors.ConnNotFound(connId);
 					}
 
 					// Authenticate connection
 					if (conn._token !== connToken) {
-						throw new errors.IncorrectConnectionToken();
+						throw new errors.IncorrectConnToken();
 					}
 
 					// Process message
