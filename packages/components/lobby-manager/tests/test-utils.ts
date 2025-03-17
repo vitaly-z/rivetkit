@@ -1,16 +1,19 @@
 import { onTestFinished, vi } from "vitest";
-import { type ActorHandle, Client } from "actor-core/client";
+import { type ActorHandle, Client, createClient } from "actor-core/client";
 import getPort from "get-port";
-import { type LobbyManager, lobbyManager } from "../src/mod";
+import { lobbyManager } from "../src/mod";
 import { serve } from "@actor-core/nodejs";
+import { ActorCoreApp, setup } from "actor-core";
 
 export const ADMIN_TOKEN = "test-admin";
 export const VERSION = "test";
 export const REGION = "test";
 
+type App = ActorCoreApp<{ lobbyManager: ReturnType<typeof lobbyManager> }>;
+
 export interface SetupTestResult {
-	mm: ActorHandle<LobbyManager>;
-	client: Client;
+	mm: ActorHandle<ReturnType<typeof lobbyManager>>;
+	client: Client<App>;
 }
 
 export async function setupTest(
@@ -34,24 +37,23 @@ export async function setupTest(
 		},
 	};
 
+	// Setup app
+	const app: App = setup({
+		actors: { lobbyManager: lobbyManager(config ?? defaultConfig) },
+	});
+
 	// Start server with a random port
 	const port = await getPort();
-	const server = serve({
-		actors: {
-			"lobby-manager": lobbyManager(config ?? defaultConfig),
-		},
-		port,
-	});
+	const server = serve(app, { port });
 	onTestFinished(
 		async () => await new Promise((resolve) => server.close(() => resolve())),
 	);
 
 	// Create client
-	const client = new Client(`http://localhost:${port}`);
+	const client = createClient<App>(`http://localhost:${port}`);
 	onTestFinished(async () => await client.dispose());
 
-	// Get actor reference
-	const mm = await client.get<LobbyManager>({ name: "lobby-manager" });
+	const mm = await client.lobbyManager.get();
 
 	return {
 		mm,
@@ -60,7 +62,7 @@ export async function setupTest(
 }
 
 export async function getLobbyToken(
-	mm: ActorHandle<LobbyManager>,
+	mm: ActorHandle<ReturnType<typeof lobbyManager>>,
 	adminToken: string,
 	lobbyId: string,
 ): Promise<string> {
@@ -69,7 +71,7 @@ export async function getLobbyToken(
 }
 
 export async function setLobbyReady(
-	mm: ActorHandle<LobbyManager>,
+	mm: ActorHandle<ReturnType<typeof lobbyManager>>,
 	adminToken: string,
 	lobbyId: string,
 ): Promise<{ lobbyToken: string }> {
