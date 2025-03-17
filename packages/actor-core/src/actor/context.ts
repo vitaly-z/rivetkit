@@ -1,7 +1,7 @@
 import { Logger } from "@/common/log";
 import { Actions } from "./config";
 import { ActorInstance, SaveStateOptions } from "./instance";
-import { Connection, ConnectionId } from "./connection";
+import { Conn, ConnId } from "./connection";
 import { ActorTags } from "@/common/utils";
 import { Schedule } from "./schedule";
 
@@ -77,9 +77,9 @@ export class ActorContext<S, CP, CS> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get connections(): Map<ConnectionId, Connection<S, CP, CS>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS>> {
 		// @ts-ignore - Access protected method
-		return this.#actor.connections;
+		return this.#actor.conns;
 	}
 
 	/**

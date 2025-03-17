@@ -3,7 +3,7 @@ import { ActorDefinition } from "./definition";
 
 export type { ActorContext } from "./context";
 export { UserError, type UserErrorOptions } from "./errors";
-export type { Connection } from "./connection";
+export type { Conn } from "./connection";
 export type { ActionContext } from "./action";
 export type { ActorConfig, OnConnectOptions } from "./config";
 export type { Encoding } from "@/actor/protocol/serde";

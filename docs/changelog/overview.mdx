@@ -32,14 +32,14 @@ mode: "center"
 
   - **Functional Actor API**: Instead of subclassing with `extends Actor`, actors are now created by using `actor({ ... })`
   - **Cleaner & More Type-Safe Client**: Instead of manually specifying actor names with `client.get<ChatRoom>({ name: "chat-room" })`, you can now simply call `client.chatRoom.get()`
-  - **Shorthand State Initiation**: Use  `state` and `connectionState` to create state without having to implement `createState` and `createConnectionState`
+  - **Shorthand State Initiation**: Use  `state` and `connState` to create state without having to implement `createState` and `createConnState`
   - **Portable ActorCore App**: Use `setup` to create an ActorCore app that can be connected to multiple platforms without extra modification.
 
   ## Enhancements
 
   - Rename "RPC" to "Actions"
   - Add `createState` instead of using return value from `onInitialize` for clarity
-  - Add `createConnectionState` instead of using return value from `onBeforeConnect` for clarity
+  - Add `createConnState` instead of using return value from `onBeforeConnect` for clarity
   - Rename `onInitialize` to `onCreate`
 </Update>
 

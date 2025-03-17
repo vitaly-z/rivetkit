@@ -1,7 +1,7 @@
 import * as wsToClient from "@/actor/protocol/message/to-client";
 import * as wsToServer from "@/actor/protocol/message/to-server";
 import type { ActorInstance, AnyActorInstance } from "../../instance";
-import type { Connection } from "../../connection";
+import type { Conn } from "../../connection";
 import * as errors from "../../errors";
 import { logger } from "../../log";
 import { ActionContext } from "../../action";
@@ -75,14 +75,14 @@ export interface ProcessMessageHandler<S, CP, CS> {
 		name: string,
 		args: unknown[],
 	) => Promise<unknown>;
-	onSubscribe?: (eventName: string, conn: Connection<S, CP, CS>) => Promise<void>;
-	onUnsubscribe?: (eventName: string, conn: Connection<S, CP, CS>) => Promise<void>;
+	onSubscribe?: (eventName: string, conn: Conn<S, CP, CS>) => Promise<void>;
+	onUnsubscribe?: (eventName: string, conn: Conn<S, CP, CS>) => Promise<void>;
 }
 
 export async function processMessage<S, CP, CS>(
 	message: wsToServer.ToServer,
 	actor: ActorInstance<S, CP, CS>,
-	conn: Connection<S, CP, CS>,
+	conn: Conn<S, CP, CS>,
 	handler: ProcessMessageHandler<S, CP, CS>,
 ) {
 	let rpcId: number | undefined;

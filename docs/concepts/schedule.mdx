@@ -67,7 +67,7 @@ const reminderService = actor({
       if (!reminder) return;
       
       // Find the user's connection if they're online
-      const userConn = c.connections.find(
+      const userConn = c.conns.find(
         conn => conn.state.userId === reminder.userId
       );
       

@@ -9,7 +9,7 @@ Events are used for clients to receive realtime data from actors.
 
 ## Publishing from actors
 
-Actors can publish events to clients using `c.broadcast` and `connection.send`.
+Actors can publish events to clients using `c.broadcast` and `conn.send`.
 
 ### Broadcasting events
 
@@ -53,8 +53,8 @@ import { actor } from "actor-core";
 const chatRoom = actor({
   state: {},
   actions: {
-    sendPrivateMessage: (c, connectionId, message) => {
-      const conn = c.connections.find(conn => conn.id === connectionId);
+    sendPrivateMessage: (c, connId, message) => {
+      const conn = c.conns.find(conn => conn.id === connId);
       if (conn) {
         conn.send('newMessage', { message });
       }
@@ -147,8 +147,8 @@ const chatRoom = actor({
     requestJoin: (c) => {
       // ...add to pending requests...
     },
-    approveJoinRequest: (c, connectionId) => {
-      const conn = c.connections.find(conn => conn.id === connectionId);
+    approveJoinRequest: (c, connId) => {
+      const conn = c.conns.find(conn => conn.id === connId);
       if (conn) {
         conn.send('joinRequestApproved');
       }

@@ -5,7 +5,7 @@ import { serialize } from "@/actor/protocol/serde";
 import type * as messageToServer from "@/actor/protocol/message/to-server";
 import * as errors from "@/actor/errors";
 import type { CoordinateDriver } from "../driver";
-import { RelayConnection } from "../conn/mod";
+import { RelayConn } from "../conn/mod";
 import { publishMessageToLeader } from "../node/message";
 import type { ActorDriver } from "@/actor/driver";
 import type { ConnectWebSocketOpts, ConnectWebSocketOutput } from "@/actor/router";
@@ -19,12 +19,12 @@ export async function serveWebSocket(
 	CoordinateDriver: CoordinateDriver,
 	globalState: GlobalState,
 	actorId: string,
-	{ req, encoding, parameters }: ConnectWebSocketOpts,
+	{ req, encoding, params }: ConnectWebSocketOpts,
 ): Promise<ConnectWebSocketOutput> {
-	let conn: RelayConnection | undefined;
+	let conn: RelayConn | undefined;
 	return {
 		onOpen: async (ws: WSContext) => {
-			conn = new RelayConnection(
+			conn = new RelayConn(
 				appConfig,
 				driverConfig,
 				actorDriver,
@@ -40,7 +40,7 @@ export async function serveWebSocket(
 					},
 				},
 				actorId,
-				parameters,
+				params,
 			);
 			await conn.start();
 		},

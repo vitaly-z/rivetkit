@@ -20,9 +20,9 @@ const gameRoom = actor({
   state: {},
   
   // Handle connection setup
-  createConnectionState: (c) => {
+  createConnState: (c, { params }) => {
     // Validate authentication token
-    const authToken = c.parameters.authToken;
+    const authToken = params.authToken;
     
     if (!authToken || !validateToken(authToken)) {
       throw new Error("Invalid auth token");
@@ -44,7 +44,7 @@ import type { App } from "./src/index";
 
 const client = createClient<App>("http://localhost:6420");
 const gameRoom = await client.gameRoom.get({
-  parameters: { authToken: "supersekure" }
+  params: { authToken: "supersekure" }
 });
 ```
 
@@ -54,7 +54,7 @@ const gameRoom = await client.gameRoom.get({
 
 There are two ways to define an actor's connection state:
 
-### Method 1: `connectionState` constant
+### Method 1: `ConnState` constant
 
 ```typescript
 import { actor } from "actor-core";
@@ -63,14 +63,14 @@ const chatRoom = actor({
   state: { messages: [] },
   
   // Define default connection state as a constant
-  connectionState: {
+  connState: {
     role: "guest",
     joinedAt: 0
   },
   
   onConnect: (c) => {
     // Update join timestamp when a client connects
-    c.connection.state.joinedAt = Date.now();
+    c.conn.state.joinedAt = Date.now();
   },
   
   actions: {
@@ -79,9 +79,9 @@ const chatRoom = actor({
 });
 ```
 
-### Method 2: `createConnectionState` function
+### Method 2: `createConnState` function
 
-The data returned from `createConnectionState` is used as the initial state of the connection. The connection state can be accessed through `connection.state`.
+The data returned from `createConnState` is used as the initial state of the connection. The connection state can be accessed through `conn.state`.
 
 ```typescript
 import { actor } from "actor-core";
@@ -90,7 +90,7 @@ const chatRoom = actor({
   state: { messages: [] },
   
   // Create connection state dynamically
-  createConnectionState: (c) => {
+  createConnState: (c) => {
     // Validate any connection parameters
     // ...
     
@@ -104,7 +104,7 @@ const chatRoom = actor({
   
   actions: {
     sendMessage: (c, message) => {
-      const username = c.connection.state.userId;
+      const username = c.conn.state.userId;
       c.state.messages.push({ username, message });
       c.broadcast("newMessage", { username, message });
     }
@@ -124,7 +124,7 @@ See the documentation on [Actor Lifecycle](/concepts/lifecycle) for more details
 
 ## Connection List
 
-All active connections can be accessed through the context object's `connections` property. This is an array of all current connections.
+All active connections can be accessed through the context object's `conns` property. This is an array of all current connections.
 
 This is frequently used with `conn.send(name, event)` to send messages directly to clients.
 
@@ -139,12 +139,12 @@ const chatRoom = actor({
   actions: {
     sendDirectMessage: (c, recipientId, message) => {
       // Find the recipient's connection
-      const recipientConn = c.connections.find(conn => conn.state.userId === recipientId);
+      const recipientConn = c.conns.find(conn => conn.state.userId === recipientId);
       
       if (recipientConn) {
         // Send a private message to just that client
         recipientConn.send('directMessage', {
-          from: c.connection.state.userId,
+          from: c.conn.state.userId,
           message: message
         });
       }
@@ -166,7 +166,7 @@ const secureRoom = actor({
   actions: {
     kickUser: (c, targetUserId, reason) => {
       // Find the connection to kick
-      const targetConn = c.connections.find(conn => conn.state.userId === targetUserId);
+      const targetConn = c.conns.find(conn => conn.state.userId === targetUserId);
       
       if (targetConn) {
         // Disconnect with a reason
@@ -181,7 +181,7 @@ const secureRoom = actor({
 If you need to wait for the disconnection to complete, you can use `await`:
 
 ```typescript
-await connection.disconnect('Too many requests');
+await c.conn.disconnect('Too many requests');
 ```
 
 This ensures the underlying network connections close cleanly before continuing.
