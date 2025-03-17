@@ -17,6 +17,7 @@ import type * as wsToServer from "@/actor/protocol/message/to-server";
 import { CachedSerializer } from "./protocol/serde";
 import { Inspector } from "@/actor/inspect";
 import { ActorContext } from "./context";
+import invariant from "invariant";
 
 /**
  * Options for the `_saveState` method.
@@ -96,7 +97,8 @@ export class ActorInstance<S, CP, CS> {
 	#pendingSaveTimeout?: NodeJS.Timeout;
 
 	#backgroundPromises: Promise<void>[] = [];
-	#config: ActorConfig<S, CP, CS>;
+	// Config will be set lazily
+	#configOptional?: ActorConfig<S, CP, CS>;
 	#connectionDrivers!: ConnDrivers;
 	#actorDriver!: ActorDriver;
 	#actorId!: string;
@@ -120,6 +122,14 @@ export class ActorInstance<S, CP, CS> {
 		return this.#actorId;
 	}
 
+	get #config(): ActorConfig<S, CP, CS> {
+		invariant(
+			this.#config !== undefined,
+			"cannot access config before assigned",
+		);
+		return this.#config;
+	}
+
 	/**
 	 * This constructor should never be used directly.
 	 *
@@ -127,9 +137,14 @@ export class ActorInstance<S, CP, CS> {
 	 *
 	 * @private
 	 */
-	constructor(config: ActorConfig<S, CP, CS>) {
-		this.#config = config;
+	constructor() {
 		this.actorContext = new ActorContext(this);
+	}
+
+	/** Lazily sets the config. */
+	setConfig(config: ActorConfig<S, CP, CS>) {
+		invariant(this.#configOptional, "config cannot be set twice");
+		this.#configOptional = config;
 	}
 
 	async start(
@@ -182,10 +197,7 @@ export class ActorInstance<S, CP, CS> {
 	}
 
 	get #connStateEnabled() {
-		return (
-			"createConnState" in this.#config ||
-			"connState" in this.#config
-		);
+		return "createConnState" in this.#config || "connState" in this.#config;
 	}
 
 	/** Promise used to wait for a save to complete. This is required since you cannot await `#saveStateThrottled`. */
@@ -573,10 +585,7 @@ export class ActorInstance<S, CP, CS> {
 	}
 
 	// MARK: Messages
-	async processMessage(
-		message: wsToServer.ToServer,
-		conn: Conn<S, CP, CS>,
-	) {
+	async processMessage(message: wsToServer.ToServer, conn: Conn<S, CP, CS>) {
 		await processMessage(message, this, conn, {
 			onExecuteRpc: async (ctx, name, args) => {
 				return await this.executeRpc(ctx, name, args);
