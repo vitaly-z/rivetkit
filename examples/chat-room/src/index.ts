@@ -7,7 +7,7 @@ export interface State {
 
 export const chatRoom = actor({
 	// initialize state
-	createState: () => ({ messages: [] } as State),
+	state: { messages: [] } as State,
 
 	// define actions
 	actions: {

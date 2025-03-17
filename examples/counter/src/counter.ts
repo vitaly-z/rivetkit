@@ -1,7 +1,7 @@
 import { actor } from "actor-core";
 
 const counter = actor({
-	createState: () => ({ count: 0 }),
+	state: { count: 0 },
 	actions: {
 		increment: (c, x: number) => {
 			c.state.count += x;
