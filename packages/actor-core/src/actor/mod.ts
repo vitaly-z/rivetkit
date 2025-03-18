@@ -8,7 +8,7 @@ export type { ActionContext } from "./action";
 export type { ActorConfig, OnConnectOptions } from "./config";
 export type { Encoding } from "@/actor/protocol/serde";
 export type { ActorTags } from "@/common/utils";
-export type { ActorDefinition } from "./definition";
+export type { ActorDefinition, ActorContextOf } from "./definition";
 
 export function actor<S, CP, CS, R extends Actions<S, CP, CS>>(
 	input: ActorConfigInput<S, CP, CS, R>,
