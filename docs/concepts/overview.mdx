@@ -192,9 +192,9 @@ const messageService = actor({
   actions: {
     sendPrivateMessage: (c, userId, text) => {
       // Send to a specific connection
-      const connection = c.connections.find(conn => conn.parameters.userId === userId);
-      if (connection) {
-        connection.send("privateMessage", { text });
+      const conn = c.conns.find(conn => conn.params.userId === userId);
+      if (conn) {
+        conn.send("privateMessage", { text });
       }
     }
   }

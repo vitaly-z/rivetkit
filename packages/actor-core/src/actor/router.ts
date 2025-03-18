@@ -11,7 +11,7 @@ import type { InputData } from "@/actor/protocol/serde";
 import { SSEStreamingApi, streamSSE } from "hono/streaming";
 import { cors } from "hono/cors";
 import { assertUnreachable } from "./utils";
-import { createInspectorRouter, InspectorConnectionHandler } from "./inspect";
+import { createInspectorRouter, InspectorConnHandler } from "./inspect";
 import { handleRouteError, handleRouteNotFound } from "@/common/router";
 import { deconstructError } from "@/common/utils";
 import { DriverConfig } from "@/driver-helpers/config";
@@ -20,7 +20,7 @@ import { AppConfig } from "@/app/config";
 export interface ConnectWebSocketOpts {
 	req: HonoRequest;
 	encoding: Encoding;
-	parameters: unknown;
+	params: unknown;
 }
 
 export interface ConnectWebSocketOutput {
@@ -32,7 +32,7 @@ export interface ConnectWebSocketOutput {
 export interface ConnectSseOpts {
 	req: HonoRequest;
 	encoding: Encoding;
-	parameters: unknown;
+	params: unknown;
 }
 
 export interface ConnectSseOutput {
@@ -42,7 +42,7 @@ export interface ConnectSseOutput {
 
 export interface RpcOpts {
 	req: HonoRequest;
-	parameters: unknown;
+	params: unknown;
 	rpcName: string;
 	rpcArgs: unknown[];
 }
@@ -51,7 +51,7 @@ export interface RpcOutput {
 	output: unknown;
 }
 
-export interface ConnectionsMessageOpts {
+export interface ConnsMessageOpts {
 	req: HonoRequest;
 	connId: string;
 	connToken: string;
@@ -67,8 +67,8 @@ export interface ActorRouterHandler {
 	): Promise<ConnectWebSocketOutput>;
 	onConnectSse(opts: ConnectSseOpts): Promise<ConnectSseOutput>;
 	onRpc(opts: RpcOpts): Promise<RpcOutput>;
-	onConnectionsMessage(opts: ConnectionsMessageOpts): Promise<void>;
-	onConnectInspector?: InspectorConnectionHandler;
+	onConnMessage(opts: ConnsMessageOpts): Promise<void>;
+	onConnectInspector?: InspectorConnHandler;
 }
 
 /**
@@ -116,12 +116,12 @@ export function createActorRouter(
 						throw new Error("onConnectWebSocket is not implemented");
 
 					const encoding = getRequestEncoding(c.req);
-					const parameters = getRequestConnectionParameters(c.req, appConfig, driverConfig);
+					const parameters = getRequestConnParams(c.req, appConfig, driverConfig);
 
 					const wsHandler = await handler.onConnectWebSocket({
 						req: c.req,
 						encoding,
-						parameters,
+						params: parameters,
 					});
 
 					const { promise: onOpenPromise, resolve: onOpenResolve } =
@@ -203,12 +203,12 @@ export function createActorRouter(
 
 	app.get("/connect/sse", async (c) => {
 		const encoding = getRequestEncoding(c.req);
-		const parameters = getRequestConnectionParameters(c.req, appConfig, driverConfig);
+		const parameters = getRequestConnParams(c.req, appConfig, driverConfig);
 
 		const sseHandler = await handler.onConnectSse({
 			req: c.req,
 			encoding,
-			parameters,
+			params: parameters,
 		});
 
 		return streamSSE(
@@ -242,7 +242,7 @@ export function createActorRouter(
 		try {
 			// TODO: Support multiple encodings
 			const encoding: Encoding = "json";
-			const parameters = getRequestConnectionParameters(c.req, appConfig, driverConfig);
+			const parameters = getRequestConnParams(c.req, appConfig, driverConfig);
 
 			// Parse request body if present
 			const contentLength = Number(c.req.header("content-length") || "0");
@@ -262,7 +262,7 @@ export function createActorRouter(
 			// Callback
 			const { output } = await handler.onRpc({
 				req: c.req,
-				parameters,
+				params: parameters,
 				rpcName,
 				rpcArgs,
 			});
@@ -297,11 +297,11 @@ export function createActorRouter(
 
 			const connId = c.req.param("conn");
 			if (!connId) {
-				throw new errors.ConnectionNotFound(connId);
+				throw new errors.ConnNotFound(connId);
 			}
 
 			const connToken = c.req.query("connectionToken");
-			if (!connToken) throw new errors.IncorrectConnectionToken();
+			if (!connToken) throw new errors.IncorrectConnToken();
 
 			// Parse request body if present
 			const contentLength = Number(c.req.header("content-length") || "0");
@@ -326,7 +326,7 @@ export function createActorRouter(
 				maxIncomingMessageSize: appConfig.maxIncomingMessageSize,
 			});
 
-			await handler.onConnectionsMessage({
+			await handler.onConnMessage({
 				req: c.req,
 				connId,
 				connToken,
@@ -378,16 +378,16 @@ function getRequestEncoding(req: HonoRequest): Encoding {
 	return encoding;
 }
 
-function getRequestConnectionParameters(
+function getRequestConnParams(
 	req: HonoRequest,
 	appConfig: AppConfig,
 	driverConfig: DriverConfig,
 ): unknown {
 	// Validate params size
 	const paramsStr = req.query("params");
-	if (paramsStr && paramsStr.length > appConfig.maxConnectionParametersSize) {
+	if (paramsStr && paramsStr.length > appConfig.maxConnParamLength) {
 		logger().warn("connection parameters too long");
-		throw new errors.ConnectionParametersTooLong();
+		throw new errors.ConnParamsTooLong();
 	}
 
 	// Parse and validate params
@@ -397,6 +397,6 @@ function getRequestConnectionParameters(
 		logger().warn("malformed connection parameters", {
 			error: `${error}`,
 		});
-		throw new errors.MalformedConnectionParameters(error);
+		throw new errors.MalformedConnParams(error);
 	}
 }

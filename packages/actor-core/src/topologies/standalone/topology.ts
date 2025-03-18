@@ -1,10 +1,10 @@
 import type { AnyActorInstance } from "@/actor/instance";
 import type { Hono } from "hono";
 import {
-	AnyConnection,
-	type Connection,
-	generateConnectionId,
-	generateConnectionToken,
+	AnyConn,
+	type Conn,
+	generateConnId,
+	generateConnToken,
 } from "@/actor/connection";
 import { createActorRouter } from "@/actor/router";
 import { Manager } from "@/manager/manager";
@@ -127,24 +127,24 @@ export class StandaloneTopology {
 		// Build actor router
 		const actorRouter = createActorRouter(appConfig, driverConfig, {
 			upgradeWebSocket: driverConfig.getUpgradeWebSocket?.(app),
-			onConnectWebSocket: async ({ req, encoding, parameters: connParams }) => {
+			onConnectWebSocket: async ({ req, encoding, params: connParams }) => {
 				const actorId = req.param("actorId");
 				if (!actorId) throw new errors.InternalError("Missing actor ID");
 
 				const { handler, actor } = await this.#getActor(actorId);
 
-				const connId = generateConnectionId();
-				const connToken = generateConnectionToken();
-				const connState = await actor.prepareConnection(connParams, req.raw);
+				const connId = generateConnId();
+				const connToken = generateConnToken();
+				const connState = await actor.prepareConn(connParams, req.raw);
 
-				let conn: AnyConnection | undefined;
+				let conn: AnyConn | undefined;
 				return {
 					onOpen: async (ws) => {
 						// Save socket
 						handler.genericConnGlobalState.websockets.set(connId, ws);
 
 						// Create connection
-						conn = await actor.createConnection(
+						conn = await actor.createConn(
 							connId,
 							connToken,
 
@@ -168,29 +168,29 @@ export class StandaloneTopology {
 						handler.genericConnGlobalState.websockets.delete(connId);
 
 						if (conn) {
-							actor.__removeConnection(conn);
+							actor.__removeConn(conn);
 						}
 					},
 				};
 			},
-			onConnectSse: async ({ req, encoding, parameters: connParams }) => {
+			onConnectSse: async ({ req, encoding, params: connParams }) => {
 				const actorId = req.param("actorId");
 				if (!actorId) throw new errors.InternalError("Missing actor ID");
 
 				const { handler, actor } = await this.#getActor(actorId);
 
-				const connId = generateConnectionId();
-				const connToken = generateConnectionToken();
-				const connState = await actor.prepareConnection(connParams, req.raw);
+				const connId = generateConnId();
+				const connToken = generateConnToken();
+				const connState = await actor.prepareConn(connParams, req.raw);
 
-				let conn: AnyConnection | undefined;
+				let conn: AnyConn | undefined;
 				return {
 					onOpen: async (stream) => {
 						// Save socket
 						handler.genericConnGlobalState.sseStreams.set(connId, stream);
 
 						// Create connection
-						conn = await actor.createConnection(
+						conn = await actor.createConn(
 							connId,
 							connToken,
 							connParams,
@@ -203,27 +203,27 @@ export class StandaloneTopology {
 						handler.genericConnGlobalState.sseStreams.delete(connId);
 
 						if (conn) {
-							actor.__removeConnection(conn);
+							actor.__removeConn(conn);
 						}
 					},
 				};
 			},
-			onRpc: async ({ req, parameters: connParams, rpcName, rpcArgs }) => {
+			onRpc: async ({ req, params: connParams, rpcName, rpcArgs }) => {
 				const actorId = req.param("actorId");
 				if (!actorId) throw new errors.InternalError("Missing actor ID");
 
-				let conn: AnyConnection | undefined;
+				let conn: AnyConn | undefined;
 				try {
 					const { actor } = await this.#getActor(actorId);
 
 					// Create conn
-					const connState = await actor.prepareConnection(
+					const connState = await actor.prepareConn(
 						connParams,
 						req.raw,
 					);
-					conn = await actor.createConnection(
-						generateConnectionId(),
-						generateConnectionToken(),
+					conn = await actor.createConn(
+						generateConnId(),
+						generateConnToken(),
 						connParams,
 						connState,
 						CONN_DRIVER_GENERIC_HTTP,
@@ -238,25 +238,25 @@ export class StandaloneTopology {
 				} finally {
 					if (conn) {
 						const { actor } = await this.#getActor(actorId);
-						actor.__removeConnection(conn);
+						actor.__removeConn(conn);
 					}
 				}
 			},
-			onConnectionsMessage: async ({ req, connId, connToken, message }) => {
+			onConnMessage: async ({ req, connId, connToken, message }) => {
 				const actorId = req.param("actorId");
 				if (!actorId) throw new errors.InternalError("Missing actor ID");
 
 				const { actor } = await this.#getActor(actorId);
 
 				// Find connection
-				const conn = actor.connections.get(connId);
+				const conn = actor.conns.get(connId);
 				if (!conn) {
-					throw new errors.ConnectionNotFound(connId);
+					throw new errors.ConnNotFound(connId);
 				}
 
 				// Authenticate connection
 				if (conn._token !== connToken) {
-					throw new errors.IncorrectConnectionToken();
+					throw new errors.IncorrectConnToken();
 				}
 
 				// Process message

@@ -74,7 +74,7 @@ export interface ClientOptions {
  */
 export interface QueryOptions {
 	/** Parameters to pass to the connection. */
-	parameters?: unknown;
+	params?: unknown;
 }
 
 /**
@@ -237,7 +237,7 @@ export class ClientRaw {
 	): Promise<ActorHandle<AD>> {
 		logger().debug("get actor with id ", {
 			actorId,
-			parameters: opts?.parameters,
+			params: opts?.params,
 		});
 
 		const resJson = await this.#sendManagerRequest<
@@ -253,7 +253,7 @@ export class ClientRaw {
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
-			opts?.parameters,
+			opts?.params,
 			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<AD>;
@@ -300,7 +300,7 @@ export class ClientRaw {
 		logger().debug("get actor", {
 			name,
 			tags,
-			parameters: opts?.parameters,
+			parameters: opts?.params,
 			create,
 		});
 
@@ -319,7 +319,7 @@ export class ClientRaw {
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
-			opts?.parameters,
+			opts?.params,
 			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<AD>;
@@ -363,7 +363,7 @@ export class ClientRaw {
 
 		logger().debug("create actor", {
 			name,
-			parameters: opts?.parameters,
+			parameters: opts?.params,
 			create,
 		});
 
@@ -378,7 +378,7 @@ export class ClientRaw {
 
 		const handle = await this.#createHandle(
 			resJson.endpoint,
-			opts?.parameters,
+			opts?.params,
 			resJson.supportedTransports,
 		);
 		return this.#createProxy(handle) as ActorHandle<AD>;
@@ -386,7 +386,7 @@ export class ClientRaw {
 
 	async #createHandle(
 		endpoint: string,
-		parameters: unknown,
+		params: unknown,
 		serverTransports: Transport[],
 	): Promise<ActorHandleRaw> {
 		const imports = await this.#dynamicImportsPromise;
@@ -394,7 +394,7 @@ export class ClientRaw {
 		const handle = new ActorHandleRaw(
 			this,
 			endpoint,
-			parameters,
+			params,
 			this.#encodingKind,
 			this.#supportedTransports,
 			serverTransports,

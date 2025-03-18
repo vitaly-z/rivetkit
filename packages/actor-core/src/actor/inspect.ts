@@ -1,5 +1,5 @@
 import type { AnyActorInstance } from "@/actor/instance";
-import type { AnyConnection, Connection, ConnectionId } from "@/actor/connection";
+import type { AnyConn, Conn, ConnId } from "@/actor/connection";
 import { throttle } from "@/actor/utils";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
 import { Hono, type HonoRequest } from "hono";
@@ -22,7 +22,7 @@ export interface ConnectInspectortOutput {
 	onClose: () => Promise<void>;
 }
 
-export type InspectorConnectionHandler = (
+export type InspectorConnHandler = (
 	opts: ConnectInspectorOpts,
 ) => Promise<ConnectInspectortOutput>;
 
@@ -32,7 +32,7 @@ export type InspectorConnectionHandler = (
  */
 export function createInspectorRouter(
 	upgradeWebSocket: UpgradeWebSocket | undefined,
-	onConnect: InspectorConnectionHandler | undefined,
+	onConnect: InspectorConnHandler | undefined,
 ) {
 	const app = new Hono();
 
@@ -130,7 +130,7 @@ export class Inspector {
 	 * Map of all connections to the inspector.
 	 * @internal
 	 */
-	readonly #connections = new Map<ConnectionId, InspectorConnection>();
+	readonly #connections = new Map<ConnId, InspectorConnection>();
 
 	/**
 	 * Connection counter.
@@ -152,8 +152,8 @@ export class Inspector {
 	 * @param connections - The new connections.
 	 * @internal
 	 */
-	onConnectionsChange = throttle(
-		(connections: Map<ConnectionId, AnyConnection>) => {
+	onConnChange = throttle(
+		(connections: Map<ConnId, AnyConn>) => {
 			this.__broadcast(this.#createInfoMessage());
 		},
 		500,
@@ -195,10 +195,10 @@ export class Inspector {
 	#createInfoMessage(): ToClient {
 		return {
 			type: "info",
-			connections: Array.from(this.actor.connections).map(
+			connections: Array.from(this.actor.conns).map(
 				([id, connection]) => ({
 					id,
-					parameters: connection.parameters,
+					parameters: connection.params,
 					state: {
 						value: connection._stateEnabled ? connection.state : undefined,
 						enabled: connection._stateEnabled,

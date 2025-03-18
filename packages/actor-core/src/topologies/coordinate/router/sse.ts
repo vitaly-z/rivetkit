@@ -2,7 +2,7 @@ import type { GlobalState } from "@/topologies/coordinate/topology";
 import { logger } from "../log";
 import { encodeDataToString, serialize } from "@/actor/protocol/serde";
 import type { CoordinateDriver } from "../driver";
-import { RelayConnection } from "../conn/mod";
+import { RelayConn } from "../conn/mod";
 import type { ActorDriver } from "@/actor/driver";
 import type { ConnectSseOpts, ConnectSseOutput } from "@/actor/router";
 import { DriverConfig } from "@/driver-helpers/config";
@@ -15,12 +15,12 @@ export async function serveSse(
 	CoordinateDriver: CoordinateDriver,
 	globalState: GlobalState,
 	actorId: string,
-	{ encoding, parameters }: ConnectSseOpts,
+	{ encoding, params: params }: ConnectSseOpts,
 ): Promise<ConnectSseOutput> {
-	let conn: RelayConnection | undefined;
+	let conn: RelayConn | undefined;
 	return {
 		onOpen: async (stream) => {
-			conn = new RelayConnection(
+			conn = new RelayConn(
 				appConfig,
 				driverConfig,
 				actorDriver,
@@ -38,7 +38,7 @@ export async function serveSse(
 					},
 				},
 				actorId,
-				parameters,
+				params,
 			);
 			await conn.start();
 		},

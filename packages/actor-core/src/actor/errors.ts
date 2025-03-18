@@ -48,10 +48,10 @@ export class StateNotEnabled extends ActorError {
 	}
 }
 
-export class ConnectionStateNotEnabled extends ActorError {
+export class ConnStateNotEnabled extends ActorError {
 	constructor() {
 		super(
-			"connection_state_not_enabled",
+			"conn_state_not_enabled",
 			"Connection state not enabled. Must implement `createConnectionState` or `connectionState` to use connection state.",
 		);
 	}
@@ -77,34 +77,34 @@ export class InvalidEncoding extends ActorError {
 	}
 }
 
-export class ConnectionNotFound extends ActorError {
+export class ConnNotFound extends ActorError {
 	constructor(id?: string) {
-		super("connection_not_found", `Connection not found for ID \`${id}\`.`, {
+		super("conn_not_found", `Connection not found for ID \`${id}\`.`, {
 			public: true,
 		});
 	}
 }
 
-export class IncorrectConnectionToken extends ActorError {
+export class IncorrectConnToken extends ActorError {
 	constructor() {
-		super("incorrect_connection_token", "Incorrect connection token.", {
+		super("incorrect_conn_token", "Incorrect connection token.", {
 			public: true,
 		});
 	}
 }
 
-export class ConnectionParametersTooLong extends ActorError {
+export class ConnParamsTooLong extends ActorError {
 	constructor() {
-		super("connection_parameters_too_long", "Connection parameters too long.", {
+		super("conn_params_too_long", "Connection parameters too long.", {
 			public: true,
 		});
 	}
 }
 
-export class MalformedConnectionParameters extends ActorError {
+export class MalformedConnParams extends ActorError {
 	constructor(cause: unknown) {
 		super(
-			"malformed_connection_parameters",
+			"malformed_conn_params",
 			`Malformed connection parameters: ${cause}`,
 			{ public: true, cause },
 		);

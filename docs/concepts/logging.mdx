@@ -30,7 +30,7 @@ humans to make them easier to parse & search.
 Passing an object to a log will print as structured data. For example:
 
 ```typescript
-c.log.info('increment', { connection: c.connection.id, count });
+c.log.info('increment', { connection: c.conn.id, count });
 // Prints: level=INFO msg=increment connection=123 count=456
 ```
 
@@ -54,7 +54,7 @@ const counter = actor({
   actions: {
     increment: (c, count) => {
       // Prints: level=INFO msg=increment connection=123 count=456
-      c.log.info('increment', { connection: c.connection.id, count });
+      c.log.info('increment', { connection: c.conn.id, count });
 
       c.state.count += count;
       return c.state.count;
@@ -72,7 +72,7 @@ const counter = actor({
   actions: {
     increment: (c, count) => {
       // Prints: Increment for connection 123 with count 456
-      console.log(`Increment for connection ${c.connection.id} with count ${count}`);
+      console.log(`Increment for connection ${c.conn.id} with count ${count}`);
 
       c.state.count += count;
       return c.state.count;
@@ -101,9 +101,9 @@ const loggingExample = actor({
     c.log.info('actor_started', { timestamp: Date.now() });
   },
   
-  onBeforeConnect: (c) => {
+  onBeforeConnect: (c, { params }) => {
     c.log.debug('connection_attempt', { 
-      ip: c.parameters.ip,
+      ip: params.ip,
       timestamp: Date.now() 
     });
     
@@ -112,26 +112,26 @@ const loggingExample = actor({
   
   onConnect: (c) => {
     c.log.info('connection_established', { 
-      connectionId: c.connection.id,
+      connectionId: c.conn.id,
       timestamp: Date.now() 
     });
     
     c.state.events.push({
       type: 'connect',
-      connectionId: c.connection.id,
+      connectionId: c.conn.id,
       timestamp: Date.now()
     });
   },
   
   onDisconnect: (c) => {
     c.log.info('connection_closed', { 
-      connectionId: c.connection.id,
+      connectionId: c.conn.id,
       timestamp: Date.now() 
     });
     
     c.state.events.push({
       type: 'disconnect',
-      connectionId: c.connection.id,
+      connectionId: c.conn.id,
       timestamp: Date.now()
     });
   },

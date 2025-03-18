@@ -1,8 +1,8 @@
 import type { AnyActorInstance } from "@/actor/instance";
-import { AnyConnection, Connection } from "@/actor/connection";
+import { AnyConn, Conn } from "@/actor/connection";
 import { logger } from "./log";
 import { CachedSerializer, Encoding } from "@/actor/protocol/serde";
-import { ConnectionDriver } from "@/actor/driver";
+import { ConnDriver } from "@/actor/driver";
 import * as messageToClient from "@/actor/protocol/message/to-client";
 import { encodeDataToString } from "@/actor/protocol/serde";
 import { WSContext } from "hono/ws";
@@ -23,7 +23,7 @@ export class GenericConnGlobalState {
  */
 export function createGenericConnDrivers(
 	globalState: GenericConnGlobalState,
-): Record<string, ConnectionDriver> {
+): Record<string, ConnDriver> {
 	return {
 		[CONN_DRIVER_GENERIC_WEBSOCKET]: createGenericWebSocketDriver(globalState),
 		[CONN_DRIVER_GENERIC_SSE]: createGenericSseDriver(globalState),
@@ -40,11 +40,11 @@ export interface GenericWebSocketDriverState {
 
 export function createGenericWebSocketDriver(
 	globalState: GenericConnGlobalState,
-): ConnectionDriver<GenericWebSocketDriverState> {
+): ConnDriver<GenericWebSocketDriverState> {
 	return {
 		sendMessage: (
 			_actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			state: GenericWebSocketDriverState,
 			message: CachedSerializer<messageToClient.ToClient>,
 		) => {
@@ -58,7 +58,7 @@ export function createGenericWebSocketDriver(
 
 		disconnect: async (
 			_actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			_state: GenericWebSocketDriverState,
 			reason?: string,
 		) => {
@@ -97,7 +97,7 @@ export function createGenericSseDriver(globalState: GenericConnGlobalState) {
 	return {
 		sendMessage: (
 			_actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			state: GenericSseDriverState,
 			message: CachedSerializer<messageToClient.ToClient>,
 		) => {
@@ -115,7 +115,7 @@ export function createGenericSseDriver(globalState: GenericConnGlobalState) {
 
 		disconnect: async (
 			_actor: AnyActorInstance,
-			conn: AnyConnection,
+			conn: AnyConn,
 			_state: GenericSseDriverState,
 			_reason?: string,
 		) => {

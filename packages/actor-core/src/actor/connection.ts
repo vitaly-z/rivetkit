@@ -8,19 +8,19 @@ import * as errors from "./errors";
 import { generateSecureToken } from "./utils";
 import { CachedSerializer, Encoding } from "./protocol/serde";
 import { logger } from "./log";
-import { ConnectionDriver } from "./driver";
+import { ConnDriver } from "./driver";
 import * as messageToClient from "@/actor/protocol/message/to-client";
 import { Actions } from "./config";
 
-export function generateConnectionId(): string {
+export function generateConnId(): string {
 	return crypto.randomUUID();
 }
 
-export function generateConnectionToken(): string {
+export function generateConnToken(): string {
 	return generateSecureToken(32);
 }
 
-export type ConnectionId = string;
+export type ConnId = string;
 
 /** Object representing connection that gets persisted to storage. */
 export interface PersistedConn<CP, CS> {
@@ -45,7 +45,7 @@ export interface PersistedSub {
 	n: string;
 }
 
-export type AnyConnection = Connection<any, any, any>;
+export type AnyConn = Conn<any, any, any>;
 
 /**
  * Represents a client connection to an actor.
@@ -54,7 +54,7 @@ export type AnyConnection = Connection<any, any, any>;
  *
  * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
  */
-export class Connection<S, CP, CS> {
+export class Conn<S, CP, CS> {
 	subscriptions: Set<string> = new Set<string>();
 
 	#stateEnabled: boolean;
@@ -74,9 +74,9 @@ export class Connection<S, CP, CS> {
 	 *
 	 * @protected
 	 */
-	#driver: ConnectionDriver;
+	#driver: ConnDriver;
 
-	public get parameters(): CP {
+	public get params(): CP {
 		return this.__persist.p;
 	}
 
@@ -108,7 +108,7 @@ export class Connection<S, CP, CS> {
 	/**
 	 * Unique identifier for the connection.
 	 */
-	public get id(): ConnectionId {
+	public get id(): ConnId {
 		return this.__persist.i;
 	}
 
@@ -129,7 +129,7 @@ export class Connection<S, CP, CS> {
 	public constructor(
 		actor: ActorInstance<S, CP, CS>,
 		persist: PersistedConn<CP, CS>,
-		driver: ConnectionDriver,
+		driver: ConnDriver,
 		stateEnabled: boolean,
 	) {
 		this.#actor = actor;
@@ -140,7 +140,7 @@ export class Connection<S, CP, CS> {
 
 	#validateStateEnabled() {
 		if (!this.#stateEnabled) {
-			throw new errors.ConnectionStateNotEnabled();
+			throw new errors.ConnStateNotEnabled();
 		}
 	}
 

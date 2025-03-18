@@ -3,13 +3,13 @@ title: Authentication
 icon: fingerprint
 ---
 
-Authentication can be handled through the `onBeforeConnect` or `createConnectionState` lifecycle hook, which acts as middleware before allowing clients to interact with your actor.
+Authentication can be handled through the `onBeforeConnect` or `createConnState` lifecycle hook, which acts as middleware before allowing clients to interact with your actor.
 
-## Using `onBeforeConnect` or `createConnectionState`
+## Using `onBeforeConnect` or `createConnState`
 
-The `onBeforeConnect` and `createConnectionState` hook is called whenever a new client attempts to connect to your actor. It receives a context object that contains the client's connection parameters. `createConnectionState` should return an object that will become the connection state.
+The `onBeforeConnect` and `createConnState` hook is called whenever a new client attempts to connect to your actor. It receives a context object that contains the client's connection parameters. `createConnState` should return an object that will become the connection state.
 
-Throwing an error in `onBeforeConnect` or `createConnectionState` will abort the connection.
+Throwing an error in `onBeforeConnect` or `createConnState` will abort the connection.
 
 Here's a basic example:
 
@@ -21,9 +21,9 @@ const exampleActor = actor({
     // Actor state...
   },
   
-  createConnectionState: async (c) => {
+  createConnState: async (c, { params }) => {
     // Verify the token with your authentication system
-    const userData = await myValidateAuthToken(c.parameters.authToken);
+    const userData = await myValidateAuthToken(params.authToken);
     if (!userData) {
       throw new Error('Invalid auth token');
     }
@@ -53,7 +53,7 @@ const authenticatedActor = actor({
     // Actor state...
   },
   
-  createConnectionState: (c) => {
+  createConnState: (c) => {
     // Authentication logic...
     return {
       userId: "user_123",
@@ -64,7 +64,7 @@ const authenticatedActor = actor({
   actions: {
     exampleAdminCommand: (c) => {
       // Example of validating admin access
-      if (c.connection.state.role !== 'admin') {
+      if (c.conn.state.role !== 'admin') {
         throw new Error('User must be an admin');
       }
 
@@ -87,12 +87,12 @@ const apiAuthenticatedActor = actor({
     // Actor state...
   },
   
-  createConnectionState: async (c) => {
+  createConnState: async (c, { params }) => {
     // Validate API key with your server
     const response = await fetch('https://api.yourserver.com/validate', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${c.parameters.apiKey}`
+        Authorization: `Bearer ${params.apiKey}`
       }
     });
 
@@ -113,7 +113,7 @@ const apiAuthenticatedActor = actor({
 });
 ```
 
-When authentication fails, throwing an error in `createConnectionState` will prevent the connection from being established, and the client will receive the error message.
+When authentication fails, throwing an error in `createConnState` will prevent the connection from being established, and the client will receive the error message.
 
 ### With JWT Authentication
 
@@ -128,10 +128,10 @@ const jwtAuthenticatedActor = actor({
     // Actor state...
   },
   
-  createConnectionState: (c) => {
+  createConnState: (c, { params }) => {
     try {
       // Verify JWT token
-      const decoded = jwt.verify(c.parameters.jwt, JWT_SECRET);
+      const decoded = jwt.verify(params.jwt, JWT_SECRET);
       
       return {
         userId: decoded.sub,
@@ -145,7 +145,7 @@ const jwtAuthenticatedActor = actor({
   actions: {
     secureAction: (c, data) => {
       // Check permissions before proceeding
-      if (!c.connection.state.permissions.includes('write')) {
+      if (!c.conn.state.permissions.includes('write')) {
         throw new Error('Permission denied: requires write access');
       }
       

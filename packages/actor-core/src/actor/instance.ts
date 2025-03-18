@@ -3,9 +3,9 @@ import type { Logger } from "@/common//log";
 import { type ActorTags, isJsonSerializable } from "@/common//utils";
 import onChange from "on-change";
 import type { ActorConfig } from "./config";
-import { Connection, type ConnectionId } from "./connection";
-import type { ActorDriver, ConnectionDrivers } from "./driver";
-import type { ConnectionDriver } from "./driver";
+import { Conn, type ConnId } from "./connection";
+import type { ActorDriver, ConnDrivers } from "./driver";
+import type { ConnDriver } from "./driver";
 import * as errors from "./errors";
 import { processMessage } from "./protocol/message/mod";
 import { instanceLogger, logger } from "./log";
@@ -97,7 +97,7 @@ export class ActorInstance<S, CP, CS> {
 
 	#backgroundPromises: Promise<void>[] = [];
 	#config: ActorConfig<S, CP, CS>;
-	#connectionDrivers!: ConnectionDrivers;
+	#connectionDrivers!: ConnDrivers;
 	#actorDriver!: ActorDriver;
 	#actorId!: string;
 	#name!: string;
@@ -105,8 +105,8 @@ export class ActorInstance<S, CP, CS> {
 	#region!: string;
 	#ready = false;
 
-	#connections = new Map<ConnectionId, Connection<S, CP, CS>>();
-	#subscriptionIndex = new Map<string, Set<Connection<S, CP, CS>>>();
+	#connections = new Map<ConnId, Conn<S, CP, CS>>();
+	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS>>>();
 
 	#schedule!: Schedule;
 
@@ -133,7 +133,7 @@ export class ActorInstance<S, CP, CS> {
 	}
 
 	async start(
-		connectionDrivers: ConnectionDrivers,
+		connectionDrivers: ConnDrivers,
 		actorDriver: ActorDriver,
 		actorId: string,
 		name: string,
@@ -181,10 +181,10 @@ export class ActorInstance<S, CP, CS> {
 		}
 	}
 
-	get #connectionStateEnabled() {
+	get #connStateEnabled() {
 		return (
-			"createConnectionState" in this.#config ||
-			"connectionState" in this.#config
+			"createConnState" in this.#config ||
+			"connState" in this.#config
 		);
 	}
 
@@ -335,12 +335,12 @@ export class ActorInstance<S, CP, CS> {
 			// Load connections
 			for (const connPersist of this.#persist.c) {
 				// Create connections
-				const driver = this.__getConnectionDriver(connPersist.d);
-				const conn = new Connection<S, CP, CS>(
+				const driver = this.__getConnDriver(connPersist.d);
+				const conn = new Conn<S, CP, CS>(
 					this,
 					connPersist,
 					driver,
-					this.#connectionStateEnabled,
+					this.#connStateEnabled,
 				);
 				this.#connections.set(conn.id, conn);
 
@@ -393,14 +393,14 @@ export class ActorInstance<S, CP, CS> {
 		}
 	}
 
-	__getConnectionForId(id: string): Connection<S, CP, CS> | undefined {
+	__getConnForId(id: string): Conn<S, CP, CS> | undefined {
 		return this.#connections.get(id);
 	}
 
 	/**
 	 * Removes a connection and cleans up its resources.
 	 */
-	__removeConnection(conn: Connection<S, CP, CS> | undefined) {
+	__removeConn(conn: Conn<S, CP, CS> | undefined) {
 		if (!conn) {
 			logger().warn("`conn` does not exist");
 			return;
@@ -425,7 +425,7 @@ export class ActorInstance<S, CP, CS> {
 			this.#removeSubscription(eventName, conn, true);
 		}
 
-		this.inspector.onConnectionsChange(this.#connections);
+		this.inspector.onConnChange(this.#connections);
 		if (this.#config.onDisconnect) {
 			try {
 				const result = this.#config.onDisconnect(this.actorContext, conn);
@@ -445,9 +445,9 @@ export class ActorInstance<S, CP, CS> {
 		}
 	}
 
-	async prepareConnection(
+	async prepareConn(
 		// biome-ignore lint/suspicious/noExplicitAny: TypeScript bug with ExtractActorConnParams<this>,
-		parameters: any,
+		params: any,
 		request?: Request,
 	): Promise<CS> {
 		// Authenticate connection
@@ -456,7 +456,7 @@ export class ActorInstance<S, CP, CS> {
 
 		const onBeforeConnectOpts = {
 			request,
-			parameters,
+			params,
 		};
 
 		if (this.#config.onBeforeConnect) {
@@ -466,9 +466,9 @@ export class ActorInstance<S, CP, CS> {
 			);
 		}
 
-		if (this.#connectionStateEnabled) {
-			if ("createConnectionState" in this.#config) {
-				const dataOrPromise = this.#config.createConnectionState(
+		if (this.#connStateEnabled) {
+			if ("createConnState" in this.#config) {
+				const dataOrPromise = this.#config.createConnState(
 					this.actorContext,
 					onBeforeConnectOpts,
 				);
@@ -477,11 +477,11 @@ export class ActorInstance<S, CP, CS> {
 				} else {
 					connState = dataOrPromise;
 				}
-			} else if ("connectionState" in this.#config) {
-				connState = structuredClone(this.#config.connectionState);
+			} else if ("connState" in this.#config) {
+				connState = structuredClone(this.#config.connState);
 			} else {
 				throw new Error(
-					"Could not create connection state from 'createConnectionState' or 'connectionState'",
+					"Could not create connection state from 'createConnState' or 'connState'",
 				);
 			}
 		}
@@ -489,7 +489,7 @@ export class ActorInstance<S, CP, CS> {
 		return connState as CS;
 	}
 
-	__getConnectionDriver(driverId: string): ConnectionDriver {
+	__getConnDriver(driverId: string): ConnDriver {
 		// Get driver
 		const driver = this.#connectionDrivers[driverId];
 		if (!driver) throw new Error(`No connection driver: ${driverId}`);
@@ -499,34 +499,34 @@ export class ActorInstance<S, CP, CS> {
 	/**
 	 * Called after establishing a connection handshake.
 	 */
-	async createConnection(
+	async createConn(
 		connectionId: string,
 		connectionToken: string,
-		parameters: CP,
+		params: CP,
 		state: CS,
 		driverId: string,
 		driverState: unknown,
-	): Promise<Connection<S, CP, CS>> {
+	): Promise<Conn<S, CP, CS>> {
 		if (this.#connections.has(connectionId)) {
 			throw new Error(`Connection already exists: ${connectionId}`);
 		}
 
 		// Create connection
-		const driver = this.__getConnectionDriver(driverId);
+		const driver = this.__getConnDriver(driverId);
 		const persist: PersistedConn<CP, CS> = {
 			i: connectionId,
 			t: connectionToken,
 			d: driverId,
 			ds: driverState,
-			p: parameters,
+			p: params,
 			s: state,
 			su: [],
 		};
-		const conn = new Connection<S, CP, CS>(
+		const conn = new Conn<S, CP, CS>(
 			this,
 			persist,
 			driver,
-			this.#connectionStateEnabled,
+			this.#connStateEnabled,
 		);
 		this.#connections.set(conn.id, conn);
 
@@ -534,7 +534,7 @@ export class ActorInstance<S, CP, CS> {
 		this.#persist.c.push(persist);
 		this.saveState({ immediate: true });
 
-		this.inspector.onConnectionsChange(this.#connections);
+		this.inspector.onConnChange(this.#connections);
 
 		// Handle connection
 		const CONNECT_TIMEOUT = 5000; // 5 seconds
@@ -575,7 +575,7 @@ export class ActorInstance<S, CP, CS> {
 	// MARK: Messages
 	async processMessage(
 		message: wsToServer.ToServer,
-		conn: Connection<S, CP, CS>,
+		conn: Conn<S, CP, CS>,
 	) {
 		await processMessage(message, this, conn, {
 			onExecuteRpc: async (ctx, name, args) => {
@@ -593,7 +593,7 @@ export class ActorInstance<S, CP, CS> {
 	// MARK: Events
 	#addSubscription(
 		eventName: string,
-		connection: Connection<S, CP, CS>,
+		connection: Conn<S, CP, CS>,
 		fromPersist: boolean,
 	) {
 		if (connection.subscriptions.has(eventName)) {
@@ -623,7 +623,7 @@ export class ActorInstance<S, CP, CS> {
 
 	#removeSubscription(
 		eventName: string,
-		connection: Connection<S, CP, CS>,
+		connection: Conn<S, CP, CS>,
 		fromRemoveConn: boolean,
 	) {
 		if (!connection.subscriptions.has(eventName)) {
@@ -795,7 +795,7 @@ export class ActorInstance<S, CP, CS> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get connections(): Map<ConnectionId, Connection<S, CP, CS>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS>> {
 		return this.#connections;
 	}
 

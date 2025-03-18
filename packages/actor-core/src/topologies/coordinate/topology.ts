@@ -5,7 +5,7 @@ import type { ActorPeer } from "./actor-peer";
 import * as errors from "@/actor/errors";
 import * as events from "node:events";
 import { publishMessageToLeader } from "./node/message";
-import type { RelayConnection } from "./conn/mod";
+import type { RelayConn } from "./conn/mod";
 import type { Hono } from "hono";
 import { createActorRouter } from "@/actor/router";
 import { Manager } from "@/manager/manager";
@@ -18,7 +18,7 @@ export interface GlobalState {
 	/** Actors currently running on this instance. */
 	actorPeers: Map<string, ActorPeer>;
 	/** Connections that are connected to this node. */
-	relayConnections: Map<string, RelayConnection>;
+	relayConns: Map<string, RelayConn>;
 	/** Resolvers for when a message is acknowledged by the peer. */
 	messageAckResolvers: Map<string, () => void>;
 }
@@ -40,7 +40,7 @@ export class CoordinateTopology {
 		const globalState: GlobalState = {
 			nodeId: crypto.randomUUID(),
 			actorPeers: new Map(),
-			relayConnections: new Map(),
+			relayConns: new Map(),
 			messageAckResolvers: new Map(),
 		};
 
@@ -85,7 +85,7 @@ export class CoordinateTopology {
 				// TODO:
 				throw new errors.InternalError("UNIMPLEMENTED");
 			},
-			onConnectionsMessage: async ({ req, connId, connToken, message }) => {
+			onConnMessage: async ({ req, connId, connToken, message }) => {
 				const actorId = req.param("actorId");
 				if (!actorId) throw new errors.InternalError("Missing actor ID");
 
