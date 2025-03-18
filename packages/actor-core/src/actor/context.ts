@@ -9,10 +9,10 @@ import { Schedule } from "./schedule";
 /**
  * ActorContext class that provides access to actor methods and state
  */
-export class ActorContext<S, CP, CS> {
-	#actor: ActorInstance<S, CP, CS>;
+export class ActorContext<S, CP, CS, V> {
+	#actor: ActorInstance<S, CP, CS, V>;
 
-	constructor(actor: ActorInstance<S, CP, CS>) {
+	constructor(actor: ActorInstance<S, CP, CS, V>) {
 		this.#actor = actor;
 	}
 
@@ -21,6 +21,13 @@ export class ActorContext<S, CP, CS> {
 	 */
 	get state(): S {
 		return this.#actor.state;
+	}
+
+	/**
+	 * Get the actor variables
+	 */
+	get vars(): V {
+		return this.#actor.vars;
 	}
 
 	/**
@@ -77,7 +84,7 @@ export class ActorContext<S, CP, CS> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V>> {
 		// @ts-ignore - Access protected method
 		return this.#actor.conns;
 	}

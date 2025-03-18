@@ -57,6 +57,15 @@ export class ConnStateNotEnabled extends ActorError {
 	}
 }
 
+export class VarsNotEnabled extends ActorError {
+	constructor() {
+		super(
+			"vars_not_enabled",
+			"Variables not enabled. Must implement `createVars` or `vars` to use state.",
+		);
+	}
+}
+
 export class ActionTimedOut extends ActorError {
 	constructor() {
 		super("action_timed_out", "Action timed out.", { public: true });

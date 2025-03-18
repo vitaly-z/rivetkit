@@ -45,7 +45,7 @@ export interface PersistedSub {
 	n: string;
 }
 
-export type AnyConn = Conn<any, any, any>;
+export type AnyConn = Conn<any, any, any, any>;
 
 /**
  * Represents a client connection to an actor.
@@ -54,13 +54,13 @@ export type AnyConn = Conn<any, any, any>;
  *
  * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
  */
-export class Conn<S, CP, CS> {
+export class Conn<S, CP, CS, V> {
 	subscriptions: Set<string> = new Set<string>();
 
 	#stateEnabled: boolean;
 
 	// TODO: Remove this cyclical reference
-	#actor: ActorInstance<S, CP, CS>;
+	#actor: ActorInstance<S, CP, CS, V>;
 
 	/**
 	 * The proxied state that notifies of changes automatically.
@@ -127,7 +127,7 @@ export class Conn<S, CP, CS> {
 	 * @protected
 	 */
 	public constructor(
-		actor: ActorInstance<S, CP, CS>,
+		actor: ActorInstance<S, CP, CS, V>,
 		persist: PersistedConn<CP, CS>,
 		driver: ConnDriver,
 		stateEnabled: boolean,

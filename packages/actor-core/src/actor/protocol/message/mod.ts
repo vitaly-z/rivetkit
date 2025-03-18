@@ -69,21 +69,21 @@ export async function parseMessage(
 	return message;
 }
 
-export interface ProcessMessageHandler<S, CP, CS> {
+export interface ProcessMessageHandler<S, CP, CS, V> {
 	onExecuteRpc?: (
-		ctx: ActionContext<S, CP, CS>,
+		ctx: ActionContext<S, CP, CS, V>,
 		name: string,
 		args: unknown[],
 	) => Promise<unknown>;
-	onSubscribe?: (eventName: string, conn: Conn<S, CP, CS>) => Promise<void>;
-	onUnsubscribe?: (eventName: string, conn: Conn<S, CP, CS>) => Promise<void>;
+	onSubscribe?: (eventName: string, conn: Conn<S, CP, CS, V>) => Promise<void>;
+	onUnsubscribe?: (eventName: string, conn: Conn<S, CP, CS, V>) => Promise<void>;
 }
 
-export async function processMessage<S, CP, CS>(
+export async function processMessage<S, CP, CS, V>(
 	message: wsToServer.ToServer,
-	actor: ActorInstance<S, CP, CS>,
-	conn: Conn<S, CP, CS>,
-	handler: ProcessMessageHandler<S, CP, CS>,
+	actor: ActorInstance<S, CP, CS, V>,
+	conn: Conn<S, CP, CS, V>,
+	handler: ProcessMessageHandler<S, CP, CS, V>,
 ) {
 	let rpcId: number | undefined;
 	let rpcName: string | undefined;
@@ -101,7 +101,7 @@ export async function processMessage<S, CP, CS>(
 			rpcId = id;
 			rpcName = name;
 
-			const ctx = new ActionContext<S, CP, CS>(actor.actorContext, conn);
+			const ctx = new ActionContext<S, CP, CS, V>(actor.actorContext, conn);
 			const output = await handler.onExecuteRpc(ctx, name, args);
 
 			conn._sendMessage(

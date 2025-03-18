@@ -41,7 +41,7 @@ export const ActorPeerConfigSchema = z.object({
 });
 export type ActorPeerConfig = z.infer<typeof ActorPeerConfigSchema>;
 
-export const ActorsSchema = z.record(z.string(), z.custom<ActorDefinition<any, any, any, any>>())
+export const ActorsSchema = z.record(z.string(), z.custom<ActorDefinition<any, any, any, any, any>>())
 export type Actors = z.infer<typeof ActorsSchema>;
 
 /** Base config used for the actor config across all platforms. */
