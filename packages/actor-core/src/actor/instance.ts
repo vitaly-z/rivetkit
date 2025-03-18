@@ -17,6 +17,7 @@ import type * as wsToServer from "@/actor/protocol/message/to-server";
 import { CachedSerializer } from "./protocol/serde";
 import { Inspector } from "@/actor/inspect";
 import { ActorContext } from "./context";
+import invariant from "invariant";
 
 /**
  * Options for the `_saveState` method.
@@ -30,11 +31,13 @@ export interface SaveStateOptions {
 
 /** Actor type alias with all `any` types. Used for `extends` in classes referencing this actor. */
 // biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
-export type AnyActorInstance = ActorInstance<any, any, any>;
+export type AnyActorInstance = ActorInstance<any, any, any, any>;
 
 export type ExtractActorState<A extends AnyActorInstance> =
 	A extends ActorInstance<
 		infer State,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
@@ -49,6 +52,8 @@ export type ExtractActorConnParams<A extends AnyActorInstance> =
 		any,
 		infer ConnParams,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any
 	>
 		? ConnParams
@@ -60,7 +65,9 @@ export type ExtractActorConnState<A extends AnyActorInstance> =
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
-		infer ConnState
+		infer ConnState,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any
 	>
 		? ConnState
 		: never;
@@ -73,9 +80,9 @@ interface PersistedActor<S, CP, CS> {
 	c: PersistedConn<CP, CS>[];
 }
 
-export class ActorInstance<S, CP, CS> {
+export class ActorInstance<S, CP, CS, V> {
 	// Shared actor context for this instance
-	actorContext: ActorContext<S, CP, CS>;
+	actorContext: ActorContext<S, CP, CS, V>;
 	isStopping = false;
 
 	#persistChanged = false;
@@ -95,8 +102,10 @@ export class ActorInstance<S, CP, CS> {
 	#lastSaveTime = 0;
 	#pendingSaveTimeout?: NodeJS.Timeout;
 
+	#vars?: V;
+
 	#backgroundPromises: Promise<void>[] = [];
-	#config: ActorConfig<S, CP, CS>;
+	#config: ActorConfig<S, CP, CS, V>;
 	#connectionDrivers!: ConnDrivers;
 	#actorDriver!: ActorDriver;
 	#actorId!: string;
@@ -105,8 +114,8 @@ export class ActorInstance<S, CP, CS> {
 	#region!: string;
 	#ready = false;
 
-	#connections = new Map<ConnId, Conn<S, CP, CS>>();
-	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS>>>();
+	#connections = new Map<ConnId, Conn<S, CP, CS, V>>();
+	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V>>>();
 
 	#schedule!: Schedule;
 
@@ -127,7 +136,7 @@ export class ActorInstance<S, CP, CS> {
 	 *
 	 * @private
 	 */
-	constructor(config: ActorConfig<S, CP, CS>) {
+	constructor(config: ActorConfig<S, CP, CS, V>) {
 		this.#config = config;
 		this.actorContext = new ActorContext(this);
 	}
@@ -153,6 +162,29 @@ export class ActorInstance<S, CP, CS> {
 		//
 		// Store the promise so network requests can await initialization
 		await this.#initialize();
+
+		// TODO: Exit process if this errors
+		if (this.#varsEnabled) {
+			// TODO: Move to config
+			const CREATE_VARS_TIMEOUT = 5000; // 5 seconds
+
+			let vars: V | undefined = undefined;
+			if ("createVars" in this.#config) {
+				const dataOrPromise = this.#config.createVars(
+					this.actorContext as unknown as ActorContext<S, CP, CS, undefined>,
+				);
+				if (dataOrPromise instanceof Promise) {
+					vars = await deadline(dataOrPromise, CREATE_VARS_TIMEOUT);
+				} else {
+					vars = dataOrPromise;
+				}
+			} else if ("vars" in this.#config) {
+				vars = structuredClone(this.#config.vars);
+			} else {
+				throw new Error("Could not variables from 'createVars' or 'vars'");
+			}
+			this.#vars = vars;
+		}
 
 		// TODO: Exit process if this errors
 		logger().info("actor starting");
@@ -182,10 +214,17 @@ export class ActorInstance<S, CP, CS> {
 	}
 
 	get #connStateEnabled() {
-		return (
-			"createConnState" in this.#config ||
-			"connState" in this.#config
-		);
+		return "createConnState" in this.#config || "connState" in this.#config;
+	}
+
+	get #varsEnabled() {
+		return "createVars" in this.#config || "vars" in this.#config;
+	}
+
+	#validateVarsEnabled() {
+		if (!this.#varsEnabled) {
+			throw new errors.VarsNotEnabled();
+		}
 	}
 
 	/** Promise used to wait for a save to complete. This is required since you cannot await `#saveStateThrottled`. */
@@ -336,7 +375,7 @@ export class ActorInstance<S, CP, CS> {
 			for (const connPersist of this.#persist.c) {
 				// Create connections
 				const driver = this.__getConnDriver(connPersist.d);
-				const conn = new Conn<S, CP, CS>(
+				const conn = new Conn<S, CP, CS, V>(
 					this,
 					connPersist,
 					driver,
@@ -366,7 +405,7 @@ export class ActorInstance<S, CP, CS> {
 
 					// Convert state to undefined since state is not defined yet here
 					stateData = await this.#config.createState(
-						this.actorContext as unknown as ActorContext<undefined, CP, CS>,
+						this.actorContext as unknown as ActorContext<undefined, CP, CS, V>,
 					);
 				} else if ("state" in this.#config) {
 					stateData = structuredClone(this.#config.state);
@@ -393,14 +432,14 @@ export class ActorInstance<S, CP, CS> {
 		}
 	}
 
-	__getConnForId(id: string): Conn<S, CP, CS> | undefined {
+	__getConnForId(id: string): Conn<S, CP, CS, V> | undefined {
 		return this.#connections.get(id);
 	}
 
 	/**
 	 * Removes a connection and cleans up its resources.
 	 */
-	__removeConn(conn: Conn<S, CP, CS> | undefined) {
+	__removeConn(conn: Conn<S, CP, CS, V> | undefined) {
 		if (!conn) {
 			logger().warn("`conn` does not exist");
 			return;
@@ -506,7 +545,7 @@ export class ActorInstance<S, CP, CS> {
 		state: CS,
 		driverId: string,
 		driverState: unknown,
-	): Promise<Conn<S, CP, CS>> {
+	): Promise<Conn<S, CP, CS, V>> {
 		if (this.#connections.has(connectionId)) {
 			throw new Error(`Connection already exists: ${connectionId}`);
 		}
@@ -522,7 +561,7 @@ export class ActorInstance<S, CP, CS> {
 			s: state,
 			su: [],
 		};
-		const conn = new Conn<S, CP, CS>(
+		const conn = new Conn<S, CP, CS, V>(
 			this,
 			persist,
 			driver,
@@ -573,10 +612,7 @@ export class ActorInstance<S, CP, CS> {
 	}
 
 	// MARK: Messages
-	async processMessage(
-		message: wsToServer.ToServer,
-		conn: Conn<S, CP, CS>,
-	) {
+	async processMessage(message: wsToServer.ToServer, conn: Conn<S, CP, CS, V>) {
 		await processMessage(message, this, conn, {
 			onExecuteRpc: async (ctx, name, args) => {
 				return await this.executeRpc(ctx, name, args);
@@ -593,7 +629,7 @@ export class ActorInstance<S, CP, CS> {
 	// MARK: Events
 	#addSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS>,
+		connection: Conn<S, CP, CS, V>,
 		fromPersist: boolean,
 	) {
 		if (connection.subscriptions.has(eventName)) {
@@ -623,7 +659,7 @@ export class ActorInstance<S, CP, CS> {
 
 	#removeSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS>,
+		connection: Conn<S, CP, CS, V>,
 		fromRemoveConn: boolean,
 	) {
 		if (!connection.subscriptions.has(eventName)) {
@@ -682,7 +718,7 @@ export class ActorInstance<S, CP, CS> {
 	 * @internal
 	 */
 	async executeRpc(
-		ctx: ActionContext<S, CP, CS>,
+		ctx: ActionContext<S, CP, CS, V>,
 		rpcName: string,
 		args: unknown[],
 	): Promise<unknown> {
@@ -795,7 +831,7 @@ export class ActorInstance<S, CP, CS> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V>> {
 		return this.#connections;
 	}
 
@@ -817,6 +853,12 @@ export class ActorInstance<S, CP, CS> {
 	set state(value: S) {
 		this.#validateStateEnabled();
 		this.#persist.s = value;
+	}
+
+	get vars(): V {
+		this.#validateVarsEnabled();
+		invariant(this.#vars !== undefined, "vars not enabled");
+		return this.#vars;
 	}
 
 	/**

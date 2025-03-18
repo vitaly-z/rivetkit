@@ -10,9 +10,9 @@ export type { Encoding } from "@/actor/protocol/serde";
 export type { ActorTags } from "@/common/utils";
 export type { ActorDefinition, ActorContextOf } from "./definition";
 
-export function actor<S, CP, CS, R extends Actions<S, CP, CS>>(
-	input: ActorConfigInput<S, CP, CS, R>,
-): ActorDefinition<S, CP, CS, R> {
-	const config = ActorConfigSchema.parse(input) as ActorConfig<S, CP, CS>;
+export function actor<S, CP, CS, V, R extends Actions<S, CP, CS, V>>(
+	input: ActorConfigInput<S, CP, CS, V, R>,
+): ActorDefinition<S, CP, CS, V, R> {
+	const config = ActorConfigSchema.parse(input) as ActorConfig<S, CP, CS, V>;
 	return new ActorDefinition(config);
 }

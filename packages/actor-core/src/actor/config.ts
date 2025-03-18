@@ -17,8 +17,13 @@ export const ActorConfigSchema = z
 		onConnect: z.function().optional(),
 		onDisconnect: z.function().optional(),
 		onBeforeActionResponse: z.function().optional(),
-		// Actions<S, CP, CS>
 		actions: z.record(z.function()),
+		state: z.any().optional(),
+		createState: z.function().optional(),
+		connState: z.any().optional(),
+		createConnState: z.function().optional(),
+		vars: z.any().optional(),
+		createVars: z.function().optional(),
 		options: z
 			.object({
 				state: z
@@ -37,21 +42,28 @@ export const ActorConfigSchema = z
 			.strict()
 			.default({}),
 	})
-	.and(
-		// CreateState<S, CP, CS>
-		z.union([
-			z.object({ state: z.any() }),
-			z.object({ createState: z.function() }),
-			z.object({})
-		]),
+	.strict()
+	.refine(
+		(data) => !(data.state !== undefined && data.createState !== undefined),
+		{
+			message: "Cannot define both 'state' and 'createState'",
+			path: ["state"],
+		},
 	)
-	.and(
-		// CreateConnState<S, CP, CS>
-		z.union([
-			z.object({ connState: z.any() }),
-			z.object({ createConnState: z.function() }),
-			z.object({})
-		]),
+	.refine(
+		(data) =>
+			!(data.connState !== undefined && data.createConnState !== undefined),
+		{
+			message: "Cannot define both 'connState' and 'createConnState'",
+			path: ["connState"],
+		},
+	)
+	.refine(
+		(data) => !(data.vars !== undefined && data.createVars !== undefined),
+		{
+			message: "Cannot define both 'vars' and 'createVars'",
+			path: ["vars"],
+		},
 	);
 
 export interface OnConnectOptions<CP> {
@@ -67,41 +79,62 @@ export interface OnConnectOptions<CP> {
 // Creates state config
 //
 // This must have only one or the other or else S will not be able to be inferred
-type CreateState<S, CP, CS> =
+type CreateState<S, CP, CS, V> =
 	| { state: S }
-	| { createState: (c: ActorContext<undefined, CP, CS>) => S | Promise<S> }
+	| { createState: (c: ActorContext<undefined, CP, CS, V>) => S | Promise<S> }
 	| Record<never, never>;
 
 // Creates connection state config
 //
 // This must have only one or the other or else S will not be able to be inferred
-type CreateConnState<S, CP, CS> =
+type CreateConnState<S, CP, CS, V> =
 	| { connState: CS }
 	| {
 			createConnState: (
-				c: ActorContext<S, CP, CS>,
+				c: ActorContext<S, CP, CS, V>,
 				opts: OnConnectOptions<CP>,
 			) => CS | Promise<CS>;
 	  }
 	| Record<never, never>;
 
-export interface Actions<S, CP, CS> {
-	[Action: string]: (c: ActionContext<S, CP, CS>, ...args: any[]) => any;
+// Creates vars config
+//
+// This must have only one or the other or else S will not be able to be inferred
+/**
+ * @experimental
+ */
+type CreateVars<S, CP, CS, V> =
+	| {
+			/**
+			 * @experimental
+			 */
+			vars: V;
+	  }
+	| {
+			/**
+			 * @experimental
+			 */
+			createVars: (c: ActorContext<S, CP, CS, undefined>) => V | Promise<V>;
+	  }
+	| Record<never, never>;
+
+export interface Actions<S, CP, CS, V> {
+	[Action: string]: (c: ActionContext<S, CP, CS, V>, ...args: any[]) => any;
 }
 
-//export type ActorConfig<S, CP, CS> = BaseActorConfig<S, CP, CS> &
-//	ActorConfigLifecycle<S, CP, CS> &
-//	CreateState<S, CP, CS> &
-//	CreateConnState<S, CP, CS>;
+//export type ActorConfig<S, CP, CS, V> = BaseActorConfig<S, CP, CS, V> &
+//	ActorConfigLifecycle<S, CP, CS, V> &
+//	CreateState<S, CP, CS, V> &
+//	CreateConnState<S, CP, CS, V>;
 
-interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
+interface BaseActorConfig<S, CP, CS, V, R extends Actions<S, CP, CS, V>> {
 	/**
 	 * Called when the actor is first initialized.
 	 *
 	 * Use this hook to initialize your actor's state.
 	 * This is called before any other lifecycle hooks.
 	 */
-	onCreate?: (c: ActorContext<S, CP, CS>) => void | Promise<void>;
+	onCreate?: (c: ActorContext<S, CP, CS, V>) => void | Promise<void>;
 
 	/**
 	 * Called when the actor is started and ready to receive connections and action.
@@ -111,7 +144,7 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 *
 	 * @returns Void or a Promise that resolves when startup is complete
 	 */
-	onStart?: (c: ActorContext<S, CP, CS>) => void | Promise<void>;
+	onStart?: (c: ActorContext<S, CP, CS, V>) => void | Promise<void>;
 
 	/**
 	 * Called when the actor's state changes.
@@ -121,7 +154,7 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 *
 	 * @param newState The updated state
 	 */
-	onStateChange?: (c: ActorContext<S, CP, CS>, newState: S) => void;
+	onStateChange?: (c: ActorContext<S, CP, CS, V>, newState: S) => void;
 
 	/**
 	 * Called before a client connects to the actor.
@@ -134,7 +167,7 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * @throws Throw an error to reject the connection
 	 */
 	onBeforeConnect?: (
-		c: ActorContext<S, CP, CS>,
+		c: ActorContext<S, CP, CS, V>,
 		opts: OnConnectOptions<CP>,
 	) => void | Promise<void>;
 
@@ -148,8 +181,8 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * @returns Void or a Promise that resolves when connection handling is complete
 	 */
 	onConnect?: (
-		c: ActorContext<S, CP, CS>,
-		conn: Conn<S, CP, CS>,
+		c: ActorContext<S, CP, CS, V>,
+		conn: Conn<S, CP, CS, V>,
 	) => void | Promise<void>;
 
 	/**
@@ -162,8 +195,8 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * @returns Void or a Promise that resolves when disconnect handling is complete
 	 */
 	onDisconnect?: (
-		c: ActorContext<S, CP, CS>,
-		conn: Conn<S, CP, CS>,
+		c: ActorContext<S, CP, CS, V>,
+		conn: Conn<S, CP, CS, V>,
 	) => void | Promise<void>;
 
 	/**
@@ -179,7 +212,7 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 	 * @returns The modified output to send to the client
 	 */
 	onBeforeActionResponse?: <Out>(
-		c: ActorContext<S, CP, CS>,
+		c: ActorContext<S, CP, CS, V>,
 		name: string,
 		args: unknown[],
 		output: Out,
@@ -191,32 +224,62 @@ interface BaseActorConfig<S, CP, CS, R extends Actions<S, CP, CS>> {
 // 1. Infer schema
 // 2. Omit keys that we'll manually define (because of generics)
 // 3. Define our own types that have generic constraints
-export type ActorConfig<S, CP, CS> = Omit<
+export type ActorConfig<S, CP, CS, V> = Omit<
 	z.infer<typeof ActorConfigSchema>,
-	| keyof BaseActorConfig<S, CP, CS, Actions<S, CP, CS>>
-	| keyof CreateState<S, CP, CS>
-	| keyof CreateConnState<S, CP, CS>
+	| "actions"
+	| "onCreate"
+	| "onStart"
+	| "onStateChange"
+	| "onBeforeConnect"
+	| "onConnect"
+	| "onDisconnect"
+	| "onBeforeActionResponse"
+	| "state"
+	| "createState"
+	| "connState"
+	| "createConnState"
+	| "vars"
+	| "createVars"
 > &
-	BaseActorConfig<S, CP, CS, Actions<S, CP, CS>> &
-	CreateState<S, CP, CS> &
-	CreateConnState<S, CP, CS>;
+	BaseActorConfig<S, CP, CS, V, Actions<S, CP, CS, V>> &
+	CreateState<S, CP, CS, V> &
+	CreateConnState<S, CP, CS, V> &
+	CreateVars<S, CP, CS, V>;
 
 // See description on `ActorConfig`
-export type ActorConfigInput<S, CP, CS, R extends Actions<S, CP, CS>> = Omit<
+export type ActorConfigInput<
+	S,
+	CP,
+	CS,
+	V,
+	R extends Actions<S, CP, CS, V>,
+> = Omit<
 	z.input<typeof ActorConfigSchema>,
-	| keyof BaseActorConfig<S, CP, CS, R>
-	| keyof CreateState<S, CP, CS>
-	| keyof CreateConnState<S, CP, CS>
+	| "actions"
+	| "onCreate"
+	| "onStart"
+	| "onStateChange"
+	| "onBeforeConnect"
+	| "onConnect"
+	| "onDisconnect"
+	| "onBeforeActionResponse"
+	| "state"
+	| "createState"
+	| "connState"
+	| "createConnState"
+	| "vars"
+	| "createVars"
 > &
-	BaseActorConfig<S, CP, CS, R> &
-	CreateState<S, CP, CS> &
-	CreateConnState<S, CP, CS>;
+	BaseActorConfig<S, CP, CS, V, R> &
+	CreateState<S, CP, CS, V> &
+	CreateConnState<S, CP, CS, V> &
+	CreateVars<S, CP, CS, V>;
 
 // For testing type definitions:
-export function test<S, CP, CS, R extends Actions<S, CP, CS>>(
-	input: ActorConfigInput<S, CP, CS, R>,
-): ActorConfig<S, CP, CS> {
-	const config = ActorConfigSchema.parse(input) as ActorConfig<S, CP, CS>;
+export function test<S, CP, CS, V, R extends Actions<S, CP, CS, V>>(
+	input: ActorConfigInput<S, CP, CS, V, R>,
+): ActorConfig<S, CP, CS, V> {
+	const config = ActorConfigSchema.parse(input) as ActorConfig<S, CP, CS, V>;
 	return config;
 }
 

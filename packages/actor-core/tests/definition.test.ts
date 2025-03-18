@@ -18,6 +18,10 @@ describe("ActorDefinition", () => {
 				lastSeen: number;
 			}
 
+			interface TestVars {
+				foo: string;
+			}
+
 			// For testing type utilities, we don't need a real actor instance
 			// We just need a properly typed ActorDefinition to check against
 			type TestActions = Record<never, never>;
@@ -25,12 +29,13 @@ describe("ActorDefinition", () => {
 				TestState,
 				TestConnParams,
 				TestConnState,
+				TestVars,
 				TestActions
 			>;
 
 			// Use expectTypeOf to verify our type utility works correctly
 			expectTypeOf<ActorContextOf<typeof dummyDefinition>>().toEqualTypeOf<
-				ActorContext<TestState, TestConnParams, TestConnState>
+				ActorContext<TestState, TestConnParams, TestConnState, TestVars>
 			>();
 
 			// Make sure that different types are not compatible
@@ -39,7 +44,7 @@ describe("ActorDefinition", () => {
 			}
 
 			expectTypeOf<ActorContextOf<typeof dummyDefinition>>().not.toEqualTypeOf<
-				ActorContext<DifferentState, TestConnParams, TestConnState>
+				ActorContext<DifferentState, TestConnParams, TestConnState, TestVars>
 			>();
 		});
 	});
