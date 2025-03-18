@@ -8,8 +8,7 @@
     "packages/drivers/*",
     "packages/components/*",
     "packages/misc/*",
-    "examples/*",
-    "templates/*"
+    "examples/*"
   ],
   "scripts": {
     "start": "npx turbo watch build",
