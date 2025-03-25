@@ -3,11 +3,19 @@ import type Redis from "ioredis";
 import { KEYS } from "./keys";
 import { AnyActorInstance } from "actor-core/driver-helpers";
 
+export interface ActorDriverContext {
+    redis: Redis;
+}
+
 export class RedisActorDriver implements ActorDriver {
     #redis: Redis;
 
     constructor(redis: Redis) {
         this.#redis = redis;
+    }
+
+    get context(): ActorDriverContext {
+        return { redis: this.#redis };
     }
 
     async kvGet(actorId: string, key: KvKey): Promise<KvValue | undefined> {
