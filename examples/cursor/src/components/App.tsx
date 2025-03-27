@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
-import { createClient, type ActorHandle } from 'actor-core/client';
-import type { ActorCoreApp } from 'actor-core';
 import { throttle } from 'lodash-es';
 import CursorList from './CursorList';
 import CursorPointers from './CursorPointers';
-import type { App } from "../index";
-import { type cursorRoom, CursorState } from '../cursor-room';
+import { actorCore } from "../index";
+import { type CursorState } from '../cursor-room';
 
 interface CursorEvent {
   id: string;
@@ -29,79 +27,67 @@ const THROTTLE_MS = 16;
 const BACKGROUND_COLOR = '#06080C';
 
 function App() {
-  const [room, setRoom] = useState<ActorHandle<typeof cursorRoom> | null>(null);
+  const [actorState] = actorCore.useActor("cursorRoom");
   const [cursors, setCursors] = useState<Record<string, CursorState>>({});
   const [userName] = useState(() => `User ${Math.floor(Math.random() * 10000)}`);
 
+  // Set up event listeners
+  actorCore.useActorEvent(
+    { actor: actorState.actor, event: "cursorMoved" },
+    (...args: unknown[]) => {
+      const event = args[0] as CursorEvent;
+      setCursors(prev => ({ ...prev, [event.id]: event.cursor }));
+    }
+  );
+
+  actorCore.useActorEvent(
+    { actor: actorState.actor, event: "cursorAdded" },
+    (...args: unknown[]) => {
+      const event = args[0] as CursorEvent;
+      setCursors(prev => ({ ...prev, [event.id]: event.cursor }));
+    }
+  );
+
+  actorCore.useActorEvent(
+    { actor: actorState.actor, event: "cursorRemoved" },
+    (...args: unknown[]) => {
+      const id = args[0] as string;
+      setCursors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  );
+
+  // Initialize user
   useEffect(() => {
-    let mounted = true;
-    let currentRoom: ActorHandle<typeof cursorRoom> | null = null;
+    if (actorState.state !== "created") return;
 
-    const connect = async () => {
-      try {
-        const client = await createClient<App>("http://localhost:6420");
-        const newRoom = await client.cursorRoom.get();
-        if (mounted) {
-          currentRoom = newRoom;
-          setRoom(newRoom);
-          const randomColor = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
+    const randomColor = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
+    Promise.all([
+      actorState.actor.setName(userName),
+      actorState.actor.setColor(randomColor)
+    ]);
 
-          await Promise.all([
-            newRoom.setName(userName),
-            newRoom.setColor(randomColor)
-          ]);
+    // Get initial cursors
+    actorState.actor.getCursors().then(setCursors);
+  }, [actorState, userName]);
 
-          // Subscribe to cursor events
-          newRoom.on("cursorMoved", (event: CursorEvent) => {
-            console.log('cursorMoved', event);
-            setCursors(prev => ({ ...prev, [event.id]: event.cursor }));
-          });
-
-          newRoom.on("cursorAdded", (event: CursorEvent) => {
-            setCursors(prev => ({ ...prev, [event.id]: event.cursor }));
-          });
-
-          newRoom.on("cursorRemoved", (id: string) => {
-            setCursors(prev => {
-              const next = { ...prev };
-              delete next[id];
-              return next;
-            });
-          });
-
-          // Get initial cursors
-          const initialCursors = await newRoom.getCursors();
-          setCursors(initialCursors);
-        } else {
-          // Component unmounted during connection, cleanup immediately
-          await newRoom.dispose();
-        }
-      } catch (err) {
-        console.error('Failed to connect:', err);
-      }
-    };
-
-    connect();
-
-    return () => {
-      mounted = false;
-      room?.dispose();
-    };
-  }, []);
-
+  // Handle mouse movement
   useEffect(() => {
-    if (!room) return;
+    if (actorState.state !== "created") return;
 
     const throttledMouseMove = throttle((event: MouseEvent) => {
-      room.updateCursor(event.clientX, event.clientY);
+      actorState.actor.updateCursor(event.clientX, event.clientY);
     }, THROTTLE_MS, { leading: true, trailing: true });
 
     window.addEventListener('mousemove', throttledMouseMove);
     return () => {
-      throttledMouseMove.cancel(); // Properly cancel the throttled function
+      throttledMouseMove.cancel();
       window.removeEventListener('mousemove', throttledMouseMove);
     };
-  }, [room]);
+  }, [actorState]);
 
   return (
     <>

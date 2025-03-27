@@ -1,13 +1,12 @@
-import { setup } from "actor-core";
-import { cursorRoom } from "./cursor-room";
+import { createClient } from "actor-core/client";
+import { createReactActorCore } from "@actor-core/react";
+import type { cursorRoom } from "./cursor-room";
 
-export const app = setup({
+export interface App {
   actors: {
-    cursorRoom,
-  },
-  cors: {
-    origin: ["http://localhost:3000"],
-  },
-});
+    cursorRoom: typeof cursorRoom;
+  };
+}
 
-export type App = typeof app; 
+const client = createClient<App>("http://localhost:6420");
+export const actorCore = createReactActorCore(client); 

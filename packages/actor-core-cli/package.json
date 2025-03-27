@@ -1,7 +1,7 @@
 {
   "name": "@actor-core/cli",
   "description": "All purpose CLI for ActorCore",
-  "version": "0.7.4",
+  "version": "0.7.6",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "yarn build --watch",
-    "test": "vitest",
+    "test": "vitest run",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {

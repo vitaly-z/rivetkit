@@ -1,6 +1,6 @@
 {
   "name": "@actor-core/react",
-  "version": "0.6.1",
+  "version": "0.7.6",
   "license": "Apache-2.0",
   "sideEffects": false,
   "files": [

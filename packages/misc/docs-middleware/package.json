@@ -1,12 +1,11 @@
 {
 	"name": "docs-middleware",
-	"version": "0.7.4",
+	"version": "0.7.6",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"test": "vitest",
 		"cf-typegen": "wrangler types"
 	},
 	"devDependencies": {
