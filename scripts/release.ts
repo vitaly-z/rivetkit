@@ -18,14 +18,17 @@ async function main() {
 
 	// Commit
 	await commitVersionChanges(version);
-
-	// Publish
+	
+	// Get packages ready for publishing
 	const publicPackages = await getPublicPackages();
 	validatePackages(publicPackages);
+	
+	// Publish
 	await publishPackages(publicPackages, version);
 	await publishRustClient(version);
 	
 	// Create GitHub release
+	await createAndPushTag(version);
 	await createGitHubRelease(version);
 }
 
@@ -86,6 +89,22 @@ async function cleanWorkspace() {
 		console.log(chalk.green("✅ Workspace cleaned"));
 	} catch (err) {
 		console.error(chalk.red("❌ Failed to clean workspace"), err);
+		process.exit(1);
+	}
+}
+
+async function createAndPushTag(version: string) {
+	console.log(chalk.blue(`Creating tag v${version}...`));
+	try {
+		// Create tag and force update if it exists
+		await $`git tag -f v${version}`;
+		
+		// Push tag with force to ensure it's updated
+		await $`git push origin v${version} -f`;
+		
+		console.log(chalk.green(`✅ Tag v${version} created and pushed`));
+	} catch (err) {
+		console.error(chalk.red("❌ Failed to create or push tag"), err);
 		process.exit(1);
 	}
 }
@@ -176,8 +195,6 @@ async function commitVersionChanges(version: string) {
 			chalk.yellow("! Failed to push branch. You may need to push manually."),
 		);
 	}
-
-	await $`git push --tags -f`;
 }
 
 async function getPublicPackages() {
