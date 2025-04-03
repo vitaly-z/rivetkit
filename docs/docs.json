@@ -17,9 +17,9 @@
     "strict": true
   },
   "colors": {
-    "primary": "#ff4f00",
-    "light": "#ff4f00",
-    "dark": "#0D9373"
+    "primary": "#FF4F00",
+    "light": "#FF4F00",
+    "dark": "#FF4F00"
   },
   "navbar": {
     "links": [
@@ -32,7 +32,7 @@
         "href": "https://github.com/rivet-gg/actor-core/discussions"
       }
     ],
-    "primary" : {
+    "primary": {
       "type": "github",
       "href": "https://github.com/rivet-gg/actor-core"
     }
@@ -41,9 +41,7 @@
     "tabs": [
       {
         "tab": "Home",
-        "pages": [
-          "introduction"
-        ]
+        "pages": ["introduction"]
       },
       {
         "tab": "Documentation",
@@ -88,10 +86,7 @@
                   "concepts/external-sql",
                   {
                     "group": "Advanced",
-                    "pages": [
-                      "concepts/types",
-                      "concepts/topology"
-                    ]
+                    "pages": ["concepts/types", "concepts/topology"]
                   }
                 ]
               }
