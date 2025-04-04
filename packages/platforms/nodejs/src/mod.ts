@@ -14,7 +14,10 @@ import { type InputConfig, ConfigSchema } from "./config";
 
 export { InputConfig as Config } from "./config";
 
-export function createRouter(app: ActorCoreApp<any>, inputConfig?: InputConfig): {
+export function createRouter(
+	app: ActorCoreApp<any>,
+	inputConfig?: InputConfig,
+): {
 	router: Hono;
 	injectWebSocket: NodeWebSocket["injectWebSocket"];
 } {
@@ -25,7 +28,7 @@ export function createRouter(app: ActorCoreApp<any>, inputConfig?: InputConfig):
 	if (!config.drivers.manager || !config.drivers.actor) {
 		const memoryState = new MemoryGlobalState();
 		if (!config.drivers.manager) {
-			config.drivers.manager = new MemoryManagerDriver(memoryState);
+			config.drivers.manager = new MemoryManagerDriver(app, memoryState);
 		}
 		if (!config.drivers.actor) {
 			config.drivers.actor = new MemoryActorDriver(memoryState);
@@ -60,7 +63,10 @@ export function createRouter(app: ActorCoreApp<any>, inputConfig?: InputConfig):
 	}
 }
 
-export function serve(app: ActorCoreApp<any>, inputConfig?: InputConfig): ServerType {
+export function serve(
+	app: ActorCoreApp<any>,
+	inputConfig?: InputConfig,
+): ServerType {
 	const config = ConfigSchema.parse(inputConfig);
 
 	const { router, injectWebSocket } = createRouter(app, config);
