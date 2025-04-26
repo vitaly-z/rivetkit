@@ -43,11 +43,6 @@ export function createManagerRouter(
 		});
 	}
 
-	// Apply CORS middleware if configured
-	if (appConfig.cors) {
-		app.use("*", cors(appConfig.cors));
-	}
-
 	app.get("/", (c) => {
 		return c.text(
 			"This is an ActorCore server.\n\nLearn more at https://actorcore.org",
