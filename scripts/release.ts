@@ -33,7 +33,7 @@ async function main() {
 	// Publish
 	await publishPackages(publicPackages, version);
 	await publishRustClient(version);
-	await publishPythonClient(version);
+	//await publishPythonClient(version);  // TODO: Add back
 	
 	// Create GitHub release
 	await createAndPushTag(version);
@@ -101,21 +101,10 @@ async function updatePythonClientVersion(version: string) {
 async function runRustCheck() {
 	console.log(chalk.blue("Running cargo check for Rust client..."));
 	try {
-		await $`cd clients/rust && cargo check`;
+		await $`cargo check`;
 		console.log(chalk.green("✅ Rust client check passed"));
 	} catch (err) {
 		console.error(chalk.red("❌ Rust client check failed"), err);
-		process.exit(1);
-	}
-}
-
-async function runPythonCheck() {
-	console.log(chalk.blue("Running cargo check for Python client..."));
-	try {
-		await $`cd clients/python && cargo check`;
-		console.log(chalk.green("✅ Python client check passed"));
-	} catch (err) {
-		console.error(chalk.red("❌ Python client check failed"), err);
 		process.exit(1);
 	}
 }
@@ -279,6 +268,12 @@ async function checkPythonEnvironment() {
 	} catch (err) {
 		console.error(chalk.red("❌ Maturin is not installed"));
 		console.error(chalk.red("Please install [Maturin](https://maturin.rs)"));
+		process.exit(1);
+	}
+
+	// Check if PYPI_TOKEN exists
+	if (!process.env["PYPI_TOKEN"]) {
+		console.error(chalk.red("❌ Missing PyPi credentials (PYPI_TOKEN env var)"));
 		process.exit(1);
 	}
 
