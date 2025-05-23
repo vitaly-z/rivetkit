@@ -1,6 +1,6 @@
 {
 	"name": "docs-middleware",
-	"version": "0.8.0",
+	"version": "0.9.0-rc.1",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
@@ -17,5 +17,6 @@
 	"dependencies": {
 		"content-security-policy-builder": "^2.3.0",
 		"content-security-policy-parser": "^0.6.0"
-	}
+	},
+	"stableVersion": "0.8.0"
 }

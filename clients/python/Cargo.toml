@@ -5,7 +5,7 @@
 # pypi actor-core-client package
 [package]
 name = "python-actor-core-client"
-version = "0.8.0"
+version = "0.9.0-rc.1"
 edition = "2021"
 publish = false
 
@@ -14,7 +14,7 @@ name = "actor_core_client"
 crate-type = ["cdylib"]
 
 [dependencies]
-actor-core-client = { path = "../rust/", version = "0.8.0" }
+actor-core-client = { path = "../rust/" }
 futures-util = "0.3.31"
 once_cell = "1.21.3"
 pyo3 = { version = "0.24.0", features = ["extension-module"] }
