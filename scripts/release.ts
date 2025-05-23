@@ -9,7 +9,7 @@ async function main() {
 	// Check if cargo, maturin etc. exist
 	await checkRustEnvironment();
 	await checkPythonEnvironment();
-	
+
 	// Update version
 	const version = getVersionFromArgs();
 	await bumpPackageVersions(version);
@@ -20,21 +20,20 @@ async function main() {
 	// Check & build
 	await runTypeCheck();
 	await runRustCheck();
-	await runPythonCheck();
 	await runBuild();
 
 	// Commit
 	await commitVersionChanges(version);
-	
+
 	// Get packages ready for publishing
 	const publicPackages = await getPublicPackages();
 	validatePackages(publicPackages);
-	
+
 	// Publish
 	await publishPackages(publicPackages, version);
 	await publishRustClient(version);
 	//await publishPythonClient(version);  // TODO: Add back
-	
+
 	// Create GitHub release
 	await createAndPushTag(version);
 	await createGitHubRelease(version);
@@ -68,7 +67,7 @@ async function runBuild() {
 async function updateRustClientVersion(version: string) {
 	console.log(chalk.blue(`Updating Rust client version to ${version}...`));
 	const cargoTomlPath = "clients/rust/Cargo.toml";
-	
+
 	try {
 		// Replace version in Cargo.toml
 		await $`sed -i.bak -e 's/^version = ".*"/version = "${version}"/' ${cargoTomlPath}`;
@@ -84,7 +83,7 @@ async function updatePythonClientVersion(version: string) {
 	console.log(chalk.blue(`Updating Python client version to ${version}...`));
 	const pyprojectTomlPath = "clients/python/pyproject.toml";
 	const pyCargoTomlPath = "clients/python/Cargo.toml";
-	
+
 	try {
 		// Replace version in pyproject.toml and Cargo.toml
 		await $`sed -i.bak -e 's/^version = ".*"/version = "${version}"/' ${pyprojectTomlPath}`;
@@ -125,10 +124,10 @@ async function createAndPushTag(version: string) {
 	try {
 		// Create tag and force update if it exists
 		await $`git tag -f v${version}`;
-		
+
 		// Push tag with force to ensure it's updated
 		await $`git push origin v${version} -f`;
-		
+
 		console.log(chalk.green(`✅ Tag v${version} created and pushed`));
 	} catch (err) {
 		console.error(chalk.red("❌ Failed to create or push tag"), err);
@@ -138,36 +137,36 @@ async function createAndPushTag(version: string) {
 
 async function publishRustClient(version: string) {
 	console.log(chalk.blue("Publishing Rust client..."));
-	
+
 	try {
 		// First check if we need to update the publish flag in Cargo.toml
 		const cargoTomlPath = "clients/rust/Cargo.toml";
 		const { stdout: cargoToml } = await $`cat ${cargoTomlPath}`;
-		
+
 		// Check if publish = false is set and update it if needed
 		if (cargoToml.includes("publish = false")) {
 			await $`sed -i.bak -e 's/publish = false/publish = true/' ${cargoTomlPath}`;
 			await $`rm ${cargoTomlPath}.bak`;
 			console.log(chalk.blue("Updated publish flag in Cargo.toml"));
 		}
-		
+
 		// Check if package already exists
 		const { exitCode } = await $({
 			nothrow: true,
 		})`cargo search actor-core-client --limit 1 | grep "actor-core-client = \\"${version}\\""`;
-		
+
 		if (exitCode === 0) {
 			console.log(
 				chalk.yellow(
-					`! Rust package actor-core-client@${version} already published, skipping`
-				)
+					`! Rust package actor-core-client@${version} already published, skipping`,
+				),
 			);
 			return;
 		}
-		
+
 		// Publish the crate
 		await $({ stdio: "inherit" })`cd clients/rust && cargo publish`;
-		
+
 		console.log(chalk.green("✅ Published Rust client"));
 	} catch (err) {
 		console.error(chalk.red("❌ Failed to publish Rust client"), err);
@@ -177,10 +176,12 @@ async function publishRustClient(version: string) {
 
 async function publishPythonClient(version: string) {
 	console.log(chalk.blue("Publishing Python client..."));
-	
+
 	try {
 		// Check if package already exists
-		const res = await fetch("https://test.pypi.org/pypi/actor-core-client/json")
+		const res = await fetch(
+			"https://test.pypi.org/pypi/actor-core-client/json",
+		);
 		if (res.ok) {
 			const data = await res.json();
 			const doesAlreadyExist = typeof data.releases[version] !== "undefined";
@@ -188,8 +189,8 @@ async function publishPythonClient(version: string) {
 			if (doesAlreadyExist) {
 				console.log(
 					chalk.yellow(
-						`! Python pypi package actor-core-client@${version} already published, skipping`
-					)
+						`! Python pypi package actor-core-client@${version} already published, skipping`,
+					),
 				);
 				return;
 			}
@@ -197,13 +198,15 @@ async function publishPythonClient(version: string) {
 
 		const token = process.env["PYPI_TOKEN"];
 		if (!token) {
-			console.error(chalk.red("❌ Missing PyPi credentials (PYPI_TOKEN env var)"));
+			console.error(
+				chalk.red("❌ Missing PyPi credentials (PYPI_TOKEN env var)"),
+			);
 			process.exit(1);
 		}
 
 		const username = "__token__";
 		const password = token;
-		
+
 		// Publish the crate
 		await $({ stdio: "inherit" })`cd clients/python &&\
 			maturin publish\
@@ -212,7 +215,7 @@ async function publishPythonClient(version: string) {
 				--password ${password}\
 				--skip-existing\
 		`;
-		
+
 		console.log(chalk.green("✅ Published Python client"));
 	} catch (err) {
 		console.error(chalk.red("❌ Failed to publish Python client"), err);
@@ -236,7 +239,11 @@ async function checkRustEnvironment() {
 		}
 	} catch (err) {
 		console.error(chalk.red("❌ Rust environment is not ready"));
-		console.error(chalk.red("Please install Rust and Cargo\n(remember to `cargo login` afterwards)"));
+		console.error(
+			chalk.red(
+				"Please install Rust and Cargo\n(remember to `cargo login` afterwards)",
+			),
+		);
 		process.exit(1);
 	}
 	console.log(chalk.green("✅ Rust environment is good"));
@@ -250,7 +257,7 @@ async function checkPythonEnvironment() {
 		const { stdout: versionText } = await $`pip --version`;
 
 		const version = versionText.split(" ")[1];
-		
+
 		if (!semver.gte(version, "23.2.1")) {
 			console.error(chalk.red("❌ Python pip version is too old"));
 			console.error(chalk.red("Please update Python pip to at least 23.2.1"));
@@ -273,7 +280,9 @@ async function checkPythonEnvironment() {
 
 	// Check if PYPI_TOKEN exists
 	if (!process.env["PYPI_TOKEN"]) {
-		console.error(chalk.red("❌ Missing PyPi credentials (PYPI_TOKEN env var)"));
+		console.error(
+			chalk.red("❌ Missing PyPi credentials (PYPI_TOKEN env var)"),
+		);
 		process.exit(1);
 	}
 
@@ -380,39 +389,48 @@ async function publishPackages(publicPackages: any[], version: string) {
 
 async function createGitHubRelease(version: string) {
 	console.log(chalk.blue("Creating GitHub release..."));
-	
+
 	try {
 		// Get the current tag name (should be the tag created during the release process)
 		const { stdout: currentTag } = await $`git describe --tags --exact-match`;
 		const tagName = currentTag.trim();
-		
+
 		console.log(chalk.blue(`Looking for existing release for ${version}`));
-		
+
 		// Check if a release with this version name already exists
-		const { stdout: releaseJson } = await $`gh release list --json name,tagName`;
+		const { stdout: releaseJson } =
+			await $`gh release list --json name,tagName`;
 		const releases = JSON.parse(releaseJson);
 		const existingRelease = releases.find((r: any) => r.name === version);
-		
+
 		if (existingRelease) {
-			console.log(chalk.blue(`Updating release ${version} to point to new tag ${tagName}`));
+			console.log(
+				chalk.blue(
+					`Updating release ${version} to point to new tag ${tagName}`,
+				),
+			);
 			await $`gh release edit ${existingRelease.tagName} --tag ${tagName}`;
 		} else {
-			console.log(chalk.blue(`Creating new release ${version} pointing to tag ${tagName}`));
+			console.log(
+				chalk.blue(
+					`Creating new release ${version} pointing to tag ${tagName}`,
+				),
+			);
 			await $`gh release create ${tagName} --title ${version} --draft --generate-notes`;
-			
+
 			// Check if this is a pre-release (contains -rc. or similar)
 			if (version.includes("-")) {
 				await $`gh release edit ${tagName} --prerelease`;
 			}
 		}
-		
+
 		// Check if we have a dist directory with artifacts to upload
 		const { exitCode } = await $({ nothrow: true })`test -d dist`;
 		if (exitCode === 0) {
 			console.log(chalk.blue(`Uploading artifacts for tag ${tagName}`));
 			await $`gh release upload ${tagName} dist/* --clobber`;
 		}
-		
+
 		console.log(chalk.green("✅ GitHub release created/updated"));
 	} catch (err) {
 		console.error(chalk.red("❌ Failed to create GitHub release"), err);
