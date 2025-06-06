@@ -1,13 +1,8 @@
 import type { AnyActorDefinition } from "@/actor/definition";
-import type { Transport } from "@/actor/protocol/message/mod";
 import type * as wsToClient from "@/actor/protocol/message/to-client";
 import type * as wsToServer from "@/actor/protocol/message/to-server";
 import type { Encoding } from "@/actor/protocol/serde";
-import { importEventSource } from "@/common/eventsource";
-import { MAX_CONN_PARAMS_SIZE } from "@/common/network";
-import { httpUserAgent } from "@/utils";
 import { assertUnreachable, stringifyError } from "@/common/utils";
-import { importWebSocket } from "@/common/websocket";
 import type { ActorQuery } from "@/manager/protocol/query";
 import * as cbor from "cbor-x";
 import pRetry from "p-retry";
@@ -20,14 +15,6 @@ import {
 import * as errors from "./errors";
 import { logger } from "./log";
 import { type WebSocketMessage as ConnMessage, messageLength, serializeWithEncoding } from "./utils";
-import {
-	HEADER_ACTOR_ID,
-	HEADER_ACTOR_QUERY,
-	HEADER_CONN_ID,
-	HEADER_CONN_TOKEN,
-	HEADER_ENCODING,
-	HEADER_CONN_PARAMS,
-} from "@/actor/router-endpoints";
 import type { EventSource } from "eventsource";
 import { ActorDefinitionActions } from "./actor-common";
 
@@ -251,6 +238,7 @@ enc
 
 	async #connectWebSocket() {
 		const ws = await this.#driver.connectWebSocket(
+			undefined,
 			this.#actorQuery,
 			this.#encodingKind,
 		);
@@ -281,6 +269,7 @@ enc
 
 	async #connectSse() {
 		const eventSource = await this.#driver.connectSse(
+			undefined,
 			this.#actorQuery,
 			this.#encodingKind,
 			this.#params,
@@ -649,6 +638,7 @@ enc
 				throw new errors.InternalError("Missing connection ID or token.");
 
 			const res = await this.#driver.sendHttpMessage(
+				undefined,
 				this.#actorId,
 				this.#encodingKind,
 				this.#connectionId,

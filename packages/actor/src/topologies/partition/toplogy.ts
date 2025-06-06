@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { createActorRouter } from "@/actor/router";
 import type { AnyActorInstance } from "@/actor/instance";
 import * as errors from "@/actor/errors";
 import {
@@ -24,11 +23,7 @@ import type { ActorKey } from "@/common/utils";
 import type { DriverConfig } from "@/driver-helpers/config";
 import type { AppConfig } from "@/app/config";
 import type { ActorInspectorConnection } from "@/inspector/actor";
-import {
-	createManagerRouter,
-	OnProxyWebSocket,
-	type OnProxyRequest,
-} from "@/manager/router";
+import { createManagerRouter } from "@/manager/router";
 import type { ManagerInspectorConnection } from "@/inspector/manager";
 import type {
 	ConnectWebSocketOpts,
@@ -39,6 +34,22 @@ import type {
 	ConnectSseOutput,
 	ActionOutput,
 } from "@/actor/router-endpoints";
+import { SendRequestHandler, ProxyWebSocketHandler } from "@/app/inline-client-driver";
+import { ClientDriver } from "@/client/client";
+
+export type SendRequestHandler = (
+	c: HonoContext,
+	actorRequest: Request,
+	actorId: string,
+	meta?: unknown,
+) => Promise<Response>;
+
+export type OpenWebSocketHandler = (
+	c: HonoContext,
+	path: string,
+	actorId: string,
+	meta?: unknown,
+) => Promise<WebSocket>;
 
 export class PartitionTopologyManager {
 	router: Hono;
@@ -47,14 +58,28 @@ export class PartitionTopologyManager {
 		appConfig: AppConfig,
 		driverConfig: DriverConfig,
 		proxyCustomConfig: {
-			onProxyRequest: OnProxyRequest;
-			onProxyWebSocket: OnProxyWebSocket;
+			sendRequest: OnSendRequest;
+			openWebSocket: OnOpenWebSocket;
+			proxyRequest: SendRequestHandler;
+			proxyWebSocket: ProxyWebSocketHandler;
 		},
 	) {
-		this.router = createManagerRouter(appConfig, driverConfig, {
-			proxyMode: {
-				custom: proxyCustomConfig,
-			},
+		function unimplemented(): never {
+			throw new Error("UNIMPLEMENTED");
+		}
+
+		// TODO: needs a custom client driver that will forward to the actor
+		const clientDriver: ClientDriver = {
+			action: unimplemented,
+			resolveActorId: unimplemented,
+			connectWebSocket: unimplemented,
+			connectSse: unimplemented,
+			sendHttpMessage: unimplemented,
+		};
+
+		this.router = createManagerRouter(appConfig, driverConfig, clientDriver, {
+			proxyRequest,
+			proxyWebSocket,
 			onConnectInspector: async () => {
 				const inspector = driverConfig.drivers?.manager?.inspector;
 				if (!inspector) throw new errors.Unsupported("inspector");
@@ -85,8 +110,6 @@ export class PartitionTopologyManager {
 
 /** Manages the actor in the topology. */
 export class PartitionTopologyActor {
-	router: Hono;
-
 	#appConfig: AppConfig;
 	#driverConfig: DriverConfig;
 	#connDrivers: Record<string, ConnDriver>;
@@ -110,189 +133,189 @@ export class PartitionTopologyActor {
 		this.#connDrivers = createGenericConnDrivers(genericConnGlobalState);
 
 		// TODO: Store this actor router globally so we're not re-initializing it for every DO
-		this.router = createActorRouter(appConfig, driverConfig, {
-			getActorId: async () => {
-				if (this.#actorStartedPromise) await this.#actorStartedPromise.promise;
-				return this.actor.id;
-			},
-			connectionHandlers: {
-				onConnectWebSocket: async (
-					opts: ConnectWebSocketOpts,
-				): Promise<ConnectWebSocketOutput> => {
-					if (this.#actorStartedPromise)
-						await this.#actorStartedPromise.promise;
-
-					const actor = this.#actor;
-					if (!actor) throw new Error("Actor should be defined");
-
-					const connId = generateConnId();
-					const connToken = generateConnToken();
-					const connState = await actor.prepareConn(opts.params, opts.req.raw);
-
-					let conn: AnyConn | undefined;
-					return {
-						onOpen: async (ws) => {
-							// Save socket
-							genericConnGlobalState.websockets.set(connId, ws);
-
-							// Create connection
-							conn = await actor.createConn(
-								connId,
-								connToken,
-								opts.params,
-								connState,
-								CONN_DRIVER_GENERIC_WEBSOCKET,
-								{
-									encoding: opts.encoding,
-								} satisfies GenericWebSocketDriverState,
-							);
-						},
-						onMessage: async (message) => {
-							logger().debug("received message");
-
-							if (!conn) {
-								logger().warn("`conn` does not exist");
-								return;
-							}
-
-							await actor.processMessage(message, conn);
-						},
-						onClose: async () => {
-							genericConnGlobalState.websockets.delete(connId);
-
-							if (conn) {
-								actor.__removeConn(conn);
-							}
-						},
-					};
-				},
-				onConnectSse: async (
-					opts: ConnectSseOpts,
-				): Promise<ConnectSseOutput> => {
-					if (this.#actorStartedPromise)
-						await this.#actorStartedPromise.promise;
-
-					const actor = this.#actor;
-					if (!actor) throw new Error("Actor should be defined");
-
-					const connId = generateConnId();
-					const connToken = generateConnToken();
-					const connState = await actor.prepareConn(opts.params, opts.req.raw);
-
-					let conn: AnyConn | undefined;
-					return {
-						onOpen: async (stream) => {
-							// Save socket
-							genericConnGlobalState.sseStreams.set(connId, stream);
-
-							// Create connection
-							conn = await actor.createConn(
-								connId,
-								connToken,
-								opts.params,
-								connState,
-								CONN_DRIVER_GENERIC_SSE,
-								{ encoding: opts.encoding } satisfies GenericSseDriverState,
-							);
-						},
-						onClose: async () => {
-							genericConnGlobalState.sseStreams.delete(connId);
-
-							if (conn) {
-								actor.__removeConn(conn);
-							}
-						},
-					};
-				},
-				onAction: async (opts: ActionOpts): Promise<ActionOutput> => {
-					let conn: AnyConn | undefined;
-					try {
-						// Wait for init to finish
-						if (this.#actorStartedPromise)
-							await this.#actorStartedPromise.promise;
-
-						const actor = this.#actor;
-						if (!actor) throw new Error("Actor should be defined");
-
-						// Create conn
-						const connState = await actor.prepareConn(
-							opts.params,
-							opts.req.raw,
-						);
-						conn = await actor.createConn(
-							generateConnId(),
-							generateConnToken(),
-							opts.params,
-							connState,
-							CONN_DRIVER_GENERIC_HTTP,
-							{} satisfies GenericHttpDriverState,
-						);
-
-						// Call action
-						const ctx = new ActionContext(actor.actorContext!, conn!);
-						const output = await actor.executeAction(
-							ctx,
-							opts.actionName,
-							opts.actionArgs,
-						);
-
-						return { output };
-					} finally {
-						if (conn) {
-							this.#actor?.__removeConn(conn);
-						}
-					}
-				},
-				onConnMessage: async (opts: ConnsMessageOpts): Promise<void> => {
-					// Wait for init to finish
-					if (this.#actorStartedPromise)
-						await this.#actorStartedPromise.promise;
-
-					const actor = this.#actor;
-					if (!actor) throw new Error("Actor should be defined");
-
-					// Find connection
-					const conn = actor.conns.get(opts.connId);
-					if (!conn) {
-						throw new errors.ConnNotFound(opts.connId);
-					}
-
-					// Authenticate connection
-					if (conn._token !== opts.connToken) {
-						throw new errors.IncorrectConnToken();
-					}
-
-					// Process message
-					await actor.processMessage(opts.message, conn);
-				},
-			},
-			onConnectInspector: async () => {
-				if (this.#actorStartedPromise) await this.#actorStartedPromise.promise;
-
-				const actor = this.#actor;
-				if (!actor) throw new Error("Actor should be defined");
-
-				let conn: ActorInspectorConnection | undefined;
-				return {
-					onOpen: async (ws) => {
-						conn = actor.inspector.createConnection(ws);
-					},
-					onMessage: async (message) => {
-						if (!conn) {
-							logger().warn("`conn` does not exist");
-							return;
-						}
-
-						actor.inspector.processMessage(conn, message);
-					},
-					onClose: async () => {
-						if (conn) {
-							actor.inspector.removeConnection(conn);
-						}
-					},
-				};
-			},
-		});
+		//this.router = createActorRouter(appConfig, driverConfig, {
+		//	getActorId: async () => {
+		//		if (this.#actorStartedPromise) await this.#actorStartedPromise.promise;
+		//		return this.actor.id;
+		//	},
+		//	connectionHandlers: {
+		//		onConnectWebSocket: async (
+		//			opts: ConnectWebSocketOpts,
+		//		): Promise<ConnectWebSocketOutput> => {
+		//			if (this.#actorStartedPromise)
+		//				await this.#actorStartedPromise.promise;
+		//
+		//			const actor = this.#actor;
+		//			if (!actor) throw new Error("Actor should be defined");
+		//
+		//			const connId = generateConnId();
+		//			const connToken = generateConnToken();
+		//			const connState = await actor.prepareConn(opts.params, opts.req.raw);
+		//
+		//			let conn: AnyConn | undefined;
+		//			return {
+		//				onOpen: async (ws) => {
+		//					// Save socket
+		//					genericConnGlobalState.websockets.set(connId, ws);
+		//
+		//					// Create connection
+		//					conn = await actor.createConn(
+		//						connId,
+		//						connToken,
+		//						opts.params,
+		//						connState,
+		//						CONN_DRIVER_GENERIC_WEBSOCKET,
+		//						{
+		//							encoding: opts.encoding,
+		//						} satisfies GenericWebSocketDriverState,
+		//					);
+		//				},
+		//				onMessage: async (message) => {
+		//					logger().debug("received message");
+		//
+		//					if (!conn) {
+		//						logger().warn("`conn` does not exist");
+		//						return;
+		//					}
+		//
+		//					await actor.processMessage(message, conn);
+		//				},
+		//				onClose: async () => {
+		//					genericConnGlobalState.websockets.delete(connId);
+		//
+		//					if (conn) {
+		//						actor.__removeConn(conn);
+		//					}
+		//				},
+		//			};
+		//		},
+		//		onConnectSse: async (
+		//			opts: ConnectSseOpts,
+		//		): Promise<ConnectSseOutput> => {
+		//			if (this.#actorStartedPromise)
+		//				await this.#actorStartedPromise.promise;
+		//
+		//			const actor = this.#actor;
+		//			if (!actor) throw new Error("Actor should be defined");
+		//
+		//			const connId = generateConnId();
+		//			const connToken = generateConnToken();
+		//			const connState = await actor.prepareConn(opts.params, opts.req.raw);
+		//
+		//			let conn: AnyConn | undefined;
+		//			return {
+		//				onOpen: async (stream) => {
+		//					// Save socket
+		//					genericConnGlobalState.sseStreams.set(connId, stream);
+		//
+		//					// Create connection
+		//					conn = await actor.createConn(
+		//						connId,
+		//						connToken,
+		//						opts.params,
+		//						connState,
+		//						CONN_DRIVER_GENERIC_SSE,
+		//						{ encoding: opts.encoding } satisfies GenericSseDriverState,
+		//					);
+		//				},
+		//				onClose: async () => {
+		//					genericConnGlobalState.sseStreams.delete(connId);
+		//
+		//					if (conn) {
+		//						actor.__removeConn(conn);
+		//					}
+		//				},
+		//			};
+		//		},
+		//		onAction: async (opts: ActionOpts): Promise<ActionOutput> => {
+		//			let conn: AnyConn | undefined;
+		//			try {
+		//				// Wait for init to finish
+		//				if (this.#actorStartedPromise)
+		//					await this.#actorStartedPromise.promise;
+		//
+		//				const actor = this.#actor;
+		//				if (!actor) throw new Error("Actor should be defined");
+		//
+		//				// Create conn
+		//				const connState = await actor.prepareConn(
+		//					opts.params,
+		//					opts.req.raw,
+		//				);
+		//				conn = await actor.createConn(
+		//					generateConnId(),
+		//					generateConnToken(),
+		//					opts.params,
+		//					connState,
+		//					CONN_DRIVER_GENERIC_HTTP,
+		//					{} satisfies GenericHttpDriverState,
+		//				);
+		//
+		//				// Call action
+		//				const ctx = new ActionContext(actor.actorContext!, conn!);
+		//				const output = await actor.executeAction(
+		//					ctx,
+		//					opts.actionName,
+		//					opts.actionArgs,
+		//				);
+		//
+		//				return { output };
+		//			} finally {
+		//				if (conn) {
+		//					this.#actor?.__removeConn(conn);
+		//				}
+		//			}
+		//		},
+		//		onConnMessage: async (opts: ConnsMessageOpts): Promise<void> => {
+		//			// Wait for init to finish
+		//			if (this.#actorStartedPromise)
+		//				await this.#actorStartedPromise.promise;
+		//
+		//			const actor = this.#actor;
+		//			if (!actor) throw new Error("Actor should be defined");
+		//
+		//			// Find connection
+		//			const conn = actor.conns.get(opts.connId);
+		//			if (!conn) {
+		//				throw new errors.ConnNotFound(opts.connId);
+		//			}
+		//
+		//			// Authenticate connection
+		//			if (conn._token !== opts.connToken) {
+		//				throw new errors.IncorrectConnToken();
+		//			}
+		//
+		//			// Process message
+		//			await actor.processMessage(opts.message, conn);
+		//		},
+		//	},
+		//	onConnectInspector: async () => {
+		//		if (this.#actorStartedPromise) await this.#actorStartedPromise.promise;
+		//
+		//		const actor = this.#actor;
+		//		if (!actor) throw new Error("Actor should be defined");
+		//
+		//		let conn: ActorInspectorConnection | undefined;
+		//		return {
+		//			onOpen: async (ws) => {
+		//				conn = actor.inspector.createConnection(ws);
+		//			},
+		//			onMessage: async (message) => {
+		//				if (!conn) {
+		//					logger().warn("`conn` does not exist");
+		//					return;
+		//				}
+		//
+		//				actor.inspector.processMessage(conn, message);
+		//			},
+		//			onClose: async () => {
+		//				if (conn) {
+		//					actor.inspector.removeConnection(conn);
+		//				}
+		//			},
+		//		};
+		//	},
+		//});
 	}
 
 	async start(id: string, name: string, key: ActorKey, region: string) {

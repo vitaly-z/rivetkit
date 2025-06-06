@@ -25,12 +25,15 @@ import {
 import type { ActionRequest } from "@/actor/protocol/http/action";
 import type { ActionResponse } from "@/actor/protocol/message/to-client";
 import { ClientDriver } from "./client";
+import { HonoRequest } from "hono";
 
 /**
  * Client driver that communicates with the manager via HTTP.
+ *
+ * This driver cannot access private resources.
  */
 export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
-	// Lazily import the dynamic imports so we don't have to turn `createClient` in to an aysnc fn
+	// Lazily import the dynamic imports so we don't have to turn `createClient` in to an async fn
 	const dynamicImports = (async () => {
 		// Import dynamic dependencies
 		const [WebSocket, EventSource] = await Promise.all([
@@ -45,6 +48,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 
 	const driver: ClientDriver = {
 		action: async <Args extends Array<unknown> = unknown[], Response = unknown>(
+			req: HonoRequest | undefined,
 			actorQuery: ActorQuery,
 			encoding: Encoding,
 			params: unknown,
@@ -77,6 +81,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 		},
 
 		resolveActorId: async (
+			req: HonoRequest | undefined,
 			actorQuery: ActorQuery,
 			encodingKind: Encoding,
 		): Promise<string> => {
@@ -112,6 +117,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 		},
 
 		connectWebSocket: async (
+			req: HonoRequest | undefined,
 			actorQuery: ActorQuery,
 			encodingKind: Encoding,
 		): Promise<WebSocket> => {
@@ -140,6 +146,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 		},
 
 		connectSse: async (
+			req: HonoRequest | undefined,
 			actorQuery: ActorQuery,
 			encodingKind: Encoding,
 			params: unknown,
@@ -170,6 +177,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 		},
 
 		sendHttpMessage: async (
+			req: HonoRequest | undefined,
 			actorId: string,
 			encoding: Encoding,
 			connectionId: string,

@@ -14,7 +14,7 @@ export function httpUserAgent(): string {
 	}
 
 	// Library
-	let userAgent = `ActorCore/${VERSION}`;
+	let userAgent = `RivetKit/${VERSION}`;
 
 	// Navigator
 	const navigatorObj = typeof navigator !== "undefined" ? navigator : undefined;

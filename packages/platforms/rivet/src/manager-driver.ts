@@ -49,8 +49,8 @@ export class RivetManagerDriver implements ManagerDriver {
 			if (res.actor.tags.role !== "actor") {
 				throw new Error(`Actor ${res.actor.id} does not have an actor role.`);
 			}
-			if (res.actor.tags.framework !== "@rivetkit/actor") {
-				throw new Error(`Actor ${res.actor.id} is not an ActorCore actor.`);
+			if (res.actor.tags.framework !== "rivetkit") {
+				throw new Error(`Actor ${res.actor.id} is not RivetKit actor.`);
 			}
 
 			return {
@@ -153,7 +153,7 @@ export class RivetManagerDriver implements ManagerDriver {
 			build_tags: {
 				name,
 				role: "actor",
-				framework: "@rivetkit/actor",
+				framework: "rivetkit",
 				current: "true",
 			},
 			region,
@@ -235,7 +235,7 @@ export class RivetManagerDriver implements ManagerDriver {
 			name,
 			key: serializeKeyForTag(key),
 			role: "actor",
-			framework: "@rivetkit/actor",
+			framework: "rivetkit",
 		};
 	}
 

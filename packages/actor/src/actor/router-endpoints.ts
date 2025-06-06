@@ -46,7 +46,7 @@ export interface ConnectSseOutput {
 }
 
 export interface ActionOpts {
-	req: HonoRequest;
+	req?: HonoRequest;
 	params: unknown;
 	actionName: string;
 	actionArgs: unknown[];
@@ -264,86 +264,6 @@ export async function handleSseConnect(
 			throw error;
 		}
 	});
-}
-
-/**
- * Creates an action handler
- */
-export async function handleAction(
-	c: HonoContext,
-	appConfig: AppConfig,
-	driverConfig: DriverConfig,
-	handler: (opts: ActionOpts) => Promise<ActionOutput>,
-	actionName: string,
-	actorId: string,
-) {
-	const encoding = getRequestEncoding(c.req, false);
-	const parameters = getRequestConnParams(c.req, appConfig, driverConfig);
-
-	logger().debug("handling action", {  actionName, encoding });
-
-	// Validate incoming request
-	let actionArgs: unknown[];
-	if (encoding === "json") {
-		try {
-			actionArgs = await c.req.json();
-		} catch (err) {
-			throw new errors.InvalidActionRequest("Invalid JSON");
-		}
-
-		if (!Array.isArray(actionArgs)) {
-			throw new errors.InvalidActionRequest("Action arguments must be an array");
-		}
-	} else if (encoding === "cbor") {
-		try {
-			const value = await c.req.arrayBuffer();
-			const uint8Array = new Uint8Array(value);
-			const deserialized = await deserialize(
-				uint8Array as unknown as InputData,
-				encoding,
-			);
-
-			// Validate using the action schema
-			const result = protoHttpAction.ActionRequestSchema.safeParse(deserialized);
-			if (!result.success) {
-				throw new errors.InvalidActionRequest("Invalid action request format");
-			}
-
-			actionArgs = result.data.a;
-		} catch (err) {
-			throw new errors.InvalidActionRequest(
-				`Invalid binary format: ${stringifyError(err)}`,
-			);
-		}
-	} else {
-		return assertUnreachable(encoding);
-	}
-
-	// Invoke the action
-	const result = await handler({
-		req: c.req,
-		params: parameters,
-		actionName: actionName,
-		actionArgs: actionArgs,
-		actorId,
-	});
-
-	// Encode the response
-	if (encoding === "json") {
-		return c.json(result.output as Record<string, unknown>);
-	} else if (encoding === "cbor") {
-		// Use serialize from serde.ts instead of custom encoder
-		const responseData = {
-			o: result.output, // Use the format expected by ResponseOkSchema
-		};
-		const serialized = serialize(responseData, encoding);
-
-		return c.body(serialized as Uint8Array, 200, {
-			"Content-Type": "application/octet-stream",
-		});
-	} else {
-		return assertUnreachable(encoding);
-	}
 }
 
 /**

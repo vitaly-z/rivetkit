@@ -32,6 +32,8 @@ import type {
 	ActionOutput,
 	ConnectionHandlers,
 } from "@/actor/router-endpoints";
+import { createInlineClientDriver } from "@/app/inline-client-driver";
+import invariant from "invariant";
 
 class ActorHandler {
 	/** Will be undefined if not yet loaded. */
@@ -214,7 +216,9 @@ export class StandaloneTopology {
 					const { actor } = await this.#getActor(opts.actorId);
 
 					// Create conn
-					const connState = await actor.prepareConn(opts.params, opts.req.raw);
+					const req = opts.req;
+					invariant(req, "missing request")
+					const connState = await actor.prepareConn(opts.params, req.raw);
 					conn = await actor.createConn(
 						generateConnId(),
 						generateConnToken(),
@@ -260,37 +264,43 @@ export class StandaloneTopology {
 		};
 
 		// Build manager router
-		const managerRouter = createManagerRouter(appConfig, driverConfig, {
-			proxyMode: {
-				inline: {
-					handlers: sharedConnectionHandlers,
+		const managerDriver = this.#driverConfig.drivers.manager;
+		invariant(managerDriver, "missing manager driver");
+		const clientDriver = createInlineClientDriver(
+			managerDriver,
+			sharedConnectionHandlers,
+		);
+		const managerRouter = createManagerRouter(
+			appConfig,
+			driverConfig,
+			clientDriver,
+			{
+				onConnectInspector: async () => {
+					const inspector = driverConfig.drivers?.manager?.inspector;
+					if (!inspector) throw new errors.Unsupported("inspector");
+
+					let conn: ManagerInspectorConnection | undefined;
+					return {
+						onOpen: async (ws) => {
+							conn = inspector.createConnection(ws);
+						},
+						onMessage: async (message) => {
+							if (!conn) {
+								logger().warn("`conn` does not exist");
+								return;
+							}
+
+							inspector.processMessage(conn, message);
+						},
+						onClose: async () => {
+							if (conn) {
+								inspector.removeConnection(conn);
+							}
+						},
+					};
 				},
 			},
-			onConnectInspector: async () => {
-				const inspector = driverConfig.drivers?.manager?.inspector;
-				if (!inspector) throw new errors.Unsupported("inspector");
-
-				let conn: ManagerInspectorConnection | undefined;
-				return {
-					onOpen: async (ws) => {
-						conn = inspector.createConnection(ws);
-					},
-					onMessage: async (message) => {
-						if (!conn) {
-							logger().warn("`conn` does not exist");
-							return;
-						}
-
-						inspector.processMessage(conn, message);
-					},
-					onClose: async () => {
-						if (conn) {
-							inspector.removeConnection(conn);
-						}
-					},
-				};
-			},
-		});
+		);
 
 		app.route("/", managerRouter);
 

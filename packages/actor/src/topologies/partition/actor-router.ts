@@ -52,9 +52,7 @@ export interface ActorRouterHandler {
 }
 
 /**
- * Creates a router that handles requests for the protocol and passes it off to the handler.
- *
- * This allows for creating a universal protocol across all platforms.
+ * Creates a router that runs on the partitioned instance.
  */
 export function createActorRouter(
 	appConfig: AppConfig,

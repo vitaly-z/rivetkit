@@ -11,6 +11,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { VERSION } from "@/utils";
 import * as fs from "node:fs/promises";
 import { resolve } from "node:path";
+import type { ClientDriver } from "@/client/client";
 
 function main() {
 	const appConfig: AppConfig = AppConfigSchema.parse({ actors: {} });
@@ -40,13 +41,20 @@ function main() {
 		},
 	};
 
-	const managerRouter = createManagerRouter(appConfig, driverConfig, {
-		proxyMode: {
-			inline: {
-				handlers: sharedConnectionHandlers,
-			},
-		},
-	}) as unknown as OpenAPIHono;
+	const clientDriver: ClientDriver = {
+		action: unimplemented,
+		resolveActorId: unimplemented,
+		connectWebSocket: unimplemented,
+		connectSse: unimplemented,
+		sendHttpMessage: unimplemented,
+	};
+
+	const managerRouter = createManagerRouter(
+		appConfig,
+		driverConfig,
+		clientDriver,
+		{},
+	) as unknown as OpenAPIHono;
 
 	const openApiDoc = managerRouter.getOpenAPIDocument({
 		openapi: "3.0.0",
