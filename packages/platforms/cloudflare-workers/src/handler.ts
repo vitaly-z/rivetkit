@@ -131,7 +131,7 @@ export function createRouter(
 						);
 					}
 
-					logger().debug("druable object websocket connection open", {
+					logger().debug("durable object websocket connection open", {
 						workerId,
 					});
 
