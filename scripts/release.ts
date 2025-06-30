@@ -7,19 +7,19 @@ async function main() {
 	await cleanWorkspace();
 
 	// Check if cargo, maturin etc. exist
-	await checkRustEnvironment();
-	await checkPythonEnvironment();
+	// await checkRustEnvironment();
+	// await checkPythonEnvironment();
 
 	// Update version
 	const version = getVersionFromArgs();
 	await bumpPackageVersions(version);
-	await updateRustClientVersion(version);
+	// await updateRustClientVersion(version);
 	// await updatePythonClientVersion(version);
 
 	// IMPORTANT: Do this after bumping the version
 	// Check & build
 	await runTypeCheck();
-	await runRustCheck();
+	// await runRustCheck();
 	await runBuild();
 
 	// Commit
@@ -31,7 +31,7 @@ async function main() {
 
 	// Publish
 	await publishPackages(publicPackages, version);
-	await publishRustClient(version);
+	// await publishRustClient(version);
 	//await publishPythonClient(version);  // TODO: Add back
 
 	// Create GitHub release
@@ -40,8 +40,6 @@ async function main() {
 }
 
 async function runTypeCheck() {
-	console.log(chalk.blue("Running type check..."));
-	return;
 	try {
 		// --force to skip cache in case of Turborepo bugs
 		await $`pnpm check-types --force`;
@@ -113,8 +111,12 @@ async function cleanWorkspace() {
 	try {
 		await $`git clean -fdx`;
 		console.log(chalk.green("✅ Workspace cleaned"));
+		
+		console.log(chalk.blue("Installing dependencies..."));
+		await $`pnpm install`;
+		console.log(chalk.green("✅ Dependencies installed"));
 	} catch (err) {
-		console.error(chalk.red("❌ Failed to clean workspace"), err);
+		console.error(chalk.red("❌ Failed to clean workspace or install dependencies"), err);
 		process.exit(1);
 	}
 }
@@ -312,7 +314,7 @@ function getVersionFromArgs() {
 
 async function bumpPackageVersions(version: string) {
 	console.log(chalk.blue(`Setting version to ${version}...`));
-	await $`pnpm workspaces foreach -A -t version ${version}`;
+	await $`pnpm -r exec npm version ${version} --no-git-tag-version --allow-same-version`;
 }
 
 async function commitVersionChanges(version: string) {
@@ -341,7 +343,7 @@ async function commitVersionChanges(version: string) {
 async function getPublicPackages() {
 	console.log(chalk.blue("Getting list of public packages..."));
 	const { stdout: packagesStdout } =
-		await $`pnpm workspaces list --json --no-private`;
+		await $`pnpm -r list --json --only-private=false`;
 
 	return packagesStdout
 		.trim()
@@ -463,7 +465,7 @@ async function publishPackage(pkg: any, version: string) {
 
 		await $({
 			stdio: "inherit",
-		})`pnpm workspace ${name} npm publish --access public --tag ${tag}`;
+		})`pnpm --filter ${name} publish --access public --tag ${tag}`;
 
 		console.log(chalk.green(`✅ Published ${name} with tag '${tag}'`));
 	} catch (err) {
