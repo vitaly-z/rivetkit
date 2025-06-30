@@ -1,6 +1,6 @@
 {
   "name": "@rivetkit/cloudflare-workers",
-  "version": "0.9.0-rc.2",
+  "version": "0.9.0",
   "keywords": [
     "rivetkit",
     "cloudflare",

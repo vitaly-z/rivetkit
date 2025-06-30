@@ -347,7 +347,7 @@ async function getPublicPackages() {
 	const allPackages = JSON.parse(packagesStdout.trim());
 
 	return allPackages.filter(
-		(pkg) => pkg.name !== "rivetkit" && !pkg.name.startsWith("@rivetkit/"),
+		(pkg) => pkg.name === "rivetkit" || pkg.name.startsWith("@rivetkit/"),
 	);
 }
 
