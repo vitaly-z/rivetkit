@@ -3,24 +3,24 @@ import * as semver from "semver";
 import { $, chalk, argv } from "zx";
 
 async function main() {
-	// // Clean the workspace first
-	// await cleanWorkspace();
-	//
-	// // Check if cargo, maturin etc. exist
-	// // await checkRustEnvironment();
-	// // await checkPythonEnvironment();
-	//
-	// // Update version
+	// Clean the workspace first
+	await cleanWorkspace();
+
+	// Check if cargo, maturin etc. exist
+	// await checkRustEnvironment();
+	// await checkPythonEnvironment();
+
+	// Update version
 	const version = getVersionFromArgs();
-	// await bumpPackageVersions(version);
-	// // await updateRustClientVersion(version);
-	// // await updatePythonClientVersion(version);
-	//
-	// // IMPORTANT: Do this after bumping the version
-	// // Check & build
-	// await runTypeCheck();
-	// // await runRustCheck();
-	// await runBuild();
+	await bumpPackageVersions(version);
+	// await updateRustClientVersion(version);
+	// await updatePythonClientVersion(version);
+
+	// IMPORTANT: Do this after bumping the version
+	// Check & build
+	await runTypeCheck();
+	// await runRustCheck();
+	await runBuild();
 
 	// Commit
 	await commitVersionChanges(version);
