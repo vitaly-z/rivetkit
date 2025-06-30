@@ -40,6 +40,7 @@ async function main() {
 }
 
 async function runTypeCheck() {
+	console.log(chalk.blue("Checking types..."));
 	try {
 		// --force to skip cache in case of Turborepo bugs
 		await $`pnpm check-types --force`;
