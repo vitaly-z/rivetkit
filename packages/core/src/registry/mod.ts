@@ -1,14 +1,8 @@
 import type { Hono } from "hono";
-import invariant from "invariant";
 import { createActorRouter } from "@/actor/router";
-import {
-	type Client,
-	type ClientDriver,
-	createClientWithDriver,
-} from "@/client/client";
+import { type Client, createClientWithDriver } from "@/client/client";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { createManagerRouter } from "@/manager/router";
-import { assertUnreachable } from "@/utils";
 import {
 	type RegistryActors,
 	type RegistryConfig,

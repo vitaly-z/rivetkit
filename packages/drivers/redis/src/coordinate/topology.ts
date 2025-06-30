@@ -1,8 +1,31 @@
-// TODO: Fix imports for topology when needed
-// This file is not currently being used and has been commented out to avoid type errors
-
-/*
-import type { ActorPeer } from "./actor-peer";
+import * as events from "node:events";
+import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
+import invariant from "invariant";
+import type { ConnRoutingHandler } from "@/actor/conn-routing-handler";
+import type {
+	ActionOpts,
+	ActionOutput,
+	ConnectionHandlers,
+	ConnectSseOpts,
+	ConnectSseOutput,
+	ConnectWebSocketOpts,
+	ConnectWebSocketOutput,
+	ConnsMessageOpts,
+	FetchOpts,
+	WebSocketOpts,
+} from "@/actor/router-endpoints";
+import {
+	type Client,
+	type ClientDriver,
+	createClientWithDriver,
+} from "@/client/client";
+import type { UniversalWebSocket } from "@/common/websocket-interface";
+import { createInlineClientDriver } from "@/inline-client-driver/mod";
+import { createManagerRouter } from "@/manager/router";
+import type { RegistryConfig } from "@/registry/config";
+import type { Registry } from "@/registry/mod";
+import type { RunConfig } from "@/registry/run-config";
 import type { ActorPeer } from "./actor-peer";
 import type { RelayConn } from "./conn/mod";
 import { publishActionToLeader } from "./node/action";
@@ -163,9 +186,6 @@ export class CoordinateTopology {
 			this.clientDriver,
 			{
 				routingHandler,
-				// onConnectInspector: () => {
-				// 	throw new errors.Unsupported("inspect");
-				// },
 			},
 		);
 
@@ -174,4 +194,3 @@ export class CoordinateTopology {
 		this.router = router;
 	}
 }
-*/

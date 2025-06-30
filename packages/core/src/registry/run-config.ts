@@ -2,6 +2,7 @@ import type { cors } from "hono/cors";
 import { z } from "zod";
 import type { ActorDriverBuilder } from "@/actor/driver";
 import { createDefaultDriver } from "@/drivers/default";
+import { InspectorConfigSchema } from "@/inspector/config";
 import type { ManagerDriverBuilder } from "@/manager/driver";
 import type { UpgradeWebSocket } from "@/utils";
 
@@ -32,7 +33,7 @@ export const RunConfigSchema = z
 
 		maxIncomingMessageSize: z.number().optional().default(65_536),
 
-		// inspector: InspectorConfigSchema.optional().default({ enabled: false }),
+		studio: InspectorConfigSchema,
 	})
 	.default({});
 

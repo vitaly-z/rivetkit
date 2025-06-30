@@ -8,11 +8,13 @@ import type { Client } from "@/client/client";
 import type { Logger } from "@/common/log";
 import { isCborSerializable, stringifyError } from "@/common/utils";
 import type { UniversalWebSocket } from "@/common/websocket-interface";
+import { ActorInspector } from "@/inspector/actor";
 import type { Registry, RegistryConfig } from "@/mod";
 import type { ActionContext } from "./action";
 import type { ActorConfig } from "./config";
 import { Conn, type ConnId } from "./connection";
 import { ActorContext } from "./context";
+import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorDriver, ConnDriver, ConnDrivers } from "./driver";
 import * as errors from "./errors";
 import { instanceLogger, logger } from "./log";
@@ -111,7 +113,15 @@ export type ExtractActorConnState<A extends AnyActorInstance> =
 		? ConnState
 		: never;
 
-export class ActorInstance<S, CP, CS, V, I, AD, DB> {
+export class ActorInstance<
+	S,
+	CP,
+	CS,
+	V,
+	I,
+	AD,
+	DB extends AnyDatabaseProvider,
+> {
 	// Shared actor context for this instance
 	actorContext: ActorContext<S, CP, CS, V, I, AD, DB>;
 	isStopping = false;
@@ -150,9 +160,42 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, AD, DB>>>();
 
 	#schedule!: Schedule;
+	#db!: InferDatabaseClient<DB>;
 
-	// inspector!: ActorInspector;
-	#db!: DB;
+	#inspector = new ActorInspector(() => {
+		return {
+			isDbEnabled: async () => {
+				return this.#db !== undefined;
+			},
+			getDb: async () => {
+				return this.db;
+			},
+			isStateEnabled: async () => {
+				return this.stateEnabled;
+			},
+			getState: async () => {
+				this.#validateStateEnabled();
+				return this.#persistRaw.s as unknown;
+			},
+			getRpcs: async () => {
+				return Object.keys(this.#config.actions);
+			},
+			getConnections: async () => {
+				return Array.from(this.#connections.entries()).map(([id, conn]) => ({
+					id,
+					stateEnabled: conn._stateEnabled,
+					params: conn.params as {},
+					state: conn._stateEnabled ? conn.state : undefined,
+					auth: conn.auth as {},
+				}));
+			},
+			setState: async (state: unknown) => {
+				this.#validateStateEnabled();
+				this.#persist.s = state as S;
+				await this.saveState({ immediate: true });
+			},
+		};
+	});
 
 	get id() {
 		return this.#actorId;
@@ -160,6 +203,10 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 
 	get inlineClient(): Client<Registry<any>> {
 		return this.#inlineClient;
+	}
+
+	get inspector() {
+		return this.#inspector;
 	}
 
 	/**
@@ -191,7 +238,6 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 		this.#key = key;
 		this.#region = region;
 		this.#schedule = new Schedule(this);
-		// this.inspector = new ActorInspector(this);
 
 		// Initialize server
 		//
@@ -210,7 +256,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 						undefined,
 						undefined,
 						undefined,
-						undefined
+						any
 					>,
 					this.#actorDriver.getContext(this.#actorId),
 				);
@@ -240,14 +286,14 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 		}
 
 		// Setup Database
-		if ("db" in this.#config) {
-			const db = await this.#config.db({
-				createDatabase: () => actorDriver.getDatabase(this.#actorId),
+		if ("db" in this.#config && this.#config.db) {
+			const client = await this.#config.db.createClient({
+				getDatabase: () => actorDriver.getDatabase(this.#actorId),
 			});
-
 			logger().info("database migration starting");
-			await db.onMigrate?.();
+			await this.#config.db.onMigrate?.(client);
 			logger().info("database migration complete");
+			this.#db = client;
 		}
 
 		// Set alarm for next scheduled event if any exist after finishing initiation sequence
@@ -493,8 +539,8 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 				}
 				this.#persistChanged = true;
 
-				// Call inspect handler
-				// this.inspector.onStateChange(this.#persistRaw.s);
+				// Inform the inspector about state changes
+				this.inspector.emitter.emit("stateUpdated", this.#persist.s);
 
 				// Call onStateChange if it exists
 				if (this.#config.onStateChange && this.#ready) {
@@ -641,7 +687,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 			this.#removeSubscription(eventName, conn, true);
 		}
 
-		// this.inspector.onConnChange(this.#connections);
+		this.inspector.emitter.emit("connectionUpdated");
 		if (this.#config.onDisconnect) {
 			try {
 				const result = this.#config.onDisconnect(this.actorContext, conn);
@@ -764,8 +810,6 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 		this.#persist.c.push(persist);
 		this.saveState({ immediate: true });
 
-		// this.inspector.onConnChange(this.#connections);
-
 		// Handle connection
 		if (this.#config.onConnect) {
 			try {
@@ -788,6 +832,8 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 				conn?.disconnect("`onConnect` failed");
 			}
 		}
+
+		this.inspector.emitter.emit("connectionUpdated");
 
 		// Send init message
 		conn._sendMessage(
@@ -812,12 +858,28 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	) {
 		await processMessage(message, this, conn, {
 			onExecuteAction: async (ctx, name, args) => {
+				this.inspector.emitter.emit("eventFired", {
+					type: "action",
+					name,
+					args,
+					connId: conn.id,
+				});
 				return await this.executeAction(ctx, name, args);
 			},
 			onSubscribe: async (eventName, conn) => {
+				this.inspector.emitter.emit("eventFired", {
+					type: "subscribe",
+					eventName,
+					connId: conn.id,
+				});
 				this.#addSubscription(eventName, conn, false);
 			},
 			onUnsubscribe: async (eventName, conn) => {
+				this.inspector.emitter.emit("eventFired", {
+					type: "unsubscribe",
+					eventName,
+					connId: conn.id,
+				});
 				this.#removeSubscription(eventName, conn, false);
 			},
 		});
@@ -1147,7 +1209,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	 * @experimental
 	 * @throws {DatabaseNotEnabled} If the database is not enabled.
 	 */
-	get db(): DB {
+	get db(): InferDatabaseClient<DB> {
 		if (!this.#db) {
 			throw new errors.DatabaseNotEnabled();
 		}
@@ -1177,6 +1239,12 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	 */
 	_broadcast<Args extends Array<unknown>>(name: string, ...args: Args) {
 		this.#assertReady();
+
+		this.inspector.emitter.emit("eventFired", {
+			type: "broadcast",
+			eventName: name,
+			args,
+		});
 
 		// Send to all connected clients
 		const subscriptions = this.#subscriptionIndex.get(name);

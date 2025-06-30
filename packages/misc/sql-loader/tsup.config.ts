@@ -1,6 +1,7 @@
 import { defineConfig } from "tsup";
-import defaultConfig from "../../tsup.base.ts";
+import defaultConfig from "../../../tsup.base.ts";
 
 export default defineConfig({
 	...defaultConfig,
+	dts: false,
 });

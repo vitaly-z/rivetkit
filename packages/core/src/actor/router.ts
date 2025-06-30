@@ -1,4 +1,5 @@
 import { Hono, type Context as HonoContext } from "hono";
+import invariant from "invariant";
 import { EncodingSchema } from "@/actor/protocol/serde";
 import {
 	type ActionOpts,
@@ -19,17 +20,18 @@ import {
 	handleSseConnect,
 	handleWebSocketConnect,
 } from "@/actor/router-endpoints";
-import { AnyClient } from "@/client/client";
 import {
 	handleRouteError,
 	handleRouteNotFound,
 	loggerMiddleware,
 } from "@/common/router";
 import { noopNext } from "@/common/utils";
-import { ManagerDriver } from "@/manager/driver";
-import { RegistryConfig } from "@/mod";
+import {
+	type ActorInspectorRouterEnv,
+	createActorInspectorRouter,
+} from "@/inspector/actor";
+import { secureInspector } from "@/inspector/utils";
 import type { RunConfig } from "@/registry/run-config";
-import { dbg } from "@/utils";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
 import { logger } from "./log";
@@ -233,16 +235,21 @@ export function createActorRouter(
 		}
 	});
 
-	// if (registryConfig.inspector.enabled) {
-	// 	router.route(
-	// 		"/inspect",
-	// 		createActorInspectorRouter(
-	// 			upgradeWebSocket,
-	// 			handler.onConnectInspector,
-	// 			registryConfig.inspector,
-	// 		),
-	// 	);
-	// }
+	if (runConfig.studio.enabled) {
+		router.route(
+			"/inspect",
+			new Hono<ActorInspectorRouterEnv & { Bindings: ActorRouterBindings }>()
+				.use(secureInspector(runConfig), async (c, next) => {
+					const inspector = (await actorDriver.loadActor(c.env.actorId))
+						.inspector;
+					invariant(inspector, "inspector not supported on this platform");
+
+					c.set("inspector", inspector);
+					await next();
+				})
+				.route("/", createActorInspectorRouter()),
+		);
+	}
 
 	router.notFound(handleRouteNotFound);
 	router.onError(

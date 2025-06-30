@@ -2,6 +2,7 @@ import type { RegistryConfig } from "@/registry/config";
 import type { ActionContext } from "./action";
 import type { Actions, ActorConfig } from "./config";
 import type { ActorContext } from "./context";
+import type { AnyDatabaseProvider } from "./database";
 import { ActorInstance } from "./instance";
 
 export type AnyActorDefinition = ActorDefinition<
@@ -56,7 +57,7 @@ export class ActorDefinition<
 	V,
 	I,
 	AD,
-	DB,
+	DB extends AnyDatabaseProvider,
 	R extends Actions<S, CP, CS, V, I, AD, DB>,
 > {
 	#config: ActorConfig<S, CP, CS, V, I, AD, DB>;

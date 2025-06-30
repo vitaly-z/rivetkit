@@ -11,6 +11,7 @@ import {
 } from "@/actor/generic-conn-driver";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { ActorKey } from "@/actor/mod";
+import { generateSecureToken } from "@/actor/utils";
 import type { AnyClient } from "@/client/client";
 import {
 	type ActorDriver,
@@ -23,6 +24,8 @@ import {
 	ensureDirectoryExists,
 	ensureDirectoryExistsSync,
 	getActorStoragePath as getActorDataPath,
+	getActorDbPath,
+	getActorsDbsPath,
 	getActorsDir,
 	getStoragePath,
 } from "./utils";
@@ -50,6 +53,7 @@ export interface ActorState {
 	id: string;
 	name: string;
 	key: ActorKey;
+	createdAt?: Date;
 	persistedData: Uint8Array;
 }
 
@@ -67,25 +71,33 @@ export class FileSystemGlobalState {
 
 		if (this.#persist) {
 			// Ensure storage directories exist synchronously during initialization
-			ensureDirectoryExistsSync(getActorsDir(this.#storagePath));
+			ensureDirectoryExistsSync(this.actorsDir);
+			ensureDirectoryExistsSync(this.dbsDir);
 
-			const actorsDir = getActorsDir(this.#storagePath);
 			let actorCount = 0;
 
 			try {
-				const actorIds = fsSync.readdirSync(actorsDir);
+				const actorIds = fsSync.readdirSync(this.actorsDir);
 				actorCount = actorIds.length;
 			} catch (error) {
 				logger().error("failed to count actors", { error });
 			}
 
-			logger().info("file system driver ready", {
+			logger().debug("file system driver ready", {
 				dir: this.#storagePath,
 				actorCount,
 			});
 		} else {
-			logger().info("memory driver ready");
+			logger().debug("memory driver ready");
 		}
+	}
+
+	private get actorsDir(): string {
+		return getActorsDir(this.#storagePath);
+	}
+
+	private get dbsDir(): string {
+		return getActorsDbsPath(this.#storagePath);
 	}
 
 	/**
@@ -93,6 +105,27 @@ export class FileSystemGlobalState {
 	 */
 	get storagePath(): string {
 		return this.#storagePath;
+	}
+
+	async *getActorsIterator(params: {
+		cursor?: string;
+	}): AsyncGenerator<ActorState> {
+		const actorIds = fsSync.readdirSync(this.actorsDir).sort();
+		const startIndex = params.cursor ? actorIds.indexOf(params.cursor) + 1 : 0;
+
+		for (let i = startIndex; i < actorIds.length; i++) {
+			const actorId = actorIds[i];
+			if (!actorId) {
+				continue;
+			}
+
+			try {
+				const state = await this.loadActorStateOrError(actorId);
+				yield state;
+			} catch (error) {
+				logger().error("failed to load actor state", { actorId, error });
+			}
+		}
 	}
 
 	/**
@@ -315,5 +348,20 @@ export class FileSystemGlobalState {
 		const entry = this.#actors.get(actorId);
 		if (!entry) throw new Error(`No entry for actor: ${actorId}`);
 		return entry;
+	}
+
+	async createDatabase(actorId: string): Promise<string | undefined> {
+		return getActorDbPath(this.#storagePath, actorId);
+	}
+
+	getOrCreateInspectorAccessToken(): string {
+		const tokenPath = path.join(this.#storagePath, "inspector-token");
+		if (fsSync.existsSync(tokenPath)) {
+			return fsSync.readFileSync(tokenPath, "utf-8");
+		}
+
+		const newToken = generateSecureToken();
+		fsSync.writeFileSync(tokenPath, newToken);
+		return newToken;
 	}
 }

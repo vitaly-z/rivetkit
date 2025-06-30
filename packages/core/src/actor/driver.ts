@@ -1,6 +1,7 @@
 import type * as messageToClient from "@/actor/protocol/message/to-client";
 import type { CachedSerializer } from "@/actor/protocol/serde";
 import type { AnyClient } from "@/client/client";
+import type { ActorInspector } from "@/inspector/actor";
 import type { ManagerDriver } from "@/manager/driver";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";

@@ -3,6 +3,7 @@ import type { UniversalWebSocket } from "@/common/websocket-interface";
 import type { ActionContext } from "./action";
 import type { Conn } from "./connection";
 import type { ActorContext } from "./context";
+import type { AnyDatabaseProvider } from "./database";
 
 // This schema is used to validate the input at runtime. The generic types are defined below in `ActorConfig`.
 //
@@ -209,7 +210,7 @@ type OnAuth<CP, AD> =
 	  }
 	| Record<never, never>;
 
-export interface Actions<S, CP, CS, V, I, AD, DB> {
+export interface Actions<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 	[Action: string]: (
 		c: ActionContext<S, CP, CS, V, I, AD, DB>,
 		...args: any[]
@@ -242,7 +243,7 @@ interface BaseActorConfig<
 	V,
 	I,
 	AD,
-	DB,
+	DB extends AnyDatabaseProvider,
 	R extends Actions<S, CP, CS, V, I, AD, DB>,
 > {
 	/**
@@ -384,32 +385,27 @@ interface BaseActorConfig<
 	actions: R;
 }
 
-export type DatabaseFactory<DB> = (ctx: {
-	createDatabase: () => Promise<unknown>;
-}) => Promise<{
-	/**
-	 * @experimental
-	 */
-	db?: DB;
-	/**
-	 * @experimental
-	 */
-	onMigrate?: () => void | Promise<void>;
-}>;
-
-type ActorDatabaseConfig<DB> =
+type ActorDatabaseConfig<DB extends AnyDatabaseProvider> =
 	| {
 			/**
 			 * @experimental
 			 */
-			db: DatabaseFactory<DB>;
+			db: DB;
 	  }
 	| Record<never, never>;
 
 // 1. Infer schema
 // 2. Omit keys that we'll manually define (because of generics)
 // 3. Define our own types that have generic constraints
-export type ActorConfig<S, CP, CS, V, I, AD, DB> = Omit<
+export type ActorConfig<
+	S,
+	CP,
+	CS,
+	V,
+	I,
+	AD,
+	DB extends AnyDatabaseProvider,
+> = Omit<
 	z.infer<typeof ActorConfigSchema>,
 	| "actions"
 	| "onAuth"
@@ -445,7 +441,7 @@ export type ActorConfigInput<
 	V,
 	I,
 	AD,
-	DB,
+	DB extends AnyDatabaseProvider,
 	R extends Actions<S, CP, CS, V, I, AD, DB>,
 > = Omit<
 	z.input<typeof ActorConfigSchema>,
@@ -483,7 +479,7 @@ export function test<
 	V,
 	I,
 	AD,
-	DB,
+	DB extends AnyDatabaseProvider,
 	R extends Actions<S, CP, CS, V, I, AD, DB>,
 >(
 	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, R>,
@@ -499,15 +495,3 @@ export function test<
 	>;
 	return config;
 }
-
-export const testActor = test({
-	state: { count: 0 },
-	// createState: () => ({ count: 0 }),
-	actions: {
-		increment: (c, x: number) => {
-			c.state.count += x;
-			c.broadcast("newCount", c.state.count);
-			return c.state.count;
-		},
-	},
-});
