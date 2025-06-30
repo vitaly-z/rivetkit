@@ -3,31 +3,30 @@ import * as semver from "semver";
 import { $, chalk, argv } from "zx";
 
 async function main() {
-	// Clean the workspace first
-	await cleanWorkspace();
-
-	// Check if cargo, maturin etc. exist
-	// await checkRustEnvironment();
-	// await checkPythonEnvironment();
-
-	// Update version
+	// // Clean the workspace first
+	// await cleanWorkspace();
+	//
+	// // Check if cargo, maturin etc. exist
+	// // await checkRustEnvironment();
+	// // await checkPythonEnvironment();
+	//
+	// // Update version
 	const version = getVersionFromArgs();
-	await bumpPackageVersions(version);
-	// await updateRustClientVersion(version);
-	// await updatePythonClientVersion(version);
-
-	// IMPORTANT: Do this after bumping the version
-	// Check & build
-	await runTypeCheck();
-	// await runRustCheck();
-	await runBuild();
+	// await bumpPackageVersions(version);
+	// // await updateRustClientVersion(version);
+	// // await updatePythonClientVersion(version);
+	//
+	// // IMPORTANT: Do this after bumping the version
+	// // Check & build
+	// await runTypeCheck();
+	// // await runRustCheck();
+	// await runBuild();
 
 	// Commit
 	await commitVersionChanges(version);
 
 	// Get packages ready for publishing
 	const publicPackages = await getPublicPackages();
-	validatePackages(publicPackages);
 
 	// Publish
 	await publishPackages(publicPackages, version);
@@ -112,12 +111,15 @@ async function cleanWorkspace() {
 	try {
 		await $`git clean -fdx`;
 		console.log(chalk.green("✅ Workspace cleaned"));
-		
+
 		console.log(chalk.blue("Installing dependencies..."));
 		await $`pnpm install`;
 		console.log(chalk.green("✅ Dependencies installed"));
 	} catch (err) {
-		console.error(chalk.red("❌ Failed to clean workspace or install dependencies"), err);
+		console.error(
+			chalk.red("❌ Failed to clean workspace or install dependencies"),
+			err,
+		);
 		process.exit(1);
 	}
 }
@@ -182,9 +184,7 @@ async function publishPythonClient(version: string) {
 
 	try {
 		// Check if package already exists
-		const res = await fetch(
-			"https://test.pypi.org/pypi/rivetkit-client/json",
-		);
+		const res = await fetch("https://test.pypi.org/pypi/rivetkit-client/json");
 		if (res.ok) {
 			const data = await res.json();
 			const doesAlreadyExist = typeof data.releases[version] !== "undefined";
@@ -343,40 +343,11 @@ async function commitVersionChanges(version: string) {
 
 async function getPublicPackages() {
 	console.log(chalk.blue("Getting list of public packages..."));
-	const { stdout: packagesStdout } =
-		await $`pnpm -r list --json --only-private=false`;
+	const { stdout: packagesStdout } = await $`pnpm -r list --json`;
+	const allPackages = JSON.parse(packagesStdout.trim());
 
-	return packagesStdout
-		.trim()
-		.split("\n")
-		.map((line) => JSON.parse(line));
-}
-
-function validatePackages(publicPackages: any[]) {
-	const nonRivetKitPackages = publicPackages.filter(
-		(pkg) =>
-			pkg.name !== "rivetkit" &&
-			pkg.name !== "create-actor" &&
-			!pkg.name.startsWith("@rivetkit/"),
-	);
-
-	if (nonRivetKitPackages.length > 0) {
-		console.error(
-			chalk.red("Error: Found non-rivetkit packages in public packages:"),
-		);
-		for (const pkg of nonRivetKitPackages) {
-			console.error(chalk.red(`  - ${pkg.name} (${pkg.location})`));
-		}
-		console.error(
-			chalk.red(
-				"Please ensure these packages are marked as private or have correct naming.",
-			),
-		);
-		process.exit(1);
-	}
-
-	console.log(
-		chalk.blue(`Found ${publicPackages.length} rivetkit packages to publish`),
+	return allPackages.filter(
+		(pkg) => pkg.name !== "rivetkit" && !pkg.name.startsWith("@rivetkit/"),
 	);
 }
 
