@@ -4,6 +4,8 @@ description: Production-ready Redis storage and coordination
 icon: redis
 ---
 
+The Redis driver provides production-ready persistence and can scale across multiple server instances. It requires a Redis server to be running.
+
 <Steps>
 <Step title="Install Dependencies">
 
@@ -40,8 +42,9 @@ export const registry = setup({
 <Step title="Setup Server">
 
 ```ts server.ts
+import { Hono } from "hono";
 import { registry } from "./registry";
-import { RedisActorDriver, RedisManagerDriver } from "@rivetkit/redis";
+import { createRedisDriver } from "@rivetkit/redis";
 import Redis from "ioredis";
 
 // Create Redis client
@@ -51,11 +54,7 @@ const redis = new Redis({
 });
 
 const { client, serve } = registry.createServer({
-	driver: {
-		topology: "standalone",
-		actor: new RedisActorDriver(redis),
-		manager: new RedisManagerDriver(redis, registry),
-	}
+	driver: createRedisDriver(redis, registry)
 });
 
 // Setup your web framework
@@ -82,7 +81,3 @@ npx tsx --watch server.ts
 </Step>
 
 </Steps>
-
-<Info>
-The Redis driver provides production-ready persistence and can scale across multiple server instances. Requires a Redis server to be running.
-</Info>

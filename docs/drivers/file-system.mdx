@@ -4,6 +4,8 @@ description: Local file system storage for development
 icon: file-system
 ---
 
+The file system driver stores actor state in local files and is the default driver for RivetKit. Data persists between restarts but will not scale across multiple servers.
+
 <Steps>
 <Step title="Install RivetKit">
 
@@ -39,8 +41,9 @@ export const registry = setup({
 <Step title="Setup Server">
 
 ```ts server.ts
+import { Hono } from "hono";
 import { registry } from "./registry";
-import { createFileSystemDriver } from "@rivetkit/actor/file-system";
+import { createFileSystemDriver } from "@rivetkit/actor";
 
 const { client, serve } = registry.createServer({
 	driver: createFileSystemDriver()
@@ -70,7 +73,3 @@ npx tsx --watch server.ts
 </Step>
 
 </Steps>
-
-<Info>
-The file system driver stores actor state in local files. Data persists between restarts but will not scale across multiple servers.
-</Info>
