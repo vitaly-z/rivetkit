@@ -8,7 +8,6 @@ import * as cbor from "cbor-x";
 import type { EventSource } from "eventsource";
 import pRetry from "p-retry";
 import type { CloseEvent, WebSocket } from "ws";
-import { removeConnectionFromTracking } from "./actor-handle";
 import type { ActorDefinitionActions } from "./actor-common";
 import {
 	ACTOR_CONNS_SYMBOL,
@@ -104,6 +103,7 @@ export class ActorConnRaw {
 	#params: unknown;
 	#encodingKind: Encoding;
 	#actorQuery: ActorQuery;
+	#removeFromHandleTracking?: () => void;
 
 	// TODO: ws message queue
 
@@ -120,12 +120,14 @@ export class ActorConnRaw {
 		private params: unknown,
 		private encodingKind: Encoding,
 		private actorQuery: ActorQuery,
+		removeFromHandleTracking?: () => void,
 	) {
 		this.#client = client;
 		this.#driver = driver;
 		this.#params = params;
 		this.#encodingKind = encodingKind;
 		this.#actorQuery = actorQuery;
+		this.#removeFromHandleTracking = removeFromHandleTracking;
 
 		this.#keepNodeAliveInterval = setInterval(() => 60_000);
 	}
@@ -751,7 +753,9 @@ enc
 		this.#client[ACTOR_CONNS_SYMBOL].delete(this);
 
 		// Remove from connection tracking
-		removeConnectionFromTracking(this.#actorQuery, this.#params, this);
+		if (this.#removeFromHandleTracking) {
+			this.#removeFromHandleTracking();
+		}
 
 		// Disconnect transport cleanly
 		if (!this.#transport) {
