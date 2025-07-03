@@ -13,6 +13,41 @@ import {
 import { logger } from "./log";
 
 /**
+ * Global registry of actor handles that have established connections.
+ * Maps from a unique handle identifier to whether connections exist.
+ */
+const ACTIVE_CONNECTIONS = new Map<string, Set<ActorConnRaw>>();
+
+/**
+ * Generates a unique identifier for an actor handle based on its query and parameters.
+ */
+function generateHandleIdentifier(
+	actorQuery: ActorQuery,
+	params: unknown,
+): string {
+	return JSON.stringify({ query: actorQuery, params });
+}
+
+/**
+ * Removes a connection from the global tracking registry.
+ * Should be called when a connection is disposed.
+ */
+export function removeConnectionFromTracking(
+	actorQuery: ActorQuery,
+	params: unknown,
+	conn: ActorConnRaw,
+): void {
+	const handleIdentifier = generateHandleIdentifier(actorQuery, params);
+	const connections = ACTIVE_CONNECTIONS.get(handleIdentifier);
+	if (connections) {
+		connections.delete(conn);
+		if (connections.size === 0) {
+			ACTIVE_CONNECTIONS.delete(handleIdentifier);
+		}
+	}
+}
+
+/**
  * Provides underlying functions for stateless {@link ActorHandle} for action calls.
  * Similar to ActorConnRaw but doesn't maintain a connection.
  *
@@ -24,6 +59,8 @@ export class ActorHandleRaw {
 	#encodingKind: Encoding;
 	#actorQuery: ActorQuery;
 	#params: unknown;
+	#silenceWarnings: boolean;
+	#handleIdentifier: string;
 
 	/**
 	 * Do not call this directly.
@@ -38,12 +75,15 @@ export class ActorHandleRaw {
 		params: unknown,
 		encodingKind: Encoding,
 		actorQuery: ActorQuery,
+		silenceWarnings = false,
 	) {
 		this.#client = client;
 		this.#driver = driver;
 		this.#encodingKind = encodingKind;
 		this.#actorQuery = actorQuery;
 		this.#params = params;
+		this.#silenceWarnings = silenceWarnings;
+		this.#handleIdentifier = generateHandleIdentifier(actorQuery, params);
 	}
 
 	/**
@@ -61,6 +101,21 @@ export class ActorHandleRaw {
 		args: Args;
 		signal?: AbortSignal;
 	}): Promise<Response> {
+		// Check for active connections and warn if they exist
+		if (!this.#silenceWarnings) {
+			const activeConnections = ACTIVE_CONNECTIONS.get(this.#handleIdentifier);
+			if (activeConnections && activeConnections.size > 0) {
+				logger().warn(
+					"calling stateless rpc on handle while connection is open - this may cause race conditions",
+					{
+						action: opts.name,
+						activeConnections: activeConnections.size,
+						query: this.#actorQuery,
+					},
+				);
+			}
+		}
+
 		return await this.#driver.action<Args, Response>(
 			undefined,
 			this.#actorQuery,
@@ -90,6 +145,12 @@ export class ActorHandleRaw {
 			this.#encodingKind,
 			this.#actorQuery,
 		);
+
+		// Track this connection in the global registry
+		if (!ACTIVE_CONNECTIONS.has(this.#handleIdentifier)) {
+			ACTIVE_CONNECTIONS.set(this.#handleIdentifier, new Set());
+		}
+		ACTIVE_CONNECTIONS.get(this.#handleIdentifier)!.add(conn);
 
 		return this.#client[CREATE_ACTOR_CONN_PROXY](
 			conn,

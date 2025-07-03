@@ -8,6 +8,7 @@ import * as cbor from "cbor-x";
 import type { EventSource } from "eventsource";
 import pRetry from "p-retry";
 import type { CloseEvent, WebSocket } from "ws";
+import { removeConnectionFromTracking } from "./actor-handle";
 import type { ActorDefinitionActions } from "./actor-common";
 import {
 	ACTOR_CONNS_SYMBOL,
@@ -748,6 +749,9 @@ enc
 
 		// Remove from registry
 		this.#client[ACTOR_CONNS_SYMBOL].delete(this);
+
+		// Remove from connection tracking
+		removeConnectionFromTracking(this.#actorQuery, this.#params, this);
 
 		// Disconnect transport cleanly
 		if (!this.#transport) {
