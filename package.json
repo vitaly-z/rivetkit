@@ -13,7 +13,8 @@
     "dev-docs-middleware": "cd packages/misc/docs-middleware && pnpm dev",
     "deploy-docs-middleware": "cd packages/misc/docs-middleware && pnpm deploy",
     "docs-broken-links": "cd docs && pnpm dlx mintlify@latest broken-links",
-    "docs-bump": "git checkout main && git pull --ff && date > docs/.bump && git add docs/.bump && git commit -m \"chore: bump mintlify\" && git push origin main"
+    "docs-bump": "git checkout main && git pull --ff && date > docs/.bump && git add docs/.bump && git commit -m \"chore: bump mintlify\" && git push origin main",
+    "release": "tsx scripts/release.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.1",
@@ -21,6 +22,7 @@
     "dedent": "^1.5.3",
     "lefthook": "^1.6.12",
     "semver": "^7.7.1",
+    "tsx": "^4.20.3",
     "turbo": "^2.0.1",
     "vitest": "^3.1.1",
     "zx": "^8.3.2"

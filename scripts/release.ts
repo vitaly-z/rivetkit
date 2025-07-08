@@ -1,4 +1,3 @@
-#!/usr/bin/env tsx
 import * as semver from "semver";
 import { $, argv, chalk } from "zx";
 
