@@ -11,7 +11,6 @@ export { getStoragePath } from "./utils";
 export function createFileSystemDriver(): DriverConfig {
 	const state = new FileSystemGlobalState();
 	return {
-		topology: "standalone",
 		manager: new FileSystemManagerDriver(state),
 		actor: new FileSystemActorDriver(state),
 	};

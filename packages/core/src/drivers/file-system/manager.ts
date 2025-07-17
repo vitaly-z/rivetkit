@@ -1,4 +1,5 @@
 import { ActorAlreadyExists } from "@/actor/errors";
+import type { UniversalWebSocket } from "@/common/websocket-interface";
 import type {
 	ActorOutput,
 	CreateInput,
@@ -94,5 +95,53 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			name,
 			key,
 		};
+	}
+
+	// Routing methods - Not implemented for file system driver
+	// The file system driver is designed for single-process testing/development scenarios
+	// where the inline client driver communicates directly with actors through the
+	// manager router. These methods are only needed for distributed deployments.
+
+	async sendRequest(actorId: string, request: Request): Promise<Response> {
+		throw new Error(
+			"FileSystemManagerDriver.sendRequest is not implemented. " +
+				"The file system driver is designed for single-process testing/development where " +
+				"the inline client driver communicates directly with actors. " +
+				"For distributed scenarios, use a different driver like Redis or Cloudflare Workers.",
+		);
+	}
+
+	async openWebSocket(
+		actorId: string,
+		request: Request,
+	): Promise<UniversalWebSocket> {
+		throw new Error(
+			"FileSystemManagerDriver.openWebSocket is not implemented. " +
+				"The file system driver is designed for single-process testing/development where " +
+				"WebSocket connections are handled directly by the platform. " +
+				"For distributed scenarios, use a different driver like Redis or Cloudflare Workers.",
+		);
+	}
+
+	async proxyRequest(actorId: string, request: Request): Promise<Response> {
+		throw new Error(
+			"FileSystemManagerDriver.proxyRequest is not implemented. " +
+				"The file system driver is designed for single-process testing/development where " +
+				"requests are routed directly through the manager router. " +
+				"For distributed scenarios, use a different driver like Redis or Cloudflare Workers.",
+		);
+	}
+
+	async proxyWebSocket(
+		actorId: string,
+		request: Request,
+		socket: UniversalWebSocket,
+	): Promise<void> {
+		throw new Error(
+			"FileSystemManagerDriver.proxyWebSocket is not implemented. " +
+				"The file system driver is designed for single-process testing/development where " +
+				"WebSocket connections are handled directly by the platform. " +
+				"For distributed scenarios, use a different driver like Redis or Cloudflare Workers.",
+		);
 	}
 }

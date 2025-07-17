@@ -4,10 +4,10 @@ import { createNodeWebSocket } from "@hono/node-ws";
 import { type TestContext, vi } from "vitest";
 import { type Client, createClient } from "@/client/mod";
 import { createMemoryDriver } from "@/drivers/memory/mod";
-import { type Registry, StandaloneTopology } from "@/mod";
+import { createInlineClientDriver } from "@/inline-client-driver/mod";
+import { createManagerRouter } from "@/manager/router";
+import type { Registry } from "@/mod";
 import { RunConfigSchema } from "@/registry/run-config";
-import { CoordinateTopology } from "@/topologies/coordinate/mod";
-import { assertUnreachable } from "@/utils";
 import { ConfigSchema, type InputConfig } from "./config";
 import { logger } from "./log";
 
@@ -25,25 +25,27 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 		config.getUpgradeWebSocket = () => upgradeWebSocket!;
 	}
 
-	// Setup topology
-	const runConfig = RunConfigSchema.parse(inputConfig);
-	let topology: StandaloneTopology | CoordinateTopology;
-	if (config.driver.topology === "standalone") {
-		topology = new StandaloneTopology(registry.config, runConfig);
-	} else if (config.driver.topology === "partition") {
-		throw new Error("Node.js only supports standalone & coordinate topology.");
-	} else if (config.driver.topology === "coordinate") {
-		topology = new CoordinateTopology(registry.config, runConfig);
-	} else {
-		assertUnreachable(config.driver.topology);
-	}
+	// Create inline client driver
+	const managerDriver = config.driver.manager;
+	const actorDriver = config.driver.actor;
+	const inlineClientDriver = createInlineClientDriver(
+		managerDriver,
+		actorDriver,
+	);
+
+	// Create manager router
+	const { router: hono } = createManagerRouter(
+		registry.config,
+		config,
+		inlineClientDriver,
+	);
 
 	// Inject WebSocket
-	const nodeWebSocket = createNodeWebSocket({ app: topology.router });
+	const nodeWebSocket = createNodeWebSocket({ app: hono });
 	upgradeWebSocket = nodeWebSocket.upgradeWebSocket;
 
 	const server = honoServe({
-		fetch: topology.router.fetch,
+		fetch: hono.fetch,
 		hostname: config.hostname,
 		port: config.port,
 	});

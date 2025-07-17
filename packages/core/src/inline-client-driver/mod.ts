@@ -2,7 +2,6 @@ import type { Context as HonoContext } from "hono";
 import invariant from "invariant";
 import onChange from "on-change";
 import type { WebSocket } from "ws";
-import type { ConnRoutingHandler } from "@/actor/conn-routing-handler";
 import * as errors from "@/actor/errors";
 import type {
 	ActionRequest,
@@ -17,7 +16,6 @@ import {
 	HEADER_ENCODING,
 	HEADER_EXPOSE_INTERNAL_ERROR,
 } from "@/actor/router-endpoints";
-import { assertUnreachable } from "@/actor/utils";
 import type { ClientDriver } from "@/client/client";
 import { ActorError as ClientActorError } from "@/client/errors";
 import { sendHttpRequest } from "@/client/utils";
@@ -27,8 +25,6 @@ import { deconstructError } from "@/common/utils";
 import type { ManagerDriver } from "@/manager/driver";
 import type { ActorQuery } from "@/manager/protocol/query";
 import { httpUserAgent } from "@/utils";
-import { FakeEventSource } from "./fake-event-source";
-import { InlineWebSocketAdapter } from "./inline-websocket-adapter";
 import { logger } from "./log";
 
 /**
@@ -44,7 +40,7 @@ import { logger } from "./log";
  */
 export function createInlineClientDriver(
 	managerDriver: ManagerDriver,
-	routingHandler: ConnRoutingHandler,
+	actorDriver: import("@/actor/driver").ActorDriver,
 ): ClientDriver {
 	const driver: ClientDriver = {
 		action: async <Args extends Array<unknown> = unknown[], Response = unknown>(
@@ -62,65 +58,29 @@ export function createInlineClientDriver(
 				logger().debug("found actor for action", { actorId });
 				invariant(actorId, "Missing actor ID");
 
-				// Invoke the action
+				// Invoke the action using ActorDriver
 				logger().debug("handling action", { actionName, encoding });
-				if ("inline" in routingHandler) {
-					const { output } = await routingHandler.inline.handlers.onAction({
-						req: c?.req,
-						params,
-						actionName,
-						actionArgs: args,
-						actorId,
-						// No auth data since this is from internal
-						authData: undefined,
-					});
 
-					try {
-						// Normally, the output is serialized over the network and is safe to mutate
-						//
-						// In this case, this value is referencing the same value in the original
-						// state, so we have to clone it to ensure that it's safe to mutate
-						// without mutating the main state
-						return structuredClone(output) as Response;
-					} catch (err) {
-						// HACK: If we return a value that references the actor state (i.e. an on-change value),
-						// this will throw an error. We fall back to `DataCloneError`.
-						if (err instanceof DOMException && err.name === "DataCloneError") {
-							logger().trace(
-								"received DataCloneError which means that there was an on-change value, unproxying recursively",
-							);
-							return structuredClone(unproxyRecursive(output as Response));
-						} else {
-							throw err;
-						}
-					}
-				} else if ("custom" in routingHandler) {
-					const responseData = await sendHttpRequest<
-						ActionRequest,
-						ActionResponse
-					>({
-						url: `http://actor/action/${encodeURIComponent(actionName)}`,
-						method: "POST",
-						headers: {
-							[HEADER_ENCODING]: encoding,
-							...(params !== undefined
-								? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
-								: {}),
-							[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
-						},
-						body: { a: args } satisfies ActionRequest,
-						encoding: encoding,
-						customFetch: routingHandler.custom.sendRequest.bind(
-							undefined,
-							actorId,
-						),
-						signal: opts?.signal,
-					});
+				const responseData = await sendHttpRequest<
+					ActionRequest,
+					ActionResponse
+				>({
+					url: `http://actor/action/${encodeURIComponent(actionName)}`,
+					method: "POST",
+					headers: {
+						[HEADER_ENCODING]: encoding,
+						...(params !== undefined
+							? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+							: {}),
+						[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
+					},
+					body: { a: args } satisfies ActionRequest,
+					encoding: encoding,
+					customFetch: managerDriver.sendRequest.bind(managerDriver, actorId),
+					signal: opts?.signal,
+				});
 
-					return responseData.o as Response;
-				} else {
-					assertUnreachable(routingHandler);
-				}
+				return responseData.o as Response;
 			} catch (err) {
 				// Standardize to ClientActorError instead of the native backend error
 				const { code, message, metadata } = deconstructError(
@@ -155,57 +115,26 @@ export function createInlineClientDriver(
 		): Promise<WebSocket> => {
 			// Get the actor ID
 			const { actorId } = await queryActor(c, actorQuery, managerDriver);
-			logger().debug("found actor for action", { actorId });
+			logger().debug("found actor for websocket connection", { actorId });
 			invariant(actorId, "Missing actor ID");
 
-			// Invoke the action
+			// Open WebSocket using ManagerDriver
 			logger().debug("opening websocket", { actorId, encoding: encodingKind });
-			if ("inline" in routingHandler) {
-				invariant(
-					routingHandler.inline.handlers.onConnectWebSocket,
-					"missing onConnectWebSocket handler",
-				);
 
-				logger().debug("calling onConnectWebSocket handler", {
-					actorId,
-					encoding: encodingKind,
-				});
+			const url = new URL("http://actor/connect/websocket");
+			const request = new Request(url, {
+				headers: {
+					[HEADER_ENCODING]: encodingKind,
+					...(params !== undefined
+						? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+						: {}),
+				},
+			});
 
-				// Create handler
-				const output = await routingHandler.inline.handlers.onConnectWebSocket({
-					req: c?.req,
-					encoding: encodingKind,
-					actorId,
-					params,
-					// No auth data since this is from internal
-					authData: undefined,
-				});
-
-				logger().debug(
-					"got ConnectWebSocketOutput, creating InlineWebSocketAdapter",
-				);
-
-				// TODO: There might be a bug where mutating data from the response of an action over a websocket will mutate the original data. See note about `structuredClone` in `action`
-				// Create and initialize the InlineWebSocketAdapter, waiting for it to be ready
-				const webSocket = new InlineWebSocketAdapter(
-					output,
-				) as any as WebSocket;
-				logger().debug("InlineWebSocketAdapter created and initialized");
-
-				return webSocket;
-			} else if ("custom" in routingHandler) {
-				// Open WebSocket
-				const ws = await routingHandler.custom.openWebSocket(
-					actorId,
-					encodingKind,
-					params,
-				);
-
-				// Node & browser WebSocket types are incompatible
-				return ws as any;
-			} else {
-				assertUnreachable(routingHandler);
-			}
+			// Use ManagerDriver.openWebSocket to establish the connection
+			const ws = await managerDriver.openWebSocket(actorId, request);
+			// UniversalWebSocket is compatible with the subset of WebSocket that clients use
+			return ws as unknown as WebSocket;
 		},
 
 		connectSse: async (
@@ -224,66 +153,30 @@ export function createInlineClientDriver(
 				encoding: encodingKind,
 			});
 
-			if ("inline" in routingHandler) {
-				invariant(
-					routingHandler.inline.handlers.onConnectSse,
-					"missing onConnectSse handler",
-				);
+			// Use EventSource with ActorDriver
+			const EventSourceClass = await importEventSource();
 
-				logger().debug("calling onConnectSse handler", {
-					actorId,
-					encoding: encodingKind,
-				});
+			const eventSource = new EventSourceClass("http://actor/connect/sse", {
+				fetch: (input, init) => {
+					// Create a proper Request object for ActorDriver
+					const request = new Request(input, {
+						...init,
+						headers: {
+							...init?.headers,
+							"User-Agent": httpUserAgent(),
+							[HEADER_ENCODING]: encodingKind,
+							...(params !== undefined
+								? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+								: {}),
+							[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
+						},
+					});
 
-				// Create handler
-				const output = await routingHandler.inline.handlers.onConnectSse({
-					req: c?.req,
-					encoding: encodingKind,
-					params,
-					actorId,
-					// No auth data since this is from internal
-					authData: undefined,
-				});
+					return managerDriver.sendRequest(actorId, request);
+				},
+			}) as UniversalEventSource;
 
-				logger().debug("got ConnectSseOutput, creating FakeEventSource");
-
-				// Create a FakeEventSource that will connect to the output handler
-				const eventSource = new FakeEventSource(async () => {
-					try {
-						await output.onClose();
-					} catch (err) {
-						logger().error("error closing sse connection", { error: err });
-					}
-				});
-
-				// Initialize the connection
-				await output.onOpen(eventSource.getStream());
-
-				return eventSource as unknown as UniversalEventSource;
-			} else if ("custom" in routingHandler) {
-				const EventSourceClass = await importEventSource();
-
-				const eventSource = new EventSourceClass("http://actor/connect/sse", {
-					fetch: (input, init) => {
-						return fetch(input, {
-							...init,
-							headers: {
-								...init?.headers,
-								"User-Agent": httpUserAgent(),
-								[HEADER_ENCODING]: encodingKind,
-								...(params !== undefined
-									? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
-									: {}),
-								[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
-							},
-						});
-					},
-				}) as UniversalEventSource;
-
-				return eventSource;
-			} else {
-				assertUnreachable(routingHandler);
-			}
+			return eventSource;
 		},
 
 		sendHttpMessage: async (
@@ -296,49 +189,21 @@ export function createInlineClientDriver(
 		): Promise<Response> => {
 			logger().debug("sending http message", { actorId, connectionId });
 
-			if ("inline" in routingHandler) {
-				invariant(
-					routingHandler.inline.handlers.onConnMessage,
-					"missing onConnMessage handler",
-				);
-
-				// Call the handler directly
-				await routingHandler.inline.handlers.onConnMessage({
-					req: c?.req,
-					connId: connectionId,
-					connToken: connectionToken,
-					message,
-					actorId,
-				});
-
-				// Return empty response
-				return new Response(JSON.stringify({}), {
-					headers: {
-						"Content-Type": "application/json",
-					},
-				});
-			} else if ("custom" in routingHandler) {
-				// Send an HTTP request to the connections endpoint
-				return sendHttpRequest({
-					url: "http://actor/connections/message",
-					method: "POST",
-					headers: {
-						[HEADER_ENCODING]: encoding,
-						[HEADER_CONN_ID]: connectionId,
-						[HEADER_CONN_TOKEN]: connectionToken,
-						[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
-					},
-					body: message,
-					encoding,
-					skipParseResponse: true,
-					customFetch: routingHandler.custom.sendRequest.bind(
-						undefined,
-						actorId,
-					),
-				});
-			} else {
-				assertUnreachable(routingHandler);
-			}
+			// Send an HTTP request to the connections endpoint using ActorDriver
+			return sendHttpRequest({
+				url: "http://actor/connections/message",
+				method: "POST",
+				headers: {
+					[HEADER_ENCODING]: encoding,
+					[HEADER_CONN_ID]: connectionId,
+					[HEADER_CONN_TOKEN]: connectionToken,
+					[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
+				},
+				body: message,
+				encoding,
+				skipParseResponse: true,
+				customFetch: managerDriver.sendRequest.bind(managerDriver, actorId),
+			});
 		},
 
 		rawHttpRequest: async (
@@ -355,52 +220,30 @@ export function createInlineClientDriver(
 				logger().debug("found actor for raw http", { actorId });
 				invariant(actorId, "Missing actor ID");
 
-				if ("inline" in routingHandler) {
-					// Check if we have an onFetch handler
-					if (!routingHandler.inline.handlers.onFetch) {
-						throw new errors.FetchHandlerNotDefined();
-					}
+				// Create a request with the correct URL path for ActorDriver
+				// Remove leading slash from path to avoid double slashes
+				const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+				const url = new URL(`http://actor/http/${normalizedPath}`);
+				const request = new Request(url.toString(), {
+					...init,
+					headers: {
+						...init.headers,
+						[HEADER_ENCODING]: encoding,
+						...(params !== undefined
+							? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+							: {}),
+						[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
+					},
+				});
 
-					// Create a request with the correct URL path
-					// Remove leading slash from path to avoid double slashes
-					const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-					const url = new URL(`http://actor/${normalizedPath}`);
-					const request = new Request(url.toString(), init);
+				// Use ActorDriver to send the request
+				const response = await managerDriver.sendRequest(actorId, request);
 
-					// Call the onFetch handler
-					const response = await routingHandler.inline.handlers.onFetch({
-						request,
-						actorId,
-						authData: undefined, // No auth data since this is from internal
-					});
-
-					if (!response || !(response instanceof Response)) {
-						throw new errors.InternalError(
-							"onFetch handler must return a Response",
-						);
-					}
-
-					return response;
-				} else if ("custom" in routingHandler) {
-					// Build the URL with normalized path
-					const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-					const url = new URL(`http://actor/http/${normalizedPath}`);
-
-					// Forward the request to the actor
-					const proxyRequest = new Request(url, init);
-
-					// Forward conn params if provided
-					if (params) {
-						proxyRequest.headers.set(
-							HEADER_CONN_PARAMS,
-							JSON.stringify(params),
-						);
-					}
-
-					return await routingHandler.custom.sendRequest(actorId, proxyRequest);
-				} else {
-					assertUnreachable(routingHandler);
+				if (!response || !(response instanceof Response)) {
+					throw new errors.InternalError("sendRequest must return a Response");
 				}
+
+				return response;
 			} catch (err) {
 				// Standardize to ClientActorError instead of the native backend error
 				const { code, message, metadata } = deconstructError(
@@ -427,17 +270,30 @@ export function createInlineClientDriver(
 				logger().debug("found actor for raw websocket", { actorId });
 				invariant(actorId, "Missing actor ID");
 
-				if ("inline" in routingHandler) {
-					throw new errors.InternalError(
-						"Raw WebSocket is not supported in inline mode",
-					);
-				} else if ("custom" in routingHandler) {
-					throw new errors.InternalError(
-						"Raw WebSocket is not supported in custom mode",
-					);
-				} else {
-					assertUnreachable(routingHandler);
-				}
+				// Create a request with the correct URL path for raw WebSocket
+				// Remove leading slash from path to avoid double slashes
+				const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+				const url = new URL(`http://actor/websocket/${normalizedPath}`);
+				const request = new Request(url.toString(), {
+					headers: {
+						[HEADER_ENCODING]: encoding,
+						...(params !== undefined
+							? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+							: {}),
+						...(protocols !== undefined
+							? {
+									"Sec-WebSocket-Protocol": Array.isArray(protocols)
+										? protocols.join(", ")
+										: protocols,
+								}
+							: {}),
+					},
+				});
+
+				// Use ManagerDriver.openWebSocket to establish the connection
+				const ws = await managerDriver.openWebSocket(actorId, request);
+				// UniversalWebSocket is compatible with the subset of WebSocket that clients use
+				return ws as unknown as WebSocket;
 			} catch (err) {
 				// Standardize to ClientActorError instead of the native backend error
 				const { code, message, metadata } = deconstructError(

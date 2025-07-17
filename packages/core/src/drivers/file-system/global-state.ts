@@ -174,4 +174,20 @@ export class FileSystemGlobalState {
 		// Save to disk
 		await this.saveActorState(actorId);
 	}
+
+	/**
+	 * Delete a actor
+	 */
+	async deleteActor(actorId: string): Promise<void> {
+		// Remove from cache
+		this.#stateCache.delete(actorId);
+
+		// Delete from disk
+		const actorDir = path.join(getActorsDir(this.#storagePath), actorId);
+		try {
+			await fs.rm(actorDir, { recursive: true, force: true });
+		} catch (error) {
+			logger().error("failed to delete actor directory", { actorId, error });
+		}
+	}
 }

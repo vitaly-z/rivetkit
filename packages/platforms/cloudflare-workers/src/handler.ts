@@ -1,7 +1,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { Registry, RunConfig } from "@rivetkit/core";
 import type { Client } from "@rivetkit/core/client";
-import { PartitionTopologyManager } from "@rivetkit/core/topologies/partition";
+import { createClientWithDriver } from "@rivetkit/core/client";
+import {
+	createInlineClientDriver,
+	createManagerRouter,
+} from "@rivetkit/core/driver-helpers";
 import { Hono } from "hono";
 import invariant from "invariant";
 import {
@@ -59,9 +63,8 @@ export function createServer<R extends Registry<any>>(
 	// Create config
 	const runConfig = {
 		driver: {
-			topology: "partition",
 			manager: new CloudflareActorsManagerDriver(),
-			// HACK: We can't build the actor driver until we're inside the Druable Object
+			// HACK: We can't build the actor driver until we're inside the Durable Object
 			actor: undefined as any,
 		},
 		getUpgradeWebSocket: () => upgradeWebSocket,
@@ -71,19 +74,30 @@ export function createServer<R extends Registry<any>>(
 	// Create Durable Object
 	const ActorHandler = createActorDurableObject(registry, runConfig);
 
-	const managerTopology = new PartitionTopologyManager(
-		registry.config,
-		runConfig,
+	// Create inline client driver
+	const inlineClientDriver = createInlineClientDriver(
+		runConfig.driver.manager,
+		runConfig.driver.actor,
 	);
 
+	// Create manager router
+	const { router: managerRouter } = createManagerRouter(
+		registry.config,
+		runConfig,
+		inlineClientDriver,
+	);
+
+	// Create client
+	const client = createClientWithDriver<R>(inlineClientDriver);
+
 	return {
-		client: managerTopology.inlineClient as Client<R>,
+		client,
 		createHandler: (hono) => {
 			// Build base router
 			const app = hono ?? new Hono();
 
 			// Mount registry
-			app.route("/registry", managerTopology.router);
+			app.route("/registry", managerRouter);
 
 			// Create Cloudflare handler
 			const handler = {

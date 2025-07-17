@@ -1,0 +1,23 @@
+{
+  "name": "@rivetkit/coordinate",
+  "version": "0.0.1",
+  "description": "Coordinate topology driver for RivetKit",
+  "type": "module",
+  "keywords": [
+    "rivetkit",
+    "coordinate",
+    "topology",
+    "peer-to-peer",
+    "distributed",
+    "actors"
+  ],
+  "peerDependencies": {
+    "@rivetkit/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@rivetkit/core": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/mod.ts"
+  }
+}

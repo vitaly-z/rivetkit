@@ -81,20 +81,6 @@ export interface WebSocketOpts {
 }
 
 /**
- * Shared interface for connection handlers used by both ActorRouterHandler and ManagerRouterHandler
- */
-export interface ConnectionHandlers {
-	onConnectWebSocket?(
-		opts: ConnectWebSocketOpts,
-	): Promise<ConnectWebSocketOutput>;
-	onConnectSse(opts: ConnectSseOpts): Promise<ConnectSseOutput>;
-	onAction(opts: ActionOpts): Promise<ActionOutput>;
-	onConnMessage(opts: ConnsMessageOpts): Promise<void>;
-	onFetch?(opts: FetchOpts): Promise<Response>;
-	onWebSocket?(opts: WebSocketOpts): Promise<void>;
-}
-
-/**
  * Creates a WebSocket connection handler
  */
 export function handleWebSocketConnect(

@@ -6,7 +6,6 @@ import { MemoryManagerDriver } from "./manager";
 export function createMemoryDriver(): DriverConfig {
 	const state = new MemoryGlobalState();
 	return {
-		topology: "standalone",
 		manager: new MemoryManagerDriver(state),
 		actor: new MemoryActorDriver(state),
 	};

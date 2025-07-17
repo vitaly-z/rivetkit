@@ -1,7 +1,7 @@
 import type { Encoding } from "@rivetkit/core";
+import type { UniversalWebSocket } from "@rivetkit/core/common/websocket";
 import {
 	type ActorOutput,
-	type ConnRoutingHandler,
 	type CreateInput,
 	type GetForIdInput,
 	type GetOrCreateWithKeyInput,
@@ -48,149 +48,195 @@ const STANDARD_WEBSOCKET_HEADERS = [
 ];
 
 export class CloudflareActorsManagerDriver implements ManagerDriver {
-	connRoutingHandler: ConnRoutingHandler;
+	constructor() {}
 
-	constructor() {
-		this.connRoutingHandler = {
-			custom: {
-				sendRequest: async (actorId, actorRequest): Promise<Response> => {
-					const env = getCloudflareAmbientEnv();
+	async sendRequest(actorId: string, request: Request): Promise<Response> {
+		const env = getCloudflareAmbientEnv();
 
-					logger().debug("sending request to durable object", {
-						actorId,
-						method: actorRequest.method,
-						url: actorRequest.url,
-					});
+		logger().debug("sending request to durable object", {
+			actorId,
+			method: request.method,
+			url: request.url,
+		});
 
-					const id = env.ACTOR_DO.idFromString(actorId);
-					const stub = env.ACTOR_DO.get(id);
+		const id = env.ACTOR_DO.idFromString(actorId);
+		const stub = env.ACTOR_DO.get(id);
 
-					return await stub.fetch(actorRequest);
-				},
+		return await stub.fetch(request);
+	}
 
-				openWebSocket: async (
-					actorId,
-					encodingKind: Encoding,
-					params: unknown,
-				): Promise<WebSocket> => {
-					const env = getCloudflareAmbientEnv();
+	async openWebSocket(
+		actorId: string,
+		request: Request,
+	): Promise<UniversalWebSocket> {
+		const env = getCloudflareAmbientEnv();
 
-					logger().debug("opening websocket to durable object", { actorId });
+		logger().debug("opening websocket to durable object", { actorId });
 
-					// Make a fetch request to the Durable Object with WebSocket upgrade
-					const id = env.ACTOR_DO.idFromString(actorId);
-					const stub = env.ACTOR_DO.get(id);
+		// Make a fetch request to the Durable Object with WebSocket upgrade
+		const id = env.ACTOR_DO.idFromString(actorId);
+		const stub = env.ACTOR_DO.get(id);
 
-					const headers: Record<string, string> = {
-						Upgrade: "websocket",
-						Connection: "Upgrade",
-						[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
-						[HEADER_ENCODING]: encodingKind,
-					};
-					if (params) {
-						headers[HEADER_CONN_PARAMS] = JSON.stringify(params);
-					}
-					// HACK: See packages/platforms/cloudflare-workers/src/websocket.ts
-					headers["sec-websocket-protocol"] = "rivetkit";
+		// Extract encoding from request headers
+		const encoding = request.headers.get(HEADER_ENCODING) || "json";
+		const params = request.headers.get(HEADER_CONN_PARAMS);
 
-					const response = await stub.fetch("http://actor/connect/websocket", {
-						headers,
-					});
-					const webSocket = response.webSocket;
-
-					if (!webSocket) {
-						throw new InternalError(
-							"missing websocket connection in response from DO",
-						);
-					}
-
-					logger().debug("durable object websocket connection open", {
-						actorId,
-					});
-
-					webSocket.accept();
-
-					// TODO: Is this still needed?
-					// HACK: Cloudflare does not call onopen automatically, so we need
-					// to call this on the next tick
-					setTimeout(() => {
-						(webSocket as any).onopen?.(new Event("open"));
-					}, 0);
-
-					return webSocket as unknown as WebSocket;
-				},
-
-				proxyRequest: async (c, actorRequest, actorId): Promise<Response> => {
-					logger().debug("forwarding request to durable object", {
-						actorId,
-						method: actorRequest.method,
-						url: actorRequest.url,
-					});
-
-					const id = c.env.ACTOR_DO.idFromString(actorId);
-					const stub = c.env.ACTOR_DO.get(id);
-
-					return await stub.fetch(actorRequest);
-				},
-				proxyWebSocket: async (
-					c,
-					path,
-					actorId,
-					encoding,
-					params,
-					authData,
-				) => {
-					logger().debug("forwarding websocket to durable object", {
-						actorId,
-						path,
-					});
-
-					// Validate upgrade
-					const upgradeHeader = c.req.header("Upgrade");
-					if (!upgradeHeader || upgradeHeader !== "websocket") {
-						return new Response("Expected Upgrade: websocket", {
-							status: 426,
-						});
-					}
-
-					// TODO: strip headers
-					const newUrl = new URL(`http://actor${path}`);
-					const actorRequest = new Request(newUrl, c.req.raw);
-
-					// Always build fresh request to prevent forwarding unwanted headers
-					// HACK: Since we can't build a new request, we need to remove
-					// non-standard headers manually
-					const headerKeys: string[] = [];
-					actorRequest.headers.forEach((v, k) => headerKeys.push(k));
-					for (const k of headerKeys) {
-						if (!STANDARD_WEBSOCKET_HEADERS.includes(k)) {
-							actorRequest.headers.delete(k);
-						}
-					}
-
-					// Add RivetKit headers
-					actorRequest.headers.set(HEADER_EXPOSE_INTERNAL_ERROR, "true");
-					actorRequest.headers.set(HEADER_ENCODING, encoding);
-					if (params) {
-						actorRequest.headers.set(
-							HEADER_CONN_PARAMS,
-							JSON.stringify(params),
-						);
-					}
-					if (authData) {
-						actorRequest.headers.set(
-							HEADER_AUTH_DATA,
-							JSON.stringify(authData),
-						);
-					}
-
-					const id = c.env.ACTOR_DO.idFromString(actorId);
-					const stub = c.env.ACTOR_DO.get(id);
-
-					return await stub.fetch(actorRequest);
-				},
-			},
+		const headers: Record<string, string> = {
+			Upgrade: "websocket",
+			Connection: "Upgrade",
+			[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
+			[HEADER_ENCODING]: encoding,
 		};
+		if (params) {
+			headers[HEADER_CONN_PARAMS] = params;
+		}
+		// HACK: See packages/platforms/cloudflare-workers/src/websocket.ts
+		headers["sec-websocket-protocol"] = "rivetkit";
+
+		const response = await stub.fetch(request.url, {
+			headers,
+		});
+		const webSocket = response.webSocket;
+
+		if (!webSocket) {
+			throw new InternalError(
+				"missing websocket connection in response from DO",
+			);
+		}
+
+		logger().debug("durable object websocket connection open", {
+			actorId,
+		});
+
+		webSocket.accept();
+
+		// TODO: Is this still needed?
+		// HACK: Cloudflare does not call onopen automatically, so we need
+		// to call this on the next tick
+		setTimeout(() => {
+			(webSocket as any).onopen?.(new Event("open"));
+		}, 0);
+
+		return webSocket as unknown as UniversalWebSocket;
+	}
+
+	async proxyRequest(actorId: string, request: Request): Promise<Response> {
+		const env = getCloudflareAmbientEnv();
+
+		logger().debug("forwarding request to durable object", {
+			actorId,
+			method: request.method,
+			url: request.url,
+		});
+
+		const id = env.ACTOR_DO.idFromString(actorId);
+		const stub = env.ACTOR_DO.get(id);
+
+		return await stub.fetch(request);
+	}
+
+	async proxyWebSocket(
+		actorId: string,
+		request: Request,
+		clientSocket: UniversalWebSocket,
+	): Promise<void> {
+		const env = getCloudflareAmbientEnv();
+
+		logger().debug("forwarding websocket to durable object", {
+			actorId,
+			url: request.url,
+		});
+
+		// Make a fetch request to the Durable Object with WebSocket upgrade
+		const id = env.ACTOR_DO.idFromString(actorId);
+		const stub = env.ACTOR_DO.get(id);
+
+		// Always build fresh request to prevent forwarding unwanted headers
+		// Copy only standard WebSocket headers
+		const headers: Record<string, string> = {
+			Upgrade: "websocket",
+			Connection: "Upgrade",
+		};
+
+		// Copy standard WebSocket headers from request
+		for (const header of STANDARD_WEBSOCKET_HEADERS) {
+			const value = request.headers.get(header);
+			if (value) {
+				headers[header] = value;
+			}
+		}
+
+		// Add RivetKit headers
+		headers[HEADER_EXPOSE_INTERNAL_ERROR] = "true";
+		const encoding = request.headers.get(HEADER_ENCODING);
+		if (encoding) {
+			headers[HEADER_ENCODING] = encoding;
+		}
+		const params = request.headers.get(HEADER_CONN_PARAMS);
+		if (params) {
+			headers[HEADER_CONN_PARAMS] = params;
+		}
+		const authData = request.headers.get(HEADER_AUTH_DATA);
+		if (authData) {
+			headers[HEADER_AUTH_DATA] = authData;
+		}
+
+		const response = await stub.fetch(request.url, {
+			method: request.method,
+			headers,
+		});
+
+		const actorWebSocket = response.webSocket;
+		if (!actorWebSocket) {
+			throw new InternalError("missing websocket in response from DO");
+		}
+
+		actorWebSocket.accept();
+
+		// Bridge the two WebSockets
+		// Forward messages from client to actor
+		clientSocket.addEventListener("message", (event: any) => {
+			if (actorWebSocket.readyState === WebSocket.OPEN) {
+				actorWebSocket.send(event.data);
+			}
+		});
+
+		// Forward messages from actor to client
+		actorWebSocket.addEventListener("message", (event: any) => {
+			if (clientSocket.readyState === 1) {
+				// OPEN
+				clientSocket.send(event.data);
+			}
+		});
+
+		// Handle client close
+		clientSocket.addEventListener("close", (event: any) => {
+			if (actorWebSocket.readyState === WebSocket.OPEN) {
+				actorWebSocket.close(event.code, event.reason);
+			}
+		});
+
+		// Handle actor close
+		actorWebSocket.addEventListener("close", (event: any) => {
+			if (clientSocket.readyState === 1) {
+				// OPEN
+				clientSocket.close(event.code || 1000, event.reason || "");
+			}
+		});
+
+		// Handle errors
+		clientSocket.addEventListener("error", () => {
+			if (actorWebSocket.readyState === WebSocket.OPEN) {
+				actorWebSocket.close(1011, "Client error");
+			}
+		});
+
+		actorWebSocket.addEventListener("error", () => {
+			if (clientSocket.readyState === 1) {
+				// OPEN
+				clientSocket.close(1011, "Actor error");
+			}
+		});
 	}
 
 	async getForId({

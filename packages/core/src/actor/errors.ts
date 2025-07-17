@@ -349,3 +349,12 @@ export class InvalidFetchResponse extends ActorError {
 		this.statusCode = 500;
 	}
 }
+
+export class OperationNotSupported extends ActorError {
+	constructor(operation: string) {
+		super("operation_not_supported", `Operation not supported: ${operation}`, {
+			public: true,
+		});
+		this.statusCode = 501;
+	}
+}

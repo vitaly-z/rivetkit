@@ -7,7 +7,6 @@ import type { WSContext } from "hono/ws";
 import invariant from "invariant";
 import type { CloseEvent, MessageEvent, WebSocket } from "ws";
 import { z } from "zod";
-import type { ConnRoutingHandler } from "@/actor/conn-routing-handler";
 import * as errors from "@/actor/errors";
 import type * as protoHttpResolve from "@/actor/protocol/http/resolve";
 import type { Transport } from "@/actor/protocol/message/mod";
@@ -29,7 +28,6 @@ import {
 	handleSseConnect,
 	handleWebSocketConnect,
 } from "@/actor/router-endpoints";
-import { assertUnreachable } from "@/actor/utils";
 import type { ClientDriver } from "@/client/client";
 import {
 	handleRouteError,
@@ -90,7 +88,6 @@ function parseWebSocketProtocols(protocols: string | undefined): {
 
 type ManagerRouterHandler = {
 	// onConnectInspector?: ManagerInspectorConnHandler;
-	routingHandler: ConnRoutingHandler;
 };
 
 const OPENAPI_ENCODING = z.string().openapi({
@@ -143,7 +140,6 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	inlineClientDriver: ClientDriver,
-	handler: ManagerRouterHandler,
 ): { router: Hono; openapi: OpenAPIHono } {
 	const driver = runConfig.driver.manager;
 	const router = new OpenAPIHono({ strict: false });
@@ -237,7 +233,6 @@ export function createManagerRouter(
 					registryConfig,
 					runConfig,
 					driver,
-					handler,
 				);
 			}
 
@@ -285,7 +280,7 @@ export function createManagerRouter(
 		});
 
 		router.openapi(sseRoute, (c) =>
-			handleSseConnectRequest(c, registryConfig, runConfig, driver, handler),
+			handleSseConnectRequest(c, registryConfig, runConfig, driver),
 		);
 	}
 
@@ -340,7 +335,7 @@ export function createManagerRouter(
 		});
 
 		router.openapi(actionRoute, (c) =>
-			handleActionRequest(c, registryConfig, runConfig, driver, handler),
+			handleActionRequest(c, registryConfig, runConfig, driver),
 		);
 	}
 
@@ -380,7 +375,7 @@ export function createManagerRouter(
 		});
 
 		router.openapi(messageRoute, (c) =>
-			handleMessageRequest(c, registryConfig, runConfig, handler),
+			handleMessageRequest(c, registryConfig, runConfig, driver),
 		);
 	}
 
@@ -451,13 +446,7 @@ export function createManagerRouter(
 			});
 
 			router.openapi(route, async (c) => {
-				return handleRawHttpRequest(
-					c,
-					registryConfig,
-					runConfig,
-					driver,
-					handler,
-				);
+				return handleRawHttpRequest(c, registryConfig, runConfig, driver);
 			});
 		}
 	}
@@ -510,7 +499,6 @@ export function createManagerRouter(
 				registryConfig,
 				runConfig,
 				driver,
-				handler,
 				upgradeWebSocket,
 			);
 		});
@@ -819,7 +807,6 @@ async function handleSseConnectRequest(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	driver: ManagerDriver,
-	handler: ManagerRouterHandler,
 ): Promise<Response> {
 	let encoding: Encoding | undefined;
 	try {
@@ -861,39 +848,27 @@ async function handleSseConnectRequest(
 		invariant(actorId, "Missing actor ID");
 		logger().debug("sse connection to actor", { actorId });
 
-		// Handle based on mode
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline proxy mode for sse connection");
-			// Use the shared SSE handler
-			return await handleSseConnect(
-				c,
-				registryConfig,
-				runConfig,
-				handler.routingHandler.inline.handlers.onConnectSse,
-				actorId,
-				authData,
-			);
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for sse connection");
-			const url = new URL("http://actor/connect/sse");
+		// Use driver to handle SSE connection
+		logger().debug("using driver proxy for sse connection");
+		const url = new URL("http://actor/connect/sse");
 
-			// Always build fresh request to prevent forwarding unwanted headers
-			const proxyRequest = new Request(url);
+		// Always build fresh request to prevent forwarding unwanted headers
+		const proxyRequest = new Request(url);
+		if (params.data.encoding) {
 			proxyRequest.headers.set(HEADER_ENCODING, params.data.encoding);
-			if (params.data.connParams) {
-				proxyRequest.headers.set(HEADER_CONN_PARAMS, params.data.connParams);
-			}
-			if (authData) {
-				proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
-			}
-			return await handler.routingHandler.custom.proxyRequest(
-				c,
-				proxyRequest,
-				actorId,
-			);
-		} else {
-			assertUnreachable(handler.routingHandler);
 		}
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
+		if (params.data.connParams) {
+			proxyRequest.headers.set(
+				HEADER_CONN_PARAMS,
+				JSON.stringify(params.data.connParams),
+			);
+		}
+		if (authData) {
+			proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
+		}
+
+		return await driver.sendRequest(actorId, proxyRequest);
 	} catch (error) {
 		// If we receive an error during setup, we send the error and close the socket immediately
 		//
@@ -955,7 +930,6 @@ async function handleWebSocketConnectRequest(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	driver: ManagerDriver,
-	handler: ManagerRouterHandler,
 ): Promise<Response> {
 	const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
 	if (!upgradeWebSocket) {
@@ -1035,48 +1009,88 @@ async function handleWebSocketConnectRequest(
 		});
 		invariant(actorId, "missing actor id");
 
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline proxy mode for websocket connection");
-			invariant(
-				handler.routingHandler.inline.handlers.onConnectWebSocket,
-				"onConnectWebSocket not provided",
-			);
+		// Use driver to handle WebSocket connection
+		logger().debug("using driver proxy for websocket connection");
 
-			const onConnectWebSocket =
-				handler.routingHandler.inline.handlers.onConnectWebSocket;
-			return upgradeWebSocket((c) => {
-				return handleWebSocketConnect(
-					c,
-					registryConfig,
-					runConfig,
-					onConnectWebSocket,
-					actorId,
-					params.data.encoding,
-					params.data.connParams,
-					authData,
-				);
-			})(c, noopNext());
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for websocket connection");
-
-			// Proxy the WebSocket connection to the actor
-			//
-			// The proxyWebSocket handler will:
-			// 1. Validate the WebSocket upgrade request
-			// 2. Forward the request to the actor with the appropriate path
-			// 3. Handle the WebSocket pair and proxy messages between client and actor
-			return await handler.routingHandler.custom.proxyWebSocket(
-				c,
-				"/connect/websocket",
-				actorId,
-				params.data.encoding,
-				params.data.connParams,
-				authData,
-				upgradeWebSocket,
-			);
-		} else {
-			assertUnreachable(handler.routingHandler);
+		// Build request for the driver
+		const url = new URL("http://actor/connect/websocket");
+		const proxyRequest = new Request(url);
+		if (params.data.encoding) {
+			proxyRequest.headers.set(HEADER_ENCODING, params.data.encoding);
 		}
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
+		if (params.data.connParams) {
+			proxyRequest.headers.set(
+				HEADER_CONN_PARAMS,
+				JSON.stringify(params.data.connParams),
+			);
+		}
+		if (authData) {
+			proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
+		}
+
+		// Use upgradeWebSocket to handle the WebSocket connection
+		return upgradeWebSocket(() => {
+			let actorWs: UniversalWebSocket | undefined;
+
+			return {
+				onOpen: async (_evt: any, ws: WSContext) => {
+					try {
+						logger().debug("client websocket opened, connecting to actor");
+
+						// Open WebSocket connection to actor
+						actorWs = await driver.openWebSocket(actorId, proxyRequest);
+
+						// Bridge messages from actor to client
+						actorWs.addEventListener("message", (event) => {
+							logger().debug("forwarding message from actor to client");
+							ws.send(event.data);
+						});
+
+						// Bridge close from actor to client
+						actorWs.addEventListener("close", (event) => {
+							logger().debug("actor websocket closed, closing client", {
+								code: event.code,
+								reason: event.reason,
+							});
+							ws.close(event.code, event.reason);
+						});
+
+						// Bridge errors from actor to client
+						actorWs.addEventListener("error", (event) => {
+							logger().error("actor websocket error", { error: event });
+							ws.close(1011, "Actor connection error");
+						});
+					} catch (error) {
+						logger().error("failed to connect to actor websocket", { error });
+						ws.close(1011, "Failed to connect to actor");
+					}
+				},
+				onMessage: async (message: any, ws: WSContext) => {
+					if (actorWs && actorWs.readyState === 1) {
+						logger().debug("forwarding message from client to actor");
+						actorWs.send(message);
+					} else {
+						logger().warn("actor websocket not ready for message");
+					}
+				},
+				onClose: async (evt: any, ws: WSContext) => {
+					logger().debug("client websocket closed", {
+						code: evt.code,
+						reason: evt.reason,
+					});
+					if (actorWs && actorWs.readyState === 1) {
+						actorWs.close(evt.code || 1000, evt.reason || "");
+					}
+				},
+				onError: async (error: unknown) => {
+					logger().error("client websocket error", { error });
+					if (actorWs && actorWs.readyState === 1) {
+						actorWs.close(1011, "Client connection error");
+					}
+				},
+			};
+		})(c, noopNext());
 	} catch (error) {
 		// If we receive an error during setup, we send the error and close the socket immediately
 		//
@@ -1132,7 +1146,7 @@ async function handleMessageRequest(
 	c: HonoContext,
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
-	handler: ManagerRouterHandler,
+	driver: ManagerDriver,
 ): Promise<Response> {
 	logger().debug("connection message request received");
 	try {
@@ -1166,40 +1180,21 @@ async function handleMessageRequest(
 		// Currently, we assume this is not a critical problem because requests will likely get rate
 		// limited before enough messages are passed to the actor to exhaust resources.
 
-		// Handle based on mode
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline proxy mode for connection message");
-			// Use shared connection message handler with direct parameters
-			return handleConnectionMessage(
-				c,
-				registryConfig,
-				runConfig,
-				handler.routingHandler.inline.handlers.onConnMessage,
-				connId,
-				connToken as string,
-				actorId,
-			);
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for connection message");
-			const url = new URL("http://actor/connections/message");
+		// Use driver to handle connection message
+		logger().debug("using driver proxy for connection message");
+		const url = new URL("http://actor/connections/message");
 
-			// Always build fresh request to prevent forwarding unwanted headers
-			const proxyRequest = new Request(url, {
-				method: "POST",
-				body: c.req.raw.body,
-			});
-			proxyRequest.headers.set(HEADER_ENCODING, encoding);
-			proxyRequest.headers.set(HEADER_CONN_ID, connId);
-			proxyRequest.headers.set(HEADER_CONN_TOKEN, connToken);
+		// Always build fresh request to prevent forwarding unwanted headers
+		const proxyRequest = new Request(url, {
+			method: "POST",
+			body: c.req.raw.body,
+		});
+		proxyRequest.headers.set(HEADER_ENCODING, encoding);
+		proxyRequest.headers.set(HEADER_CONN_ID, connId);
+		proxyRequest.headers.set(HEADER_CONN_TOKEN, connToken);
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
 
-			return await handler.routingHandler.custom.proxyRequest(
-				c,
-				proxyRequest,
-				actorId,
-			);
-		} else {
-			assertUnreachable(handler.routingHandler);
-		}
+		return await driver.sendRequest(actorId, proxyRequest);
 	} catch (error) {
 		logger().error("error proxying connection message", { error });
 
@@ -1220,7 +1215,6 @@ async function handleActionRequest(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	driver: ManagerDriver,
-	handler: ManagerRouterHandler,
 ): Promise<Response> {
 	try {
 		const actionName = c.req.param("action");
@@ -1259,47 +1253,33 @@ async function handleActionRequest(
 		logger().debug("found actor for action", { actorId });
 		invariant(actorId, "Missing actor ID");
 
-		// Handle based on mode
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline proxy mode for action call");
-			// Use shared action handler with direct parameter
-			return handleAction(
-				c,
-				registryConfig,
-				runConfig,
-				handler.routingHandler.inline.handlers.onAction,
-				actionName,
-				actorId,
-				authData,
-			);
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for action call");
+		// Use driver to handle action call
+		logger().debug("using driver proxy for action call");
 
-			const url = new URL(
-				`http://actor/action/${encodeURIComponent(actionName)}`,
-			);
+		const url = new URL(
+			`http://actor/action/${encodeURIComponent(actionName)}`,
+		);
 
-			// Always build fresh request to prevent forwarding unwanted headers
-			const proxyRequest = new Request(url, {
-				method: "POST",
-				body: c.req.raw.body,
-			});
+		// Always build fresh request to prevent forwarding unwanted headers
+		const proxyRequest = new Request(url, {
+			method: "POST",
+			body: c.req.raw.body,
+		});
+		if (params.data.encoding) {
 			proxyRequest.headers.set(HEADER_ENCODING, params.data.encoding);
-			if (params.data.connParams) {
-				proxyRequest.headers.set(HEADER_CONN_PARAMS, params.data.connParams);
-			}
-			if (authData) {
-				proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
-			}
-
-			return await handler.routingHandler.custom.proxyRequest(
-				c,
-				proxyRequest,
-				actorId,
-			);
-		} else {
-			assertUnreachable(handler.routingHandler);
 		}
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
+		if (params.data.connParams) {
+			proxyRequest.headers.set(
+				HEADER_CONN_PARAMS,
+				JSON.stringify(params.data.connParams),
+			);
+		}
+		if (authData) {
+			proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
+		}
+
+		return await driver.sendRequest(actorId, proxyRequest);
 	} catch (error) {
 		logger().error("error in action handler", { error: stringifyError(error) });
 
@@ -1365,7 +1345,6 @@ async function handleRawHttpRequest(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	driver: ManagerDriver,
-	handler: ManagerRouterHandler,
 ): Promise<Response> {
 	try {
 		const actorName = c.req.param("name");
@@ -1400,61 +1379,31 @@ async function handleRawHttpRequest(
 		logger().debug("found actor for raw http", { actorId });
 		invariant(actorId, "Missing actor ID");
 
-		// Handle based on mode
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline mode for raw http");
+		// Use driver to handle raw HTTP request
+		logger().debug("using driver proxy for raw http");
 
-			// Check if we have an onFetch handler
-			const handlers = handler.routingHandler.inline.handlers;
-			if (!handlers.onFetch) {
-				throw new errors.FetchHandlerNotDefined();
-			}
+		const url = new URL(`http://actor/http/${subpath}`);
 
-			// Create a new request with the correct URL path
-			const url = new URL(c.req.url);
-			url.pathname = `/${subpath}`;
-			const request = new Request(url.toString(), c.req.raw);
+		// Forward the request to the actor
+		const proxyRequest = new Request(url, {
+			method: c.req.method,
+			headers: c.req.raw.headers,
+			body: c.req.raw.body,
+		});
 
-			// Call the onFetch handler
-			const response = await handlers.onFetch({
-				request,
-				actorId,
-				authData,
-			});
+		// Add actor ID header
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
 
-			return response;
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for raw http");
-
-			const url = new URL(`http://actor/http/${subpath}`);
-
-			// Forward the request to the actor
-			const proxyRequest = new Request(url, {
-				method: c.req.method,
-				headers: c.req.raw.headers,
-				body: c.req.raw.body,
-			});
-
-			// Forward conn params if provided
-			if (connParams) {
-				proxyRequest.headers.set(
-					HEADER_CONN_PARAMS,
-					JSON.stringify(connParams),
-				);
-			}
-			// Forward auth data to actor
-			if (authData) {
-				proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
-			}
-
-			return await handler.routingHandler.custom.proxyRequest(
-				c,
-				proxyRequest,
-				actorId,
-			);
-		} else {
-			assertUnreachable(handler.routingHandler);
+		// Forward conn params if provided
+		if (connParams) {
+			proxyRequest.headers.set(HEADER_CONN_PARAMS, JSON.stringify(connParams));
 		}
+		// Forward auth data to actor
+		if (authData) {
+			proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
+		}
+
+		return await driver.proxyRequest(actorId, proxyRequest);
 	} catch (error) {
 		logger().error("error in raw http handler", {
 			error: stringifyError(error),
@@ -1477,7 +1426,6 @@ async function handleRawWebSocketRequest(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	driver: ManagerDriver,
-	handler: ManagerRouterHandler,
 	upgradeWebSocket: any,
 ): Promise<Response> {
 	try {
@@ -1521,99 +1469,65 @@ async function handleRawWebSocketRequest(
 		logger().debug("found actor for raw websocket", { actorId });
 		invariant(actorId, "Missing actor ID");
 
-		// Handle based on mode
-		if ("inline" in handler.routingHandler) {
-			logger().debug("using inline mode for raw websocket");
+		// Use driver to handle raw WebSocket
+		logger().debug("using driver proxy for raw websocket");
 
-			// Check if we have an onWebSocket handler
-			const handlers = handler.routingHandler.inline.handlers;
-			const onWebSocket = handlers.onWebSocket;
-			if (!onWebSocket) {
-				throw new errors.WebSocketHandlerNotDefined();
-			}
+		// Build request for the driver
+		const url = new URL(`http://actor/websocket/${subpath}`);
+		const proxyRequest = new Request(url, {
+			method: c.req.method,
+			headers: c.req.raw.headers,
+		});
 
-			// Create a WebSocket upgrade handler
-			return upgradeWebSocket(() => {
-				// Create a new request with the correct URL path
-				const url = new URL(c.req.url);
-				url.pathname = `/${subpath}`;
-				const request = new Request(url.toString(), {
-					method: c.req.method,
-					headers: c.req.raw.headers,
-				});
-
-				let bridge: HonoWebSocketAdapter | undefined;
-
-				return {
-					onOpen: async (_evt: any, ws: WSContext) => {
-						logger().debug("raw websocket connection opened");
-
-						// Create a HonoWebSocketAdapter to convert WSContext to WebSocket interface
-						bridge = new HonoWebSocketAdapter(ws);
-
-						// Call the onWebSocket handler
-						try {
-							await onWebSocket({
-								request,
-								websocket: bridge as any,
-								actorId,
-								authData,
-							});
-						} catch (error) {
-							logger().error("error in onWebSocket handler", {
-								error: stringifyError(error),
-							});
-							ws.close(1011, "Internal server error");
-						}
-					},
-					onMessage: async (message: any, ws: WSContext) => {
-						invariant(bridge, "Bridge not initialized");
-						// Forward the message to the bridge
-						// Hono passes the raw data, not a MessageEvent
-						bridge._handleMessage(message);
-					},
-					onClose: async (evt: any, ws: WSContext) => {
-						invariant(bridge, "Bridge not initialized");
-						bridge._handleClose(evt.code || 1000, evt.reason || "");
-					},
-					onError: async (error: unknown) => {
-						logger().error("error in raw websocket connection", { error });
-						invariant(bridge, "Bridge not initialized");
-						bridge._handleError(error);
-					},
-				};
-			})(c, noopNext());
-		} else if ("custom" in handler.routingHandler) {
-			logger().debug("using custom proxy mode for raw websocket");
-
-			const url = new URL(`http://actor/websocket/${subpath}`);
-
-			// For custom mode, proxy the WebSocket
-			return upgradeWebSocket(async (ws: WSContext) => {
-				try {
-					// Use the custom proxy handler
-					const customHandler = handler.routingHandler as {
-						custom: import("@/actor/conn-routing-handler").ConnRoutingHandlerCustom;
-					};
-					await customHandler.custom.proxyWebSocket(
-						c,
-						`/websocket/${subpath}`,
-						actorId,
-						"json", // Default encoding for raw WebSocket
-						connParams, // Pass connection parameters
-						authData,
-						upgradeWebSocket,
-					);
-				} catch (error) {
-					logger().error("error proxying raw websocket", {
-						error: stringifyError(error),
-					});
-					ws.close(1011, "Proxy error");
-				}
-			});
-		} else {
-			assertUnreachable(handler.routingHandler);
+		// Add required headers
+		proxyRequest.headers.set(HEADER_ACTOR_ID, actorId);
+		if (connParams) {
+			proxyRequest.headers.set(HEADER_CONN_PARAMS, JSON.stringify(connParams));
 		}
+		if (authData) {
+			proxyRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
+		}
+
+		// Use upgradeWebSocket to handle the WebSocket connection
+		return upgradeWebSocket(() => {
+			let clientAdapted: UniversalWebSocket | undefined;
+
+			return {
+				onOpen: async (_evt: any, ws: WSContext) => {
+					try {
+						logger().debug("raw websocket client connected, proxying to actor");
+
+						// Create adapter for the client WebSocket
+						clientAdapted = new HonoWebSocketAdapter(ws);
+
+						// Proxy the WebSocket connection to actor
+						await driver.proxyWebSocket(actorId, proxyRequest, clientAdapted);
+					} catch (error) {
+						logger().error("failed to proxy raw websocket", { error });
+						ws.close(1011, "Failed to proxy to actor");
+					}
+				},
+				onMessage: async (message: any, ws: WSContext) => {
+					// Messages are handled by the adapter which is passed to proxyWebSocket
+					if (clientAdapted) {
+						(clientAdapted as HonoWebSocketAdapter)._handleMessage(message);
+					}
+				},
+				onClose: async (evt: any, ws: WSContext) => {
+					if (clientAdapted) {
+						(clientAdapted as HonoWebSocketAdapter)._handleClose(
+							evt.code || 1000,
+							evt.reason || "",
+						);
+					}
+				},
+				onError: async (error: unknown) => {
+					if (clientAdapted) {
+						(clientAdapted as HonoWebSocketAdapter)._handleError(error);
+					}
+				},
+			};
+		})(c, noopNext());
 	} catch (error) {
 		logger().error("error in raw websocket handler", {
 			error: stringifyError(error),

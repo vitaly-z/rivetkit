@@ -1,6 +1,5 @@
 import * as fs from "node:fs/promises";
 import { resolve } from "node:path";
-import type { ConnectionHandlers } from "@/actor/router-endpoints";
 import type { ClientDriver } from "@/client/client";
 import { createMemoryDriver } from "@/drivers/memory/mod";
 import { createManagerRouter } from "@/manager/router";
@@ -19,21 +18,6 @@ function main() {
 		getUpgradeWebSocket: () => () => unimplemented(),
 	});
 
-	const sharedConnectionHandlers: ConnectionHandlers = {
-		onConnectWebSocket: async () => {
-			unimplemented();
-		},
-		onConnectSse: async (opts) => {
-			unimplemented();
-		},
-		onAction: async (opts) => {
-			unimplemented();
-		},
-		onConnMessage: async (opts) => {
-			unimplemented();
-		},
-	};
-
 	const inlineClientDriver: ClientDriver = {
 		action: unimplemented,
 		resolveActorId: unimplemented,
@@ -46,13 +30,6 @@ function main() {
 		registryConfig,
 		driverConfig,
 		inlineClientDriver,
-		{
-			routingHandler: {
-				inline: {
-					handlers: sharedConnectionHandlers,
-				},
-			},
-		},
 	);
 
 	const openApiDoc = openapi.getOpenAPIDocument({

@@ -5,9 +5,8 @@ import {
 	type ClientDriver,
 	createClientWithDriver,
 } from "@/client/client";
-import { PartitionTopologyActor, PartitionTopologyManager } from "@/mod";
-import { StandaloneTopology } from "@/topologies/standalone/mod";
-import { assertUnreachable } from "@/utils";
+import { createInlineClientDriver } from "@/inline-client-driver/mod";
+import { createManagerRouter } from "@/manager/router";
 import {
 	type RegistryActors,
 	type RegistryConfig,
@@ -58,24 +57,23 @@ export class Registry<A extends RegistryActors> {
 			config.getUpgradeWebSocket = () => upgradeWebSocket!;
 		}
 
-		// Setup topology
-		let hono: Hono;
-		let clientDriver: ClientDriver;
-		if (config.driver.topology === "standalone") {
-			const topology = new StandaloneTopology(this.#config, config);
-			hono = topology.router;
-			clientDriver = topology.clientDriver;
-		} else if (config.driver.topology === "partition") {
-			const topology = new PartitionTopologyManager(this.#config, config);
-			hono = topology.router;
-			clientDriver = topology.clientDriver;
-		} else if (config.driver.topology === "coordinate") {
-			const topology = new StandaloneTopology(this.#config, config);
-			hono = topology.router;
-			clientDriver = topology.clientDriver;
-		} else {
-			assertUnreachable(config.driver.topology);
-		}
+		// Create inline client driver
+		const managerDriver = config.driver.manager;
+		const actorDriver = config.driver.actor;
+		const inlineClientDriver = createInlineClientDriver(
+			managerDriver,
+			actorDriver,
+		);
+
+		// Create manager router
+		const { router: hono } = createManagerRouter(
+			this.config,
+			config,
+			inlineClientDriver,
+		);
+
+		// Create client driver
+		const clientDriver = inlineClientDriver;
 
 		// Create client
 		const client = createClientWithDriver<this>(clientDriver);
@@ -111,18 +109,20 @@ export class Registry<A extends RegistryActors> {
 			config.getUpgradeWebSocket = () => upgradeWebSocket!;
 		}
 
-		// Setup topology
-		let hono: Hono;
-		if (config.driver.topology === "standalone") {
-			invariant(false, "cannot run actor node for standalone topology");
-		} else if (config.driver.topology === "partition") {
-			const topology = new PartitionTopologyActor(this.#config, config);
-			hono = topology.router;
-		} else if (config.driver.topology === "coordinate") {
-			invariant(false, "cannot run actor node for coordinate topology");
-		} else {
-			assertUnreachable(config.driver.topology);
-		}
+		// Create inline client driver
+		const managerDriver = config.driver.manager;
+		const actorDriver = config.driver.actor;
+		const inlineClientDriver = createInlineClientDriver(
+			managerDriver,
+			actorDriver,
+		);
+
+		// Create manager router
+		const { router: hono } = createManagerRouter(
+			this.config,
+			config,
+			inlineClientDriver,
+		);
 
 		return {
 			hono,

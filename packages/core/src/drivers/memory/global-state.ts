@@ -1,3 +1,5 @@
+import type { Hono } from "hono";
+import type { AnyActorInstance } from "@/actor/instance";
 import type { ActorKey } from "@/actor/mod";
 import { serializeEmptyPersistData } from "@/driver-helpers/mod";
 
@@ -10,6 +12,8 @@ export interface ActorState {
 
 export class MemoryGlobalState {
 	#actors: Map<string, ActorState> = new Map();
+	#actorInstances: Map<string, AnyActorInstance> = new Map();
+	#actorRouters: Map<string, Hono> = new Map();
 
 	#getActor(actorId: string): ActorState {
 		const actor = this.#actors.get(actorId);
@@ -61,5 +65,27 @@ export class MemoryGlobalState {
 
 	getAllActors(): ActorState[] {
 		return Array.from(this.#actors.values());
+	}
+
+	deleteActor(actorId: string): void {
+		this.#actors.delete(actorId);
+		this.#actorInstances.delete(actorId);
+		this.#actorRouters.delete(actorId);
+	}
+
+	getActorInstance(actorId: string): AnyActorInstance | undefined {
+		return this.#actorInstances.get(actorId);
+	}
+
+	setActorInstance(actorId: string, instance: AnyActorInstance): void {
+		this.#actorInstances.set(actorId, instance);
+	}
+
+	getActorRouter(actorId: string): Hono | undefined {
+		return this.#actorRouters.get(actorId);
+	}
+
+	setActorRouter(actorId: string, router: Hono): void {
+		this.#actorRouters.set(actorId, router);
 	}
 }
