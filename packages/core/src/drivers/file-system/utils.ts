@@ -56,8 +56,8 @@ export function getActorsDir(baseDir: string): string {
 	return path.join(baseDir, "actors");
 }
 
-export function getActorStoragePath(baseDir: string, actorId: string): string {
-	return path.join(baseDir, "actors", actorId);
+export function getActorStatePath(baseDir: string, actorId: string): string {
+	return path.join(baseDir, "state", actorId);
 }
 
 export function getActorsDbsPath(baseDir: string): string {

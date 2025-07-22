@@ -23,7 +23,7 @@ import { logger } from "./log";
 import {
 	ensureDirectoryExists,
 	ensureDirectoryExistsSync,
-	getActorStoragePath as getActorDataPath,
+	getActorStatePath as getActorDataPath,
 	getActorDbPath,
 	getActorsDbsPath,
 	getActorsDir,
@@ -44,6 +44,9 @@ interface ActorEntry {
 	startPromise?: PromiseWithResolvers<void>;
 
 	genericConnGlobalState: GenericConnGlobalState;
+
+	/** Promise for ongoing write operations to prevent concurrent writes */
+	writePromise?: Promise<void>;
 }
 
 /**
@@ -87,6 +90,13 @@ export class FileSystemGlobalState {
 				dir: this.#storagePath,
 				actorCount,
 			});
+
+			// Cleanup stale temp files on startup
+			try {
+				this.#cleanupTempFilesSync();
+			} catch (err) {
+				logger().error("failed to cleanup temp files", { error: err });
+			}
 		} else {
 			logger().debug("memory driver ready");
 		}
@@ -249,29 +259,68 @@ export class FileSystemGlobalState {
 		return entry;
 	}
 
-	/** Writes actor state to file system. */
-	async writeActor(actorId: string) {
-		const handler = this.#actors.get(actorId);
-		if (!handler?.state) {
-			return;
-		}
-
-		// Skip fs write if not persisting
+	/**
+	 * Save actor state to disk
+	 */
+	async writeActor(actorId: string): Promise<void> {
 		if (!this.#persist) {
 			return;
 		}
 
+		const entry = this.#actors.get(actorId);
+		invariant(entry?.state, "missing actor state");
+		const state = entry.state;
+
+		// Get the current write promise for this actor (or resolved promise if none)
+		const currentWrite = entry.writePromise || Promise.resolve();
+
+		// Chain our write after the current one
+		const newWrite = currentWrite
+			.then(() => this.#performWrite(actorId, state))
+			.catch((err) => {
+				// Log but don't prevent future writes
+				logger().error("write failed", { actorId, error: err });
+				throw err;
+			});
+
+		// Update the actor's write promise
+		entry.writePromise = newWrite;
+
+		// Wait for our write to complete
+		try {
+			await newWrite;
+		} finally {
+			// Clean up if we're the last write
+			if (entry.writePromise === newWrite) {
+				entry.writePromise = undefined;
+			}
+		}
+	}
+
+	/**
+	 * Perform the actual write operation with atomic writes
+	 */
+	async #performWrite(actorId: string, state: ActorState): Promise<void> {
 		const dataPath = getActorDataPath(this.#storagePath, actorId);
+		// Generate unique temp filename to prevent any race conditions
+		const tempPath = `${dataPath}.tmp.${crypto.randomUUID()}`;
 
 		try {
-			// TODO: This only needs to be done once
-			// Create actor directory
+			// Create directory if needed
 			await ensureDirectoryExists(path.dirname(dataPath));
 
-			// Write data
-			const serializedState = cbor.encode(handler.state);
-			await fs.writeFile(dataPath, serializedState);
+			// Perform atomic write
+			const serializedState = cbor.encode(state);
+			await fs.writeFile(tempPath, serializedState);
+			await fs.rename(tempPath, dataPath);
 		} catch (error) {
+			// Cleanup temp file on error
+			try {
+				await fs.unlink(tempPath);
+			} catch {
+				// Ignore cleanup errors
+			}
+			logger().error("failed to save actor state", { actorId, error });
 			throw new Error(`Failed to save actor state: ${error}`);
 		}
 	}
@@ -363,5 +412,39 @@ export class FileSystemGlobalState {
 		const newToken = generateSecureToken();
 		fsSync.writeFileSync(tokenPath, newToken);
 		return newToken;
+	}
+
+	/**
+	 * Cleanup stale temp files on startup (synchronous)
+	 */
+	#cleanupTempFilesSync(): void {
+		try {
+			const files = fsSync.readdirSync(this.actorsDir);
+			const tempFiles = files.filter((f) => f.includes(".tmp."));
+
+			const oneHourAgo = Date.now() - 3600000; // 1 hour in ms
+
+			for (const tempFile of tempFiles) {
+				try {
+					const fullPath = path.join(this.actorsDir, tempFile);
+					const stat = fsSync.statSync(fullPath);
+
+					// Remove if older than 1 hour
+					if (stat.mtimeMs < oneHourAgo) {
+						fsSync.unlinkSync(fullPath);
+						logger().info("cleaned up stale temp file", { file: tempFile });
+					}
+				} catch (err) {
+					logger().debug("failed to cleanup temp file", {
+						file: tempFile,
+						error: err,
+					});
+				}
+			}
+		} catch (err) {
+			logger().error("failed to read actors directory for cleanup", {
+				error: err,
+			});
+		}
 	}
 }
