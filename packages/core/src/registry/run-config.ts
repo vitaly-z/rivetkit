@@ -11,6 +11,8 @@ type CorsOptions = NonNullable<Parameters<typeof cors>[0]>;
 export type GetUpgradeWebSocket = () => UpgradeWebSocket;
 
 export const DriverConfigSchema = z.object({
+	/** Machine-readable name to identify this driver by. */
+	name: z.string(),
 	manager: z.custom<ManagerDriverBuilder>(),
 	actor: z.custom<ActorDriverBuilder>(),
 });

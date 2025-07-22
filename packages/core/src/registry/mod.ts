@@ -9,6 +9,7 @@ import {
 	type RegistryConfigInput,
 	RegistryConfigSchema,
 } from "./config";
+import { logger } from "./log";
 import {
 	type DriverConfig,
 	type RunConfig,
@@ -65,6 +66,12 @@ export class Registry<A extends RegistryActors> {
 
 		// Create client
 		const client = createClientWithDriver<this>(clientDriver);
+
+		const driverLog = managerDriver.extraStartupLog?.() ?? {};
+		logger().info("rivetkit started", {
+			driver: config.driver.name,
+			...driverLog,
+		});
 
 		return {
 			client,

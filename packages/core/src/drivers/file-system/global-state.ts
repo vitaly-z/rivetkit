@@ -67,6 +67,23 @@ export class FileSystemGlobalState {
 	#storagePath: string;
 	#persist: boolean;
 	#actors = new Map<string, ActorEntry>();
+	#actorCountOnStartup: number = 0;
+
+	get storagePath() {
+		return this.#storagePath;
+	}
+
+	get actorCountOnStartup() {
+		return this.#actorCountOnStartup;
+	}
+
+	get #actorsDir(): string {
+		return getActorsDir(this.#storagePath);
+	}
+
+	get #dbsDir(): string {
+		return getActorsDbsPath(this.#storagePath);
+	}
 
 	constructor(persist: boolean = true, customPath?: string) {
 		this.#persist = persist;
@@ -74,21 +91,19 @@ export class FileSystemGlobalState {
 
 		if (this.#persist) {
 			// Ensure storage directories exist synchronously during initialization
-			ensureDirectoryExistsSync(this.actorsDir);
-			ensureDirectoryExistsSync(this.dbsDir);
-
-			let actorCount = 0;
+			ensureDirectoryExistsSync(this.#actorsDir);
+			ensureDirectoryExistsSync(this.#dbsDir);
 
 			try {
-				const actorIds = fsSync.readdirSync(this.actorsDir);
-				actorCount = actorIds.length;
+				const actorIds = fsSync.readdirSync(this.#actorsDir);
+				this.#actorCountOnStartup = actorIds.length;
 			} catch (error) {
 				logger().error("failed to count actors", { error });
 			}
 
 			logger().debug("file system driver ready", {
 				dir: this.#storagePath,
-				actorCount,
+				actorCount: this.#actorCountOnStartup,
 			});
 
 			// Cleanup stale temp files on startup
@@ -102,25 +117,10 @@ export class FileSystemGlobalState {
 		}
 	}
 
-	private get actorsDir(): string {
-		return getActorsDir(this.#storagePath);
-	}
-
-	private get dbsDir(): string {
-		return getActorsDbsPath(this.#storagePath);
-	}
-
-	/**
-	 * Get the current storage directory path
-	 */
-	get storagePath(): string {
-		return this.#storagePath;
-	}
-
 	async *getActorsIterator(params: {
 		cursor?: string;
 	}): AsyncGenerator<ActorState> {
-		const actorIds = fsSync.readdirSync(this.actorsDir).sort();
+		const actorIds = fsSync.readdirSync(this.#actorsDir).sort();
 		const startIndex = params.cursor ? actorIds.indexOf(params.cursor) + 1 : 0;
 
 		for (let i = startIndex; i < actorIds.length; i++) {
@@ -419,14 +419,14 @@ export class FileSystemGlobalState {
 	 */
 	#cleanupTempFilesSync(): void {
 		try {
-			const files = fsSync.readdirSync(this.actorsDir);
+			const files = fsSync.readdirSync(this.#actorsDir);
 			const tempFiles = files.filter((f) => f.includes(".tmp."));
 
 			const oneHourAgo = Date.now() - 3600000; // 1 hour in ms
 
 			for (const tempFile of tempFiles) {
 				try {
-					const fullPath = path.join(this.actorsDir, tempFile);
+					const fullPath = path.join(this.#actorsDir, tempFile);
 					const stat = fsSync.statSync(fullPath);
 
 					// Remove if older than 1 hour
