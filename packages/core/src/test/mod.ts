@@ -2,14 +2,13 @@ import { createServer } from "node:net";
 import { serve as honoServe, type ServerType } from "@hono/node-server";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { type TestContext, vi } from "vitest";
-import { type Client, createClient, ManagerError } from "@/client/mod";
+import { type Client, createClient } from "@/client/mod";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
-import { getInspectorUrl } from "@/inspector/utils";
+import { getStudioUrl } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { Registry } from "@/registry/mod";
 import { RunConfigSchema } from "@/registry/run-config";
-import { assertUnreachable } from "@/utils";
 import { ConfigSchema, type InputConfig } from "./config";
 import { logger } from "./log";
 
@@ -52,7 +51,7 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	logger().info("rivetkit started", {
 		hostname: config.hostname,
 		port: config.port,
-		studio: getInspectorUrl(config),
+		studio: getStudioUrl(config),
 	});
 
 	return server;

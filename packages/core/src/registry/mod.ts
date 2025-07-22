@@ -2,6 +2,7 @@ import type { Hono } from "hono";
 import { createActorRouter } from "@/actor/router";
 import { type Client, createClientWithDriver } from "@/client/client";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
+import { getStudioUrl } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import {
 	type RegistryActors,
@@ -70,6 +71,7 @@ export class Registry<A extends RegistryActors> {
 		const driverLog = managerDriver.extraStartupLog?.() ?? {};
 		logger().info("rivetkit started", {
 			driver: config.driver.name,
+			studio: getStudioUrl(config),
 			...driverLog,
 		});
 
