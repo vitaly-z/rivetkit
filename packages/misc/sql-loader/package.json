@@ -21,5 +21,8 @@
   "scripts": {
     "build": "tsup src/hook.ts src/register.ts",
     "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
   }
 }
