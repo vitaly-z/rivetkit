@@ -24,10 +24,10 @@ const defaultEnabled = () => {
 
 const defaultCors: CorsOptions = {
 	origin: (origin) =>
-		["http://localhost:43708", "https://studio.rivet.gg/"].includes(origin) ||
-		(origin.startsWith("https://") && origin.endsWith("rivet-studio.pages.dev"))
+		["http://localhost:43708", "https://studio.rivet.gg"].includes(origin) ||
+		(origin.startsWith("https://") && origin.endsWith("rivet-gg.vercel.app"))
 			? origin
-			: "https://studio.rivet.gg/",
+			: "https://studio.rivet.gg",
 	allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 	allowHeaders: ["Content-Type", "Authorization", HEADER_ACTOR_QUERY],
 	maxAge: 3600,
