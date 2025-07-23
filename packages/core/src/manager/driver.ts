@@ -36,6 +36,8 @@ export interface ManagerDriver {
 		authData: unknown,
 	): Promise<Response>;
 
+	extraStartupLog?: () => Record<string, unknown>;
+
 	modifyManagerRouter?: (registryConfig: RegistryConfig, router: Hono) => void;
 
 	/**

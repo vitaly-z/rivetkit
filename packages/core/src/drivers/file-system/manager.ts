@@ -274,4 +274,11 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			key,
 		};
 	}
+
+	extraStartupLog() {
+		return {
+			actors: this.#state.actorCountOnStartup,
+			data: this.#state.storagePath,
+		};
+	}
 }
