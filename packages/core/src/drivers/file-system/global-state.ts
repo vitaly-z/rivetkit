@@ -11,7 +11,7 @@ import {
 } from "@/actor/generic-conn-driver";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { ActorKey } from "@/actor/mod";
-import { generateSecureToken } from "@/actor/utils";
+import { generateRandomString } from "@/actor/utils";
 import type { AnyClient } from "@/client/client";
 import {
 	type ActorDriver,
@@ -409,7 +409,7 @@ export class FileSystemGlobalState {
 			return fsSync.readFileSync(tokenPath, "utf-8");
 		}
 
-		const newToken = generateSecureToken();
+		const newToken = generateRandomString();
 		fsSync.writeFileSync(tokenPath, newToken);
 		return newToken;
 	}
