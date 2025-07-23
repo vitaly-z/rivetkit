@@ -4,6 +4,7 @@ import {
 	type ActorConfigInput,
 	ActorConfigSchema,
 } from "./config";
+import type { AnyDatabaseProvider } from "./database";
 import { ActorDefinition } from "./definition";
 
 export function actor<
@@ -13,7 +14,7 @@ export function actor<
 	V,
 	I,
 	AD,
-	DB,
+	DB extends AnyDatabaseProvider,
 	R extends Actions<S, CP, CS, V, I, AD, DB>,
 >(
 	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, R>,

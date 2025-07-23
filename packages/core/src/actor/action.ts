@@ -4,6 +4,7 @@ import type { Logger } from "@/common/log";
 import type { Registry } from "@/registry/mod";
 import type { Conn, ConnId } from "./connection";
 import type { ActorContext } from "./context";
+import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { SaveStateOptions } from "./instance";
 import type { Schedule } from "./schedule";
 
@@ -12,7 +13,15 @@ import type { Schedule } from "./schedule";
  *
  * @typeParam A Actor this action belongs to
  */
-export class ActionContext<S, CP, CS, V, I, AD, DB> {
+export class ActionContext<
+	S,
+	CP,
+	CS,
+	V,
+	I,
+	AD,
+	DB extends AnyDatabaseProvider,
+> {
 	#actorContext: ActorContext<S, CP, CS, V, I, AD, DB>;
 
 	/**
@@ -108,7 +117,7 @@ export class ActionContext<S, CP, CS, V, I, AD, DB> {
 	/**
 	 * @experimental
 	 */
-	get db(): DB {
+	get db(): InferDatabaseClient<DB> {
 		return this.#actorContext.db;
 	}
 

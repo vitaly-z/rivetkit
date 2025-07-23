@@ -3,13 +3,14 @@ import type { Client } from "@/client/client";
 import type { Logger } from "@/common/log";
 import type { Registry } from "@/registry/mod";
 import type { Conn, ConnId } from "./connection";
+import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorInstance, SaveStateOptions } from "./instance";
 import type { Schedule } from "./schedule";
 
 /**
  * ActorContext class that provides access to actor methods and state
  */
-export class ActorContext<S, CP, CS, V, I, AD, DB> {
+export class ActorContext<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 	#actor: ActorInstance<S, CP, CS, V, I, AD, DB>;
 
 	constructor(actor: ActorInstance<S, CP, CS, V, I, AD, DB>) {
@@ -101,7 +102,7 @@ export class ActorContext<S, CP, CS, V, I, AD, DB> {
 	 * @experimental
 	 * @throws {DatabaseNotEnabled} If the database is not enabled.
 	 */
-	get db(): DB {
+	get db(): InferDatabaseClient<DB> {
 		return this.#actor.db;
 	}
 

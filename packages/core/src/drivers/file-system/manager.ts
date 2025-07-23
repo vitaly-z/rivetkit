@@ -1,11 +1,6 @@
 import type { Context as HonoContext } from "hono";
 import invariant from "invariant";
-import {
-	type ActorRouter,
-	createActorRouter,
-	PATH_CONNECT_WEBSOCKET,
-	PATH_RAW_WEBSOCKET_PREFIX,
-} from "@/actor/router";
+import { type ActorRouter, createActorRouter } from "@/actor/router";
 import {
 	handleRawWebSocketHandler,
 	handleWebSocketConnect,
@@ -23,8 +18,16 @@ import type {
 	ManagerDriver,
 } from "@/driver-helpers/mod";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
-import type { Encoding, RegistryConfig, RunConfig } from "@/mod";
-import type { FileSystemGlobalState } from "./global-state";
+import { ManagerInspector } from "@/inspector/manager";
+import { type Actor, ActorFeature, type ActorId } from "@/inspector/mod";
+import {
+	type Encoding,
+	PATH_CONNECT_WEBSOCKET,
+	PATH_RAW_WEBSOCKET_PREFIX,
+	type RegistryConfig,
+	type RunConfig,
+} from "@/mod";
+import type { ActorState, FileSystemGlobalState } from "./global-state";
 import { logger } from "./log";
 import { generateActorId } from "./utils";
 
@@ -36,10 +39,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 	#actorDriver: ActorDriver;
 	#actorRouter: ActorRouter;
 
-	// inspector: ManagerInspector = new ManagerInspector(this, {
-	// 	getAllActors: () => this.#state.getAllActors(),
-	// 	getAllTypesOfActors: () => Object.keys(this.registry.config.actors),
-	// });
+	inspector?: ManagerInspector;
 
 	constructor(
 		registryConfig: RegistryConfig,
@@ -49,6 +49,52 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		this.#registryConfig = registryConfig;
 		this.#runConfig = runConfig;
 		this.#state = state;
+
+		if (runConfig.studio.enabled) {
+			if (!this.#runConfig.studio.token()) {
+				this.#runConfig.studio.token = () =>
+					this.#state.getOrCreateInspectorAccessToken();
+			}
+			const startedAt = new Date().toISOString();
+			function transformActor(actorState: ActorState): Actor {
+				return {
+					id: actorState.id as ActorId,
+					name: actorState.name,
+					key: actorState.key,
+					startedAt: startedAt,
+					createdAt:
+						actorState.createdAt?.toISOString() || new Date().toISOString(),
+					features: [
+						ActorFeature.State,
+						ActorFeature.Connections,
+						ActorFeature.Console,
+						ActorFeature.EventsMonitoring,
+						ActorFeature.Database,
+					],
+				};
+			}
+
+			this.inspector = new ManagerInspector(() => {
+				return {
+					getAllActors: async ({ cursor, limit }) => {
+						const itr = this.#state.getActorsIterator({ cursor });
+						const actors: Actor[] = [];
+						for await (const actor of itr) {
+							actors.push(transformActor(actor));
+						}
+						return actors;
+					},
+					getActorById: async (id) => {
+						try {
+							const result = await this.#state.loadActorStateOrError(id);
+							return transformActor(result);
+						} catch {
+							return null;
+						}
+					},
+				};
+			});
+		}
 
 		// Actors run on the same node as the manager, so we create a dummy actor router that we route requests to
 		const inlineClient = createClientWithDriver(createInlineClientDriver(this));
@@ -221,9 +267,6 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		const actorId = generateActorId(name, key);
 
 		await this.#state.createActor(actorId, name, key, input);
-
-		// Notify inspector about actor changes
-		// this.inspector.onActorsChange(this.#state.getAllActors());
 
 		return {
 			actorId,

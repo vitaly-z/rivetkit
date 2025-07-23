@@ -1,3 +1,7 @@
 import { registry } from "./registry";
 
-registry.runServer();
+registry.runServer({
+	inspector: {
+		enabled: true,
+	},
+});

@@ -1,6 +1,11 @@
+export type InferDatabaseClient<DBProvider extends AnyDatabaseProvider> =
+	DBProvider extends DatabaseProvider<any>
+		? Awaited<ReturnType<DBProvider["createClient"]>>
+		: never;
+
 export type AnyDatabaseProvider = DatabaseProvider<any> | undefined;
 
-export type DatabaseProvider<DB extends RawAccess> = {
+export type DatabaseProvider<DB extends { execute: (query: string) => any }> = {
 	/**
 	 * Creates a new database client for the actor.
 	 * The result is passed to the actor context as `c.db`.
@@ -15,16 +20,4 @@ export type DatabaseProvider<DB extends RawAccess> = {
 	 * @experimental
 	 */
 	onMigrate: (client: DB) => void | Promise<void>;
-};
-
-type ExecuteFunction = (
-	query: string,
-	...args: unknown[]
-) => Promise<unknown[]>;
-
-export type RawAccess = {
-	/**
-	 * Executes a raw SQL query.
-	 */
-	execute: ExecuteFunction;
 };

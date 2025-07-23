@@ -1,6 +1,10 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import * as cbor from "cbor-x";
-import { Hono, type Context as HonoContext } from "hono";
+import {
+	Hono,
+	type Context as HonoContext,
+	type MiddlewareHandler,
+} from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import type { WSContext } from "hono/ws";
@@ -28,7 +32,6 @@ import {
 	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
 } from "@/actor/router-endpoints";
-import { assertUnreachable } from "@/actor/utils";
 import type { ClientDriver } from "@/client/client";
 import {
 	handleRouteError,
@@ -41,17 +44,18 @@ import {
 	noopNext,
 	stringifyError,
 } from "@/common/utils";
-import type { UniversalWebSocket } from "@/common/websocket-interface";
+import { createManagerInspectorRouter } from "@/inspector/manager";
+import { secureInspector } from "@/inspector/utils";
 import type { UpgradeWebSocketArgs } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
 import { VERSION } from "@/utils";
 import { authenticateEndpoint } from "./auth";
 import type { ManagerDriver } from "./driver";
-import { HonoWebSocketAdapter } from "./hono-websocket-adapter";
 import { logger } from "./log";
 import type { ActorQuery } from "./protocol/query";
 import {
+	ActorQuerySchema,
 	ConnectRequestSchema,
 	ConnectWebSocketRequestSchema,
 	ConnMessageRequestSchema,
@@ -156,7 +160,9 @@ export function createManagerRouter(
 			if (
 				path.endsWith("/actors/connect/websocket") ||
 				path.includes("/actors/raw/websocket/") ||
-				path.endsWith("/inspect")
+				// inspectors implement their own CORS handling
+				path.endsWith("/inspect") ||
+				path.endsWith("/actors/inspect")
 			) {
 				return next();
 			}
@@ -487,16 +493,41 @@ export function createManagerRouter(
 		});
 	}
 
-	// if (registryConfig.inspector.enabled) {
-	// 	router.route(
-	// 		"/inspect",
-	// 		createManagerInspectorRouter(
-	// 			upgradeWebSocket,
-	// 			handler.onConnectInspector,
-	// 			registryConfig.inspector,
-	// 		),
-	// 	);
-	// }
+	if (runConfig.studio?.enabled) {
+		router.route(
+			"/actors/inspect",
+			new Hono()
+				.use(
+					cors(runConfig.studio.cors),
+					secureInspector(runConfig),
+					universalActorProxy({
+						registryConfig,
+						runConfig,
+						driver: managerDriver,
+					}),
+				)
+				.all("/", (c) =>
+					// this should be handled by the actor proxy, but just in case
+					c.text("Unreachable.", 404),
+				),
+		);
+		router.route(
+			"/inspect",
+			new Hono()
+				.use(
+					cors(runConfig.studio.cors),
+					secureInspector(runConfig),
+					async (c, next) => {
+						const inspector = managerDriver.inspector;
+						invariant(inspector, "inspector not supported on this platform");
+
+						c.set("inspector", inspector);
+						await next();
+					},
+				)
+				.route("/", createManagerInspectorRouter()),
+		);
+	}
 
 	if (registryConfig.test.enabled) {
 		// Add HTTP endpoint to test the inline client
@@ -1610,4 +1641,39 @@ async function handleRawWebSocketRequest(
 			},
 		}))(c, noopNext());
 	}
+}
+
+function universalActorProxy({
+	registryConfig,
+	runConfig,
+	driver,
+}: {
+	registryConfig: RegistryConfig;
+	runConfig: RunConfig;
+	driver: ManagerDriver;
+}): MiddlewareHandler {
+	return async (c, next) => {
+		if (c.req.header("upgrade") === "websocket") {
+			return handleRawWebSocketRequest(c, registryConfig, runConfig, driver);
+		} else {
+			const queryHeader = c.req.header(HEADER_ACTOR_QUERY);
+			if (!queryHeader) {
+				throw new errors.InvalidRequest("Missing actor query header");
+			}
+			const query = ActorQuerySchema.parse(JSON.parse(queryHeader));
+			const { actorId } = await queryActor(c, query, driver);
+
+			const url = new URL(c.req.url);
+			url.hostname = "actor";
+			url.pathname = url.pathname
+				.replace(/^\/registry\/actors/, "")
+				.replace(/^\/actors/, ""); // Remove /registry prefix if present
+			const proxyRequest = new Request(url, {
+				method: c.req.method,
+				headers: c.req.raw.headers,
+				body: c.req.raw.body,
+			});
+			return await driver.proxyRequest(c, proxyRequest, actorId);
+		}
+	};
 }

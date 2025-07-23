@@ -79,6 +79,6 @@ export class FileSystemActorDriver implements ActorDriver {
 	}
 
 	getDatabase(actorId: string): Promise<unknown | undefined> {
-		return Promise.resolve(undefined);
+		return this.#state.createDatabase(actorId);
 	}
 }

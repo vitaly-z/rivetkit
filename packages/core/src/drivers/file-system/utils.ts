@@ -60,6 +60,14 @@ export function getActorStoragePath(baseDir: string, actorId: string): string {
 	return path.join(baseDir, "actors", actorId);
 }
 
+export function getActorsDbsPath(baseDir: string): string {
+	return path.join(baseDir, "databases");
+}
+
+export function getActorDbPath(baseDir: string, actorId: string): string {
+	return path.join(getActorsDbsPath(baseDir), `${actorId}.db`);
+}
+
 /**
  * Check if a path exists
  */

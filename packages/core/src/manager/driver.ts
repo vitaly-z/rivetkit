@@ -1,5 +1,6 @@
 import type { Env, Hono, Context as HonoContext } from "hono";
 import type { ActorKey, Encoding } from "@/actor/mod";
+import type { ManagerInspector } from "@/inspector/manager";
 import type { RunConfig } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 
@@ -37,7 +38,10 @@ export interface ManagerDriver {
 
 	modifyManagerRouter?: (registryConfig: RegistryConfig, router: Hono) => void;
 
-	// inspector?: ManagerInspector;
+	/**
+	 * @internal
+	 */
+	readonly inspector?: ManagerInspector;
 }
 export interface GetForIdInput<E extends Env = any> {
 	c?: HonoContext | undefined;
