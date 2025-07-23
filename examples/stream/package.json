@@ -1,6 +1,6 @@
 {
   "name": "example-stream",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"tsx --watch src/backend/server.ts\" \"vite\"",
