@@ -50,7 +50,7 @@ export const secureInspector = (runConfig: RunConfig) =>
 		await next();
 	});
 
-export function getInspectorUrl(runConfig: RunConfigInput | undefined) {
+export function getStudioUrl(runConfig: RunConfigInput | undefined) {
 	if (!runConfig?.studio?.enabled) {
 		return "disabled";
 	}
