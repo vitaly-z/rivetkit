@@ -1,6 +1,6 @@
 {
   "name": "example-sync",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"tsx --watch src/backend/server.ts\" \"vite\"",
