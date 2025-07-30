@@ -16,11 +16,17 @@ const SubscriptionRequestSchema = z.object({
 	s: z.boolean(),
 });
 
+export const PingResponseSchema = z.object({
+	// Ping
+	p: z.string(),
+});
+
 export const ToServerSchema = z.object({
 	// Body
 	b: z.union([
 		z.object({ ar: ActionRequestSchema }),
 		z.object({ sr: SubscriptionRequestSchema }),
+		PingResponseSchema,
 	]),
 });
 

@@ -400,12 +400,13 @@ export async function handleSseConnect(
 					.getGenericConnGlobalState(actorId)
 					.sseStreams.delete(connId);
 			}
-			if (conn && actor !== undefined) {
-				actor.__removeConn(conn);
-			}
 
 			// Close the stream on error
 			stream.close();
+		} finally {
+			if (conn) {
+				actor?.__removeConn(conn);
+			}
 		}
 	});
 }

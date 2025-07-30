@@ -9,10 +9,10 @@ import type { Logger } from "@/common/log";
 import { isCborSerializable, stringifyError } from "@/common/utils";
 import type { UniversalWebSocket } from "@/common/websocket-interface";
 import { ActorInspector } from "@/inspector/actor";
-import type { Registry, RegistryConfig } from "@/mod";
+import type { Registry } from "@/mod";
 import type { ActionContext } from "./action";
 import type { ActorConfig } from "./config";
-import { Conn, type ConnId } from "./connection";
+import { Conn, type ConnId, generatePing } from "./connection";
 import { ActorContext } from "./context";
 import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorDriver, ConnDriver, ConnDrivers } from "./driver";
@@ -157,6 +157,11 @@ export class ActorInstance<
 	#ready = false;
 
 	#connections = new Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>>();
+	// This is used to track the last ping sent to the client, when restoring a connection
+	#connectionsPingRequests = new Map<
+		ConnId,
+		{ ping: string; resolve: () => void }
+	>();
 	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, AD, DB>>>();
 
 	#schedule!: Schedule;
@@ -591,6 +596,8 @@ export class ActorInstance<
 			// Set initial state
 			this.#setPersist(persistData);
 
+			const restorePromises = [];
+
 			// Load connections
 			for (const connPersist of this.#persist.c) {
 				// Create connections
@@ -601,13 +608,60 @@ export class ActorInstance<
 					driver,
 					this.#connStateEnabled,
 				);
-				this.#connections.set(conn.id, conn);
 
-				// Register event subscriptions
-				for (const sub of connPersist.su) {
-					this.#addSubscription(sub.n, conn, true);
-				}
+				// send ping, to ensure the connection is alive
+
+				const { promise, resolve } = Promise.withResolvers<void>();
+				restorePromises.push(
+					Promise.race([
+						promise,
+						new Promise<void>((_, reject) => {
+							setTimeout(() => {
+								reject();
+							}, 2500);
+						}),
+					])
+						.catch(() => {
+							process.nextTick(() => {
+								logger().debug("connection restore failed", {
+									connId: conn.id,
+								});
+								this.#connections.delete(conn.id);
+								conn.disconnect(
+									"Connection restore failed, connection is not alive",
+								);
+								this.__removeConn(conn);
+							});
+						})
+						.then(() => {
+							logger().debug("connection restored", {
+								connId: conn.id,
+							});
+							this.#connections.set(conn.id, conn);
+
+							// Register event subscriptions
+							for (const sub of connPersist.su) {
+								this.#addSubscription(sub.n, conn, true);
+							}
+						}),
+				);
+
+				const ping = generatePing();
+				this.#connectionsPingRequests.set(conn.id, { ping, resolve });
+				conn._sendMessage(
+					new CachedSerializer<wsToClient.ToClient>({
+						b: {
+							p: ping,
+						},
+					}),
+				);
 			}
+
+			const result = await Promise.allSettled(restorePromises);
+			logger().info("connections restored", {
+				success: result.filter((r) => r.status === "fulfilled").length,
+				failed: result.filter((r) => r.status === "rejected").length,
+			});
 		} else {
 			logger().info("actor creating");
 
@@ -818,6 +872,8 @@ export class ActorInstance<
 		this.#persist.c.push(persist);
 		this.saveState({ immediate: true });
 
+		this.inspector.emitter.emit("connectionUpdated");
+
 		// Handle connection
 		if (this.#config.onConnect) {
 			try {
@@ -840,8 +896,6 @@ export class ActorInstance<
 				conn?.disconnect("`onConnect` failed");
 			}
 		}
-
-		this.inspector.emitter.emit("connectionUpdated");
 
 		// Send init message
 		conn._sendMessage(
@@ -889,6 +943,14 @@ export class ActorInstance<
 					connId: conn.id,
 				});
 				this.#removeSubscription(eventName, conn, false);
+			},
+			onPong: async (pong, conn) => {
+				const pingRequest = this.#connectionsPingRequests.get(conn.id);
+				if (pingRequest?.ping === pong) {
+					// Resolve the ping request if it matches the last sent ping
+					pingRequest.resolve();
+					this.#connectionsPingRequests.delete(conn.id);
+				}
 			},
 		});
 	}

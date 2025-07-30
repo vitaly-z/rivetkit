@@ -7,6 +7,7 @@ const counter = actor({
 	onAuth: () => {
 		return true;
 	},
+	onConnect: (c) => {},
 	actions: {
 		increment: (c, x: number) => {
 			c.state.count += x;

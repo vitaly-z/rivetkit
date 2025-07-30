@@ -75,7 +75,7 @@
   "scripts": {
     "build": "tsup src/mod.ts src/client.ts src/log.ts src/errors.ts src/test.ts",
     "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@rivetkit/core": "workspace:*"

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { DriverTestConfig } from "../mod";
 import { setupDriverTest } from "../utils";
 
@@ -256,6 +256,9 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 					],
 				]);
 			});
+		});
+		describe("Ping", () => {
+			test.skip("should restore connections after server restart", async (c) => {});
 		});
 	});
 }

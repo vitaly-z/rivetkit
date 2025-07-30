@@ -16,6 +16,10 @@ export function generateConnToken(): string {
 	return generateSecureToken(32);
 }
 
+export function generatePing(): string {
+	return crypto.randomUUID();
+}
+
 export type ConnId = string;
 
 export type AnyConn = Conn<any, any, any, any, any, any, any>;

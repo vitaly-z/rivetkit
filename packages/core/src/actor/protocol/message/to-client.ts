@@ -36,6 +36,11 @@ export const EventSchema = z.object({
 	a: z.array(z.unknown()),
 });
 
+export const PingSchema = z.object({
+	// Unique identifier for the ping
+	p: z.string(),
+});
+
 export const ToClientSchema = z.object({
 	// Body
 	b: z.union([
@@ -43,6 +48,7 @@ export const ToClientSchema = z.object({
 		z.object({ e: ErrorSchema }),
 		z.object({ ar: ActionResponseSchema }),
 		z.object({ ev: EventSchema }),
+		PingSchema,
 	]),
 });
 

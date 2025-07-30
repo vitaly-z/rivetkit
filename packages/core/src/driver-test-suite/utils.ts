@@ -14,6 +14,7 @@ export async function setupDriverTest(
 ): Promise<{
 	client: Client<typeof registry>;
 	endpoint: string;
+	cleanup?: () => Promise<void>;
 }> {
 	if (!driverTestConfig.useRealTimers) {
 		vi.useFakeTimers();
@@ -21,8 +22,9 @@ export async function setupDriverTest(
 
 	// Build drivers
 	const projectPath = resolve(__dirname, "../../fixtures/driver-test-suite");
-	const { endpoint, cleanup } = await driverTestConfig.start(projectPath);
-	c.onTestFinished(cleanup);
+	const { endpoint, cleanup: driverCleanup } =
+		await driverTestConfig.start(projectPath);
+	c.onTestFinished(driverCleanup);
 
 	let client: Client<typeof registry>;
 	if (driverTestConfig.clientType === "http") {
@@ -49,6 +51,7 @@ export async function setupDriverTest(
 	return {
 		client,
 		endpoint,
+		cleanup: driverCleanup,
 	};
 }
 

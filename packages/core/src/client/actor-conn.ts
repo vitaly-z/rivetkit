@@ -416,6 +416,11 @@ enc
 				argsCount: response.b.ev.a?.length,
 			});
 			this.#dispatchEvent(response.b.ev);
+		} else if ("p" in response.b) {
+			// Ping request
+			const ping = response.b.p;
+			logger().trace("received ping request", { ping });
+			this.#sendMessage({ b: { p: ping } });
 		} else {
 			assertUnreachable(response.b);
 		}

@@ -90,6 +90,7 @@ export interface ProcessMessageHandler<
 		eventName: string,
 		conn: Conn<S, CP, CS, V, I, AD, DB>,
 	) => Promise<void>;
+	onPong?: (pong: string, conn: Conn<S, CP, CS, V, I, AD, DB>) => Promise<void>;
 }
 
 export async function processMessage<
@@ -182,6 +183,17 @@ export async function processMessage<
 			logger().debug("subscription request completed", {
 				eventName,
 				subscribe,
+			});
+		} else if ("p" in message.b) {
+			if (handler.onPong === undefined) {
+				throw new errors.Unsupported("Ping");
+			}
+
+			const { p: pong } = message.b;
+			await handler.onPong(pong, conn);
+			logger().debug("pong response received", {
+				connId: conn.id,
+				pong,
 			});
 		} else {
 			assertUnreachable(message.b);
