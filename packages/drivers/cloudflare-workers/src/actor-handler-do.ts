@@ -1,4 +1,4 @@
-import { DurableObject } from "cloudflare:workers";
+import { DurableObject, env } from "cloudflare:workers";
 import type {
 	ActorKey,
 	ActorRouter,
@@ -16,7 +16,7 @@ import {
 	CloudflareDurableObjectGlobalState,
 	createCloudflareActorsActorDriverBuilder,
 } from "./actor-driver";
-import { type Bindings, CF_AMBIENT_ENV } from "./handler";
+import type { Bindings } from "./handler";
 import { logger } from "./log";
 
 export const KEYS = {
@@ -70,8 +70,6 @@ export function createActorDurableObject(
 		#actor?: LoadedActor;
 
 		async #loadActor(): Promise<LoadedActor> {
-			// This is always called from another context using CF_AMBIENT_ENV
-
 			// Wait for init
 			if (!this.#initialized) {
 				// Wait for init
@@ -112,7 +110,7 @@ export function createActorDurableObject(
 			// of knowing when the DO shuts down. We're making a broad assumption
 			// that DO will boot a new isolate frequenlty enough that this is not an issue.
 			const actorId = this.ctx.id.toString();
-			globalState.setDOState(actorId, { ctx: this.ctx, env: this.env });
+			globalState.setDOState(actorId, { ctx: this.ctx, env: env });
 
 			// Configure actor driver
 			runConfig.driver.actor =
@@ -156,59 +154,53 @@ export function createActorDurableObject(
 		async initialize(req: ActorInitRequest) {
 			// TODO: Need to add this to a core promise that needs to be resolved before start
 
-			return await CF_AMBIENT_ENV.run(this.env, async () => {
-				await this.ctx.storage.put({
-					[KEYS.NAME]: req.name,
-					[KEYS.KEY]: req.key,
-					[KEYS.PERSIST_DATA]: serializeEmptyPersistData(req.input),
-				});
-				this.#initialized = {
-					name: req.name,
-					key: req.key,
-				};
-
-				logger().debug("initialized actor", { key: req.key });
-
-				// Preemptively actor so the lifecycle hooks are called
-				await this.#loadActor();
+			await this.ctx.storage.put({
+				[KEYS.NAME]: req.name,
+				[KEYS.KEY]: req.key,
+				[KEYS.PERSIST_DATA]: serializeEmptyPersistData(req.input),
 			});
+			this.#initialized = {
+				name: req.name,
+				key: req.key,
+			};
+
+			logger().debug("initialized actor", { key: req.key });
+
+			// Preemptively actor so the lifecycle hooks are called
+			await this.#loadActor();
 		}
 
 		async fetch(request: Request): Promise<Response> {
-			return await CF_AMBIENT_ENV.run(this.env, async () => {
-				const { actorRouter } = await this.#loadActor();
+			const { actorRouter } = await this.#loadActor();
 
-				const actorId = this.ctx.id.toString();
-				return await actorRouter.fetch(request, {
-					actorId,
-				});
+			const actorId = this.ctx.id.toString();
+			return await actorRouter.fetch(request, {
+				actorId,
 			});
 		}
 
 		async alarm(): Promise<void> {
-			return await CF_AMBIENT_ENV.run(this.env, async () => {
-				await this.#loadActor();
-				const actorId = this.ctx.id.toString();
+			await this.#loadActor();
+			const actorId = this.ctx.id.toString();
 
-				// Get the actor driver
-				const managerDriver = runConfig.driver.manager(
-					registry.config,
-					runConfig,
-				);
-				const inlineClient = createClientWithDriver(
-					createInlineClientDriver(managerDriver),
-				);
-				const actorDriver = runConfig.driver.actor(
-					registry.config,
-					runConfig,
-					managerDriver,
-					inlineClient,
-				);
+			// Get the actor driver
+			const managerDriver = runConfig.driver.manager(
+				registry.config,
+				runConfig,
+			);
+			const inlineClient = createClientWithDriver(
+				createInlineClientDriver(managerDriver),
+			);
+			const actorDriver = runConfig.driver.actor(
+				registry.config,
+				runConfig,
+				managerDriver,
+				inlineClient,
+			);
 
-				// Load the actor instance and trigger alarm
-				const actor = await actorDriver.loadActor(actorId);
-				await actor.onAlarm();
-			});
+			// Load the actor instance and trigger alarm
+			const actor = await actorDriver.loadActor(actorId);
+			await actor.onAlarm();
 		}
 	};
 }

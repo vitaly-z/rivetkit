@@ -1,8 +1,7 @@
-import { AsyncLocalStorage } from "node:async_hooks";
+import { env } from "cloudflare:workers";
 import type { Registry, RunConfig } from "@rivetkit/core";
 import type { Client } from "@rivetkit/core/client";
 import { Hono } from "hono";
-import invariant from "invariant";
 import {
 	type ActorHandlerInterface,
 	createActorDurableObject,
@@ -23,12 +22,8 @@ export interface Bindings {
  *
  * Use getCloudflareAmbientEnv unless using CF_AMBIENT_ENV.run.
  */
-export const CF_AMBIENT_ENV = new AsyncLocalStorage<Bindings>();
-
 export function getCloudflareAmbientEnv(): Bindings {
-	const env = CF_AMBIENT_ENV.getStore();
-	invariant(env, "missing CF_AMBIENT_ENV");
-	return env;
+	return env as unknown as Bindings;
 }
 
 interface Handler {
@@ -87,7 +82,7 @@ export function createServer<R extends Registry<any>>(
 			// Create Cloudflare handler
 			const handler = {
 				fetch: (request, env, ctx) => {
-					return CF_AMBIENT_ENV.run(env, () => app.fetch(request, env, ctx));
+					return app.fetch(request, env, ctx);
 				},
 			} satisfies ExportedHandler<Bindings>;
 
